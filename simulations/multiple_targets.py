@@ -64,8 +64,8 @@ def simulate_multiple_targets():
     # Detectare ținte
     print("Detectare ținte...")
     detector = TargetDetector(radar)
-    peaks = processor.peak_detection(spectrum, threshold_db=-35, min_distance=15)
-    detected_targets = detector.detect_targets(freqs, spectrum, threshold_db=-35)
+    peaks = processor.peak_detection(spectrum, threshold_db=-50, min_distance=10)
+    detected_targets = detector.detect_targets(freqs, spectrum, threshold_db=-50)
     
     print(f"\n✓ Detectate {len(detected_targets)} ținte din {len(targets_config)} simulate:")
     for i, target in enumerate(detected_targets, 1):

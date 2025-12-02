@@ -60,8 +60,12 @@ class TargetDetector:
         
         for peak_idx in peaks:
             # Extrage parametrii
-            beat_freq = freqs[peak_idx]
+            beat_freq = abs(freqs[peak_idx])  # Take absolute value
             amplitude = spectrum[peak_idx]
+            
+            # Skip if frequency is too low (likely noise)
+            if beat_freq < 100:  # Skip very low frequencies
+                continue
             
             # Calcul parametri țintă
             target_range = self.radar.range_from_frequency(beat_freq)

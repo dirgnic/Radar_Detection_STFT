@@ -10,6 +10,8 @@
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
 
 \title{Sistem Radar pentru Detecția Aeronavelor}
 \subtitle{Analiză în Frecvență și Procesare Digitală}
@@ -471,6 +473,109 @@ Pentru tracking îmbunătățit cu predicție:
 \end{itemize}
 \end{frame}
 
+\begin{frame}{Arhitectura Detaliată a Sistemului}
+\textbf{Layer 1: Generare și Achiziție Semnal}
+\begin{itemize}
+    \item Generare chirp FMCW cu modulare liniară
+    \item Simulare canal de propagare (întârziere, atenuare)
+    \item Aplicare efecte Doppler pentru ținte în mișcare
+    \item Modelare zgomot gaussian AWGN
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Layer 2: Procesare Semnal}
+\begin{itemize}
+    \item Demodulare prin mixer complex conjugat
+    \item Windowing (Hamming, Hann, Kaiser)
+    \item FFT cu zero-padding pentru rezoluție îmbunătățită
+    \item Calculare PSD (Power Spectral Density)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Arhitectura Detaliată (continuare)}
+\textbf{Layer 3: Detectare și Estimare}
+\begin{itemize}
+    \item Algoritm CFAR pentru prag adaptat
+    \item Peak detection cu distance constraint
+    \item Estimare parametri: $R = \frac{f_{beat} \cdot c \cdot T}{2B}$
+    \item Separare distanță-Doppler prin FFT 2D
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Layer 4: Tracking și Vizualizare}
+\begin{itemize}
+    \item Asociere ținte între frame-uri consecutive
+    \item Calculare traiectorii și predicție
+    \item Generare rapoarte și metrici (SNR, detecții/frame)
+    \item Vizualizări: spectru, spectrogramă, PPI, tracking
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Probleme Întâlnite și Soluții}
+\textbf{1. Ambiguitate Distanță-Viteză}
+\begin{itemize}
+    \item \alert{Problemă:} În FMCW simplu, $f_{beat}$ conține atât informație de distanță cât și Doppler
+    \item \alert{Soluție:} FFT 2D pe multiple chirp-uri pentru separare completă
+\end{itemize}
+
+\vspace{0.2cm}
+\textbf{2. Scurgeri Spectrale (Spectral Leakage)}
+\begin{itemize}
+    \item \alert{Problemă:} Truncarea semnalului cauzează lărgirea vârfurilor în FFT
+    \item \alert{Soluție:} Aplicare ferestre (Hamming, Kaiser) reduce scurgerile cu 40-60 dB
+\end{itemize}
+
+\vspace{0.2cm}
+\textbf{3. Detectare în Zgomot Variabil}
+\begin{itemize}
+    \item \alert{Problemă:} Prag fix generează rate false alarm variabile
+    \item \alert{Soluție:} Algoritm CFAR estimează zgomotul local și adaptează pragul
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Probleme de Implementare}
+\textbf{4. Rezoluție vs Rază Maximă}
+\begin{itemize}
+    \item \alert{Trade-off:} $\Delta R = \frac{c}{2B}$ vs $R_{max} = \frac{cT}{2}$
+    \item Bandwidth mai mare $\rightarrow$ rezoluție mai bună dar complexitate mai mare
+    \item \alert{Soluție adoptată:} B = 100-150 MHz pentru echilibru optimal
+\end{itemize}
+
+\vspace{0.2cm}
+\textbf{5. Tracking Ținte Multiple}
+\begin{itemize}
+    \item \alert{Problemă:} Asociere incorectă între frame-uri (crossing targets)
+    \item \alert{Soluție:} Calculare distanță în spațiul (R, v) cu threshold adaptat
+    \item Implementare nearest-neighbor cu validare geometrică
+\end{itemize}
+
+\vspace{0.2cm}
+\textbf{6. Performanță Computațională}
+\begin{itemize}
+    \item \alert{Problemă:} FFT pe semnale lungi (1M+ eșantioane) este costisitoare
+    \item \alert{Soluție:} Zero-padding controlat, decimare inteligentă
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Optimizări și Îmbunătățiri}
+\textbf{Optimizări Implementate:}
+\begin{enumerate}
+    \item \textbf{Vectorizare NumPy}: Operații pe array-uri întregi
+    \item \textbf{FFT eficient}: Folosire scipy.fft optimizat cu FFTW
+    \item \textbf{Procesare batch}: Multiple chirp-uri procesate simultan
+    \item \textbf{Cache rezultate}: Evitare recalculări pentru parametri constanți
+\end{enumerate}
+
+\vspace{0.3cm}
+\textbf{Îmbunătățiri Posibile:}
+\begin{itemize}
+    \item Interfață Haskell pentru procesare paralelă critică
+    \item GPU acceleration cu CuPy/CUDA
+    \item Filtre Kalman pentru tracking predictiv
+    \item Machine Learning pentru clasificare automată
+\end{itemize}
+\end{frame}
+
 \begin{frame}[fragile]{Exemplu Cod: Generare Chirp}
 \begin{lstlisting}[language=Python, basicstyle=\tiny]
 def generate_tx_signal(self):
@@ -520,27 +625,79 @@ Viteză maximă & 375 m/s \\
 \end{table}
 \end{frame}
 
-\section{Rezultate}
+\section{Rezultate Experimentale}
 
-\begin{frame}{Test 1: O Țintă}
-\textbf{Parametri:}
+\begin{frame}{Experiment 1: O Țintă - Semnale}
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{figures/single_target_signals.png}
+\caption{Semnale TX, RX și IF pentru o țintă la 5 km}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Experiment 1: O Țintă - Spectru FFT}
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{figures/single_target_spectrum.png}
+\caption{Spectru de frecvență cu detecția țintei}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Experiment 2: Ținte Multiple - Semnale}
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{figures/multiple_targets_signals.png}
+\caption{Semnale pentru 5 ținte simultane}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Experiment 2: Ținte Multiple - Spectru}
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{figures/multiple_targets_spectrum.png}
+\caption{Spectru FFT cu ținte multiple detectate}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Experiment 2: Ținte Multiple - Sumar}
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{figures/multiple_targets_summary.png}
+\caption{Analiza parametrilor țintelor detectate}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Experiment 2: Vizualizare PPI}
+\begin{figure}
+\centering
+\includegraphics[width=0.75\textwidth]{figures/multiple_targets_ppi.png}
+\caption{Plan Position Indicator - vedere radar}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Experiment 3: Tracking în Timp}
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{figures/moving_targets_tracking.png}
+\caption{Evoluția distanței și SNR pentru ținte în mișcare}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Analiza Rezultatelor}
+\textbf{Performanță sistem:}
 \begin{itemize}
-    \item Distanță reală: 5.000 km
-    \item Viteză: 150 m/s (540 km/h)
-    \item RCS: 15 m²
+    \item \textcolor{green}{✓} Detecție reușită a țintelor multiple
+    \item \textcolor{green}{✓} Separare clară în domeniul frecvenței
+    \item \textcolor{green}{✓} SNR mediu: 60-80 dB
+    \item \textcolor{green}{✓} Tracking consistent pe 10 frame-uri
 \end{itemize}
 
-\textbf{Rezultate:}
+\textbf{Observații:}
 \begin{itemize}
-    \item \textcolor{green}{Distanță detectată: 4.998 km}
-    \item \textcolor{green}{Eroare: 0.04\%}
-    \item SNR: 28.5 dB
-    \item Beat frequency: 33.3 kHz
+    \item Țintele la distanțe mari necesită SNR mai mare
+    \item Ferestre spectrale reduc scurgerile
+    \item CFAR adaptat îmbunătățește detecția
 \end{itemize}
-
-\begin{alertblock}{Concluzie}
-Detecție precisă cu eroare sub 0.1\%!
-\end{alertblock}
 \end{frame}
 
 \begin{frame}{Test 2: Ținte Multiple}

@@ -84,7 +84,7 @@ def simulate_moving_targets():
         
         # FFT și detectare
         freqs, spectrum = processor.compute_fft(if_signal, window='hamming')
-        detected = detector.detect_targets(freqs, spectrum, threshold_db=-40)
+        detected = detector.detect_targets(freqs, spectrum, threshold_db=-50)
         
         all_detections.append(detected)
         

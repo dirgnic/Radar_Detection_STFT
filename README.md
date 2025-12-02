@@ -56,6 +56,22 @@ python main.py
 - Matplotlib - Vizualizări
 - Seaborn - Grafice avansate
 
+### Rezultate Experimentale
+Sistemul a fost testat extensiv cu următoarele scenarii:
+- ✅ **Experiment 1**: Detecție o țintă la 5 km
+- ✅ **Experiment 2**: Detecție 5 ținte simultane (3-25 km)
+- ✅ **Experiment 3**: Tracking 3 ținte în mișcare
+
+📊 Detalii complete în [docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md)
+
+### Documente Available
+- 📖 [README.md](README.md) - Acest fișier
+- 📘 [DOCUMENTATION.md](DOCUMENTATION.md) - Documentație tehnică completă
+- 🚀 [QUICKSTART.md](QUICKSTART.md) - Ghid rapid de pornire
+- 🔬 [docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md) - Rezultate experimentale
+- 🎓 [presentation/radar_presentation.pdf](presentation/radar_presentation.pdf) - Prezentare Beamer
+- 📄 [paper/radar_paper.pdf](paper/radar_paper.pdf) - Lucrare științifică
+
 ### Autor
 Ingrid Corobana - An III
 
