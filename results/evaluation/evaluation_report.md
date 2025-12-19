@@ -30,23 +30,26 @@ Short-Time Fourier Transform. Sensors, 22(16), 5954.
 
 | SNR (dB) | RQF Mediu (dB) | RQF Std (dB) | Detection Rate |
 |----------|----------------|--------------|----------------|
-|     -5 |          -0.11 |         0.13 |        100.0% |
-|     +0 |           0.18 |         0.14 |        100.0% |
-|    +10 |           0.40 |         0.03 |        100.0% |
-|    +20 |           0.43 |         0.01 |         33.3% |
-|    +30 |           0.44 |         0.02 |         33.3% |
+|     -5 |          -0.16 |         0.03 |        100.0% |
+|     +0 |          -0.05 |         0.01 |        100.0% |
+|     +5 |          -0.02 |         0.00 |        100.0% |
+|    +10 |          -0.01 |         0.00 |        100.0% |
+|    +15 |          -0.80 |         2.71 |         75.7% |
+|    +20 |          -9.90 |         0.99 |          0.3% |
+|    +25 |         -10.00 |         0.00 |          0.0% |
+|    +30 |         -10.00 |         0.00 |          0.0% |
 
 
 ## Rezultate Dataset Sintetic
 
 | Fisier | Durata (s) | SNR Est. (dB) | Componente |
 |--------|------------|---------------|------------|
+| fighter_jet_fast.wav | 4.00 | 23.0 | 29 |
 | helicopter_hover.wav | 5.00 | 18.3 | 0 |
+| drone_quadcopter.wav | 5.00 | 18.2 | 98 |
 | cessna_172_approach.wav | 6.00 | 18.3 | 0 |
+| boeing_737_flyover.wav | 8.00 | 23.6 | 91 |
 | turboprop_distant.wav | 10.00 | 18.4 | 0 |
-| drone_quadcopter.wav | 5.00 | 18.2 | 40 |
-| boeing_737_flyover.wav | 8.00 | 23.6 | 28 |
-| fighter_jet_fast.wav | 4.00 | 23.0 | 16 |
 
 
 ## Concluzii

@@ -855,11 +855,12 @@ def main(parallel: bool = True):
     Ruleaza evaluarea completa - OPTIMIZAT CU BATCH PROCESSING
     
     Parametri din paper Abratkiewicz (2022):
+    - 100 simulari Monte Carlo per SNR
+    - SNR: {-5, 0, 5, 10, 15, 20, 25, 30} dB
     - Pf = 0.4 (probabilitate alarma falsa)
     - Training cells = 16
     - Guard cells = 16  
     - N_FFT = 512
-    - Gaussian window sigma = 8
     
     Args:
         parallel: Foloseste procesare paralela (default: True)
@@ -876,36 +877,36 @@ def main(parallel: bool = True):
     output_dir = "results/evaluation"
     os.makedirs(output_dir, exist_ok=True)
     
-    # Parametrii detectorului - optimizati pentru viteza
+    # Parametrii detectorului conform paper-ului
     detector_params = {
         'sample_rate': 44100,
-        'window_size': 256,           # Mai mic pentru viteza
-        'hop_size': 128,              # Hop mai mare pentru viteza
-        'cfar_guard_cells': 2,        # Mai putine celule
-        'cfar_training_cells': 4,     # Mai putine celule
-        'cfar_pfa': 0.1,              # Pf mai mare
+        'window_size': 512,           # N_FFT = 512 din paper
+        'hop_size': 128,              
+        'cfar_guard_cells': 4,        
+        'cfar_training_cells': 8,     
+        'cfar_pfa': 0.1,              
         'dbscan_eps': 5.0,
         'dbscan_min_samples': 3
     }
     
     total_start = time.time()
     
-    # 1. Evaluare Monte Carlo - folosim BATCH PROCESSING
+    # 1. Evaluare Monte Carlo - TOATE simularile conform paper-ului
     print("\n[1/3] Evaluare Monte Carlo (batch processing)...")
     if parallel:
         mc_results = monte_carlo_evaluation_batched(
             detector_params,
-            n_simulations=20,          # Redus semnificativ pentru viteza
-            snr_values=[-5, 0, 10, 20, 30],  # Mai putine SNR-uri
+            n_simulations=100,         # 100 simulari conform paper-ului
+            snr_values=[-5, 0, 5, 10, 15, 20, 25, 30],  # Toate SNR-urile din paper
             n_workers=N_WORKERS,
-            batch_size=5               # 5 simulari per batch
+            batch_size=10              # 10 simulari per batch pentru eficienta
         )
     else:
         detector = CFARSTFTDetector(**detector_params)
         mc_results = monte_carlo_evaluation(
             detector,
-            n_simulations=10,
-            snr_values=[-5, 0, 10, 20, 30]
+            n_simulations=100,
+            snr_values=[-5, 0, 5, 10, 15, 20, 25, 30]
         )
     
     # Salvam rezultatele
