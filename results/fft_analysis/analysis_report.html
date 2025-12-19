@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Analiză FFT - Detecție Acustică Avioane</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { color: #2c3e50; text-align: center; }
+        h2 { color: #34495e; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; 
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
+        img { max-width: 100%; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #3498db; color: white; }
+        tr:hover { background: #f1f1f1; }
+        .highlight { background: #e8f4fd; font-weight: bold; }
+        .footer { text-align: center; margin-top: 40px; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛩️ Analiză FFT - Detecție Acustică de Avioane</h1>
+        
+        <div class="card">
+            <h2>📊 Rezumat Analiză</h2>
+            <table>
+                <tr>
+                    <th>Fișier</th>
+                    <th>Durată (s)</th>
+                    <th>Freq. Dominantă (Hz)</th>
+                    <th>Tip Detectat</th>
+                    <th>Încredere</th>
+                </tr>
+
+                <tr>
+                    <td>boeing_737_flyover.wav</td>
+                    <td>8.00</td>
+                    <td>200</td>
+                    <td>helicopter</td>
+                    <td>0%</td>
+                </tr>
+
+                <tr>
+                    <td>turboprop_distant.wav</td>
+                    <td>10.00</td>
+                    <td>102</td>
+                    <td>propeller</td>
+                    <td>100%</td>
+                </tr>
+
+                <tr>
+                    <td>helicopter_hover.wav</td>
+                    <td>5.00</td>
+                    <td>25</td>
+                    <td>propeller</td>
+                    <td>100%</td>
+                </tr>
+
+                <tr>
+                    <td>fighter_jet_fast.wav</td>
+                    <td>4.00</td>
+                    <td>502</td>
+                    <td>jet_engine</td>
+                    <td>100%</td>
+                </tr>
+
+                <tr>
+                    <td>drone_quadcopter.wav</td>
+                    <td>5.00</td>
+                    <td>197</td>
+                    <td>small_aircraft</td>
+                    <td>100%</td>
+                </tr>
+
+                <tr>
+                    <td>cessna_172_approach.wav</td>
+                    <td>6.00</td>
+                    <td>79</td>
+                    <td>propeller</td>
+                    <td>100%</td>
+                </tr>
+
+            </table>
+        </div>
+        
+        <div class="card">
+            <h2>📈 Comparație Spectre</h2>
+            <img src="comparison_all_aircraft.png" alt="Comparație">
+        </div>
+        
+        <h2>🔍 Analize Individuale</h2>
+        <div class="grid">
+
+            <div class="card">
+                <h3>Boeing 737 Flyover</h3>
+                <img src="boeing_737_flyover_analysis.png" alt="boeing_737_flyover">
+            </div>
+
+            <div class="card">
+                <h3>Turboprop Distant</h3>
+                <img src="turboprop_distant_analysis.png" alt="turboprop_distant">
+            </div>
+
+            <div class="card">
+                <h3>Helicopter Hover</h3>
+                <img src="helicopter_hover_analysis.png" alt="helicopter_hover">
+            </div>
+
+            <div class="card">
+                <h3>Fighter Jet Fast</h3>
+                <img src="fighter_jet_fast_analysis.png" alt="fighter_jet_fast">
+            </div>
+
+            <div class="card">
+                <h3>Drone Quadcopter</h3>
+                <img src="drone_quadcopter_analysis.png" alt="drone_quadcopter">
+            </div>
+
+            <div class="card">
+                <h3>Cessna 172 Approach</h3>
+                <img src="cessna_172_approach_analysis.png" alt="cessna_172_approach">
+            </div>
+
+        </div>
+        
+        <div class="card">
+            <h2>📖 Metodologie</h2>
+            <p><strong>Transformata Fourier (FFT)</strong> este folosită pentru a converti 
+            semnalul audio din domeniul timp în domeniul frecvență. Aceasta permite 
+            identificarea componentelor spectrale caracteristice fiecărui tip de avion:</p>
+            <ul>
+                <li><strong>Motoare cu reacție (Jet)</strong>: Spectru larg, 500-8000 Hz</li>
+                <li><strong>Elice (Propeller)</strong>: Frecvențe joase periodice, 50-500 Hz</li>
+                <li><strong>Elicoptere</strong>: Frecvențe foarte joase, 20-200 Hz</li>
+                <li><strong>Drone</strong>: Multiple armonice, 100-4000 Hz</li>
+            </ul>
+            
+            <h3>Formula FFT</h3>
+            <p style="text-align: center; font-size: 1.2em;">
+                X[k] = Σ x[n] · e<sup>-j2πkn/N</sup>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>Generat automat - Proiect Detecție Radar/Acustică Avioane</p>
+        </div>
+    </div>
+</body>
+</html>
