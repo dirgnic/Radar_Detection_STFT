@@ -5,9 +5,1342 @@
       "duration_s": 8.0,
       "sample_rate": 44100,
       "estimated_snr_db": "23.550327",
-      "n_components_detected": 0,
-      "detection_time_s": 3.173732042312622,
-      "components": []
+      "n_components_detected": 222,
+      "detection_time_s": 9.955650091171265,
+      "components": [
+        {
+          "cluster_id": 58,
+          "centroid_freq": 2153.3203125,
+          "centroid_time": 5.672925170068027,
+          "energy": "6.725207"
+        },
+        {
+          "cluster_id": 56,
+          "centroid_freq": 1894.921875,
+          "centroid_time": 2.991020408163265,
+          "energy": "1.1004286"
+        },
+        {
+          "cluster_id": 51,
+          "centroid_freq": 1808.7890625,
+          "centroid_time": 2.2494331065759634,
+          "energy": "0.25197667"
+        },
+        {
+          "cluster_id": 46,
+          "centroid_freq": 1808.7890625,
+          "centroid_time": 2.0709297052154194,
+          "energy": "0.11628939"
+        },
+        {
+          "cluster_id": 54,
+          "centroid_freq": 1808.7890625,
+          "centroid_time": 2.507755102040816,
+          "energy": "0.11557513"
+        },
+        {
+          "cluster_id": 45,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.9258049886621316,
+          "energy": "0.10411572"
+        },
+        {
+          "cluster_id": 52,
+          "centroid_freq": 1808.7890625,
+          "centroid_time": 2.3916553287981857,
+          "energy": "0.05820339"
+        },
+        {
+          "cluster_id": 55,
+          "centroid_freq": 1808.7890625,
+          "centroid_time": 2.5919274376417234,
+          "energy": "0.05434261"
+        },
+        {
+          "cluster_id": 25,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.0361904761904763,
+          "energy": "0.048727464"
+        },
+        {
+          "cluster_id": 43,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.6732879818594106,
+          "energy": "0.039536662"
+        },
+        {
+          "cluster_id": 36,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.3931972789115648,
+          "energy": "0.037199263"
+        },
+        {
+          "cluster_id": 44,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.7589115646258504,
+          "energy": "0.03608194"
+        },
+        {
+          "cluster_id": 41,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.5876643990929706,
+          "energy": "0.03199581"
+        },
+        {
+          "cluster_id": 48,
+          "centroid_freq": 1808.7890625,
+          "centroid_time": 1.822766439909297,
+          "energy": "0.030941978"
+        },
+        {
+          "cluster_id": 57,
+          "centroid_freq": 1894.921875,
+          "centroid_time": 3.3480272108843536,
+          "energy": "0.02831154"
+        },
+        {
+          "cluster_id": 21,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.8910657596371881,
+          "energy": "0.025639322"
+        },
+        {
+          "cluster_id": 39,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.497687074829932,
+          "energy": "0.021236451"
+        },
+        {
+          "cluster_id": 40,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.5368707482993198,
+          "energy": "0.020013927"
+        },
+        {
+          "cluster_id": 26,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.0942403628117914,
+          "energy": "0.019550188"
+        },
+        {
+          "cluster_id": 38,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.45124716553288,
+          "energy": "0.01943271"
+        },
+        {
+          "cluster_id": 53,
+          "centroid_freq": 1808.7890625,
+          "centroid_time": 2.436643990929705,
+          "energy": "0.017229185"
+        },
+        {
+          "cluster_id": 20,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.8417233560090703,
+          "energy": "0.016193531"
+        },
+        {
+          "cluster_id": 16,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.6965986394557823,
+          "energy": "0.015940716"
+        },
+        {
+          "cluster_id": 27,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.136326530612245,
+          "energy": "0.0155811105"
+        },
+        {
+          "cluster_id": 22,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.9404081632653061,
+          "energy": "0.01487822"
+        },
+        {
+          "cluster_id": 14,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.6385487528344671,
+          "energy": "0.011884626"
+        },
+        {
+          "cluster_id": 42,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.6137868480725626,
+          "energy": "0.011461254"
+        },
+        {
+          "cluster_id": 17,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.7415873015873016,
+          "energy": "0.010888023"
+        },
+        {
+          "cluster_id": 18,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.7764172335600907,
+          "energy": "0.010883647"
+        },
+        {
+          "cluster_id": 31,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.2379138321995466,
+          "energy": "0.010463854"
+        },
+        {
+          "cluster_id": 33,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.28,
+          "energy": "0.009215042"
+        },
+        {
+          "cluster_id": 47,
+          "centroid_freq": 1808.7890625,
+          "centroid_time": 1.715374149659864,
+          "energy": "0.008819767"
+        },
+        {
+          "cluster_id": 8,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.4397278911564626,
+          "energy": "0.008787667"
+        },
+        {
+          "cluster_id": 23,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.966530612244898,
+          "energy": "0.0087519195"
+        },
+        {
+          "cluster_id": 35,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.3583673469387756,
+          "energy": "0.008412426"
+        },
+        {
+          "cluster_id": 10,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.5137414965986394,
+          "energy": "0.0075180265"
+        },
+        {
+          "cluster_id": 50,
+          "centroid_freq": 1808.7890625,
+          "centroid_time": 2.0085260770975055,
+          "energy": "0.007062312"
+        },
+        {
+          "cluster_id": 11,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.5326077097505669,
+          "energy": "0.0070537534"
+        },
+        {
+          "cluster_id": 6,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.34975056689342404,
+          "energy": "0.006568431"
+        },
+        {
+          "cluster_id": 34,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.317732426303855,
+          "energy": "0.0061020865"
+        },
+        {
+          "cluster_id": 19,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.7981859410430839,
+          "energy": "0.006084459"
+        },
+        {
+          "cluster_id": 30,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.2146938775510205,
+          "energy": "0.005402907"
+        },
+        {
+          "cluster_id": 49,
+          "centroid_freq": 1808.7890625,
+          "centroid_time": 1.860498866213152,
+          "energy": "0.00504837"
+        },
+        {
+          "cluster_id": 13,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.6138775510204082,
+          "energy": "0.004866845"
+        },
+        {
+          "cluster_id": 12,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.5688888888888889,
+          "energy": "0.004720665"
+        },
+        {
+          "cluster_id": 7,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.4092517006802721,
+          "energy": "0.0043352437"
+        },
+        {
+          "cluster_id": 24,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.9839455782312925,
+          "energy": "0.004274478"
+        },
+        {
+          "cluster_id": 37,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.4236734693877553,
+          "energy": "0.00406687"
+        },
+        {
+          "cluster_id": 28,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.162448979591837,
+          "energy": "0.0040324368"
+        },
+        {
+          "cluster_id": 9,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.4687528344671202,
+          "energy": "0.0040264092"
+        },
+        {
+          "cluster_id": 29,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.1987301587301589,
+          "energy": "0.0030045018"
+        },
+        {
+          "cluster_id": 32,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 1.2611337868480728,
+          "energy": "0.0026523257"
+        },
+        {
+          "cluster_id": 66,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 0.8489795918367347,
+          "energy": "0.0026278258"
+        },
+        {
+          "cluster_id": 95,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 2.609342403628118,
+          "energy": "0.0024820361"
+        },
+        {
+          "cluster_id": 15,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.6748299319727891,
+          "energy": "0.0023817576"
+        },
+        {
+          "cluster_id": 117,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 3.3146485260770975,
+          "energy": "0.0023556917"
+        },
+        {
+          "cluster_id": 146,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 3.6005442176870748,
+          "energy": "0.0023147657"
+        },
+        {
+          "cluster_id": 68,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 1.9649886621315193,
+          "energy": "0.0022599122"
+        },
+        {
+          "cluster_id": 2,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.21188208616780044,
+          "energy": "0.0021424838"
+        },
+        {
+          "cluster_id": 135,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 4.971972789115647,
+          "energy": "0.0018122758"
+        },
+        {
+          "cluster_id": 71,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 1.8024489795918368,
+          "energy": "0.0017967053"
+        },
+        {
+          "cluster_id": 160,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 3.455419501133787,
+          "energy": "0.0016151901"
+        },
+        {
+          "cluster_id": 78,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 2.5498412698412696,
+          "energy": "0.0015851471"
+        },
+        {
+          "cluster_id": 102,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 4.130249433106576,
+          "energy": "0.0015746828"
+        },
+        {
+          "cluster_id": 134,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 4.854421768707483,
+          "energy": "0.0015509664"
+        },
+        {
+          "cluster_id": 3,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.25541950113378686,
+          "energy": "0.0015307221"
+        },
+        {
+          "cluster_id": 120,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 4.837006802721088,
+          "energy": "0.0014667539"
+        },
+        {
+          "cluster_id": 162,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 4.3769614512471655,
+          "energy": "0.0014429041"
+        },
+        {
+          "cluster_id": 5,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.31201814058956917,
+          "energy": "0.0014395209"
+        },
+        {
+          "cluster_id": 111,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 1.8271201814058957,
+          "energy": "0.0014379963"
+        },
+        {
+          "cluster_id": 131,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 3.7993650793650793,
+          "energy": "0.0014110932"
+        },
+        {
+          "cluster_id": 79,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 2.786394557823129,
+          "energy": "0.0013466205"
+        },
+        {
+          "cluster_id": 122,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 6.754104308390023,
+          "energy": "0.0013379146"
+        },
+        {
+          "cluster_id": 136,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 5.500226757369615,
+          "energy": "0.001314052"
+        },
+        {
+          "cluster_id": 70,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 1.2001814058956917,
+          "energy": "0.0013016748"
+        },
+        {
+          "cluster_id": 185,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 5.268027210884354,
+          "energy": "0.0012985176"
+        },
+        {
+          "cluster_id": 119,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 3.5773242630385487,
+          "energy": "0.0012839182"
+        },
+        {
+          "cluster_id": 4,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.2858956916099773,
+          "energy": "0.0012751872"
+        },
+        {
+          "cluster_id": 97,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 3.201451247165533,
+          "energy": "0.0012472091"
+        },
+        {
+          "cluster_id": 72,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 1.8924263038548754,
+          "energy": "0.0012097326"
+        },
+        {
+          "cluster_id": 77,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 2.4917913832199545,
+          "energy": "0.0011824435"
+        },
+        {
+          "cluster_id": 98,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 3.284172335600907,
+          "energy": "0.0011819705"
+        },
+        {
+          "cluster_id": 128,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 2.6935147392290246,
+          "energy": "0.0011569448"
+        },
+        {
+          "cluster_id": 94,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 2.0796371882086166,
+          "energy": "0.00113662"
+        },
+        {
+          "cluster_id": 129,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 3.7268027210884354,
+          "energy": "0.0011261683"
+        },
+        {
+          "cluster_id": 75,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 1.9998185941043085,
+          "energy": "0.0011219308"
+        },
+        {
+          "cluster_id": 83,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 1.2234013605442178,
+          "energy": "0.0011212279"
+        },
+        {
+          "cluster_id": 139,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 5.868843537414966,
+          "energy": "0.0011162442"
+        },
+        {
+          "cluster_id": 85,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 1.5368707482993198,
+          "energy": "0.001077773"
+        },
+        {
+          "cluster_id": 81,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 0.5906575963718821,
+          "energy": "0.0010774385"
+        },
+        {
+          "cluster_id": 80,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 3.3872108843537414,
+          "energy": "0.001030398"
+        },
+        {
+          "cluster_id": 104,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 4.4175963718820865,
+          "energy": "0.0010246234"
+        },
+        {
+          "cluster_id": 137,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 5.662766439909297,
+          "energy": "0.0010084467"
+        },
+        {
+          "cluster_id": 189,
+          "centroid_freq": 3789.84375,
+          "centroid_time": 4.323265306122449,
+          "energy": "0.0010006358"
+        },
+        {
+          "cluster_id": 198,
+          "centroid_freq": 3962.109375,
+          "centroid_time": 2.863310657596372,
+          "energy": "0.000991688"
+        },
+        {
+          "cluster_id": 99,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 3.4786394557823126,
+          "energy": "0.0009638538"
+        },
+        {
+          "cluster_id": 121,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 5.373968253968254,
+          "energy": "0.00096020463"
+        },
+        {
+          "cluster_id": 148,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 3.652789115646258,
+          "energy": "0.00095586013"
+        },
+        {
+          "cluster_id": 116,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 3.255147392290249,
+          "energy": "0.0009508126"
+        },
+        {
+          "cluster_id": 133,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 4.554013605442178,
+          "energy": "0.0009419145"
+        },
+        {
+          "cluster_id": 109,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 1.705215419501134,
+          "energy": "0.000925315"
+        },
+        {
+          "cluster_id": 163,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 4.720907029478458,
+          "energy": "0.00092237204"
+        },
+        {
+          "cluster_id": 87,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 2.461315192743764,
+          "energy": "0.00089827634"
+        },
+        {
+          "cluster_id": 93,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 1.3786848072562359,
+          "energy": "0.000880009"
+        },
+        {
+          "cluster_id": 86,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 2.1304308390022673,
+          "energy": "0.0008761601"
+        },
+        {
+          "cluster_id": 190,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 4.668662131519275,
+          "energy": "0.00083994254"
+        },
+        {
+          "cluster_id": 183,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 3.9880272108843537,
+          "energy": "0.0008155937"
+        },
+        {
+          "cluster_id": 112,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 2.2610430839002267,
+          "energy": "0.0008010241"
+        },
+        {
+          "cluster_id": 115,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 2.8183219954648524,
+          "energy": "0.00080032763"
+        },
+        {
+          "cluster_id": 103,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 4.350839002267574,
+          "energy": "0.00079653936"
+        },
+        {
+          "cluster_id": 90,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 3.355283446712018,
+          "energy": "0.0007952027"
+        },
+        {
+          "cluster_id": 89,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 2.885079365079365,
+          "energy": "0.00079342455"
+        },
+        {
+          "cluster_id": 82,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 0.8185034013605442,
+          "energy": "0.0007790072"
+        },
+        {
+          "cluster_id": 175,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 1.8532426303854876,
+          "energy": "0.00075753516"
+        },
+        {
+          "cluster_id": 161,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 3.9531972789115644,
+          "energy": "0.0007555269"
+        },
+        {
+          "cluster_id": 132,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 3.8661224489795916,
+          "energy": "0.0007303314"
+        },
+        {
+          "cluster_id": 101,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 3.8211337868480726,
+          "energy": "0.0007121485"
+        },
+        {
+          "cluster_id": 88,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 2.6862585034013606,
+          "energy": "0.0006785198"
+        },
+        {
+          "cluster_id": 100,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 3.66875283446712,
+          "energy": "0.0006743022"
+        },
+        {
+          "cluster_id": 130,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 3.767437641723356,
+          "energy": "0.0006649097"
+        },
+        {
+          "cluster_id": 147,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 3.633922902494331,
+          "energy": "0.0006630159"
+        },
+        {
+          "cluster_id": 114,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 2.725442176870748,
+          "energy": "0.00065074046"
+        },
+        {
+          "cluster_id": 176,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 2.097052154195011,
+          "energy": "0.0006477546"
+        },
+        {
+          "cluster_id": 181,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 3.102766439909297,
+          "energy": "0.0006474341"
+        },
+        {
+          "cluster_id": 69,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 0.7169160997732427,
+          "energy": "0.00064119016"
+        },
+        {
+          "cluster_id": 200,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 4.069297052154195,
+          "energy": "0.00063839485"
+        },
+        {
+          "cluster_id": 168,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 5.92108843537415,
+          "energy": "0.0006291056"
+        },
+        {
+          "cluster_id": 142,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 1.4323809523809525,
+          "energy": "0.00062696775"
+        },
+        {
+          "cluster_id": 126,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 2.1521995464852606,
+          "energy": "0.00062047504"
+        },
+        {
+          "cluster_id": 166,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 5.691791383219955,
+          "energy": "0.0006149309"
+        },
+        {
+          "cluster_id": 178,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 2.5063038548752834,
+          "energy": "0.0006088018"
+        },
+        {
+          "cluster_id": 219,
+          "centroid_freq": 4134.375,
+          "centroid_time": 3.082448979591837,
+          "energy": "0.0005934323"
+        },
+        {
+          "cluster_id": 138,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 5.834013605442177,
+          "energy": "0.0005742403"
+        },
+        {
+          "cluster_id": 144,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 2.3945578231292517,
+          "energy": "0.000564534"
+        },
+        {
+          "cluster_id": 118,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 3.5497505668934237,
+          "energy": "0.0005637441"
+        },
+        {
+          "cluster_id": 170,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 6.861496598639456,
+          "energy": "0.000563699"
+        },
+        {
+          "cluster_id": 206,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 4.461133786848073,
+          "energy": "0.0005571913"
+        },
+        {
+          "cluster_id": 182,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 3.8545124716553287,
+          "energy": "0.0005500741"
+        },
+        {
+          "cluster_id": 159,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 3.044716553287982,
+          "energy": "0.00054376724"
+        },
+        {
+          "cluster_id": 179,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 2.7689795918367346,
+          "energy": "0.00052947184"
+        },
+        {
+          "cluster_id": 180,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 2.8546031746031746,
+          "energy": "0.00052245136"
+        },
+        {
+          "cluster_id": 171,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 7.100952380952381,
+          "energy": "0.00052127696"
+        },
+        {
+          "cluster_id": 164,
+          "centroid_freq": 3789.84375,
+          "centroid_time": 5.127256235827665,
+          "energy": "0.00051973877"
+        },
+        {
+          "cluster_id": 150,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 6.279546485260771,
+          "energy": "0.0005150136"
+        },
+        {
+          "cluster_id": 158,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 1.9301587301587302,
+          "energy": "0.0005146244"
+        },
+        {
+          "cluster_id": 220,
+          "centroid_freq": 4220.5078125,
+          "centroid_time": 4.951655328798187,
+          "energy": "0.00050629553"
+        },
+        {
+          "cluster_id": 165,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 5.532154195011338,
+          "energy": "0.0005053413"
+        },
+        {
+          "cluster_id": 145,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 2.5890249433106574,
+          "energy": "0.0005044147"
+        },
+        {
+          "cluster_id": 167,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 5.755646258503401,
+          "energy": "0.0005039036"
+        },
+        {
+          "cluster_id": 108,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 1.281451247165533,
+          "energy": "0.0005034141"
+        },
+        {
+          "cluster_id": 184,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 4.475646258503402,
+          "energy": "0.000495393"
+        },
+        {
+          "cluster_id": 74,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 1.9200000000000002,
+          "energy": "0.0004933509"
+        },
+        {
+          "cluster_id": 212,
+          "centroid_freq": 3962.109375,
+          "centroid_time": 5.093877551020409,
+          "energy": "0.00049055927"
+        },
+        {
+          "cluster_id": 188,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 3.39156462585034,
+          "energy": "0.0004781604"
+        },
+        {
+          "cluster_id": 113,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 2.411972789115646,
+          "energy": "0.0004777225"
+        },
+        {
+          "cluster_id": 76,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 2.2479818594104306,
+          "energy": "0.0004729651"
+        },
+        {
+          "cluster_id": 73,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 1.9040362811791385,
+          "energy": "0.0004661058"
+        },
+        {
+          "cluster_id": 151,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 6.44498866213152,
+          "energy": "0.0004657978"
+        },
+        {
+          "cluster_id": 110,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 1.8155102040816327,
+          "energy": "0.0004579128"
+        },
+        {
+          "cluster_id": 186,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 5.349297052154196,
+          "energy": "0.0004572369"
+        },
+        {
+          "cluster_id": 199,
+          "centroid_freq": 3789.84375,
+          "centroid_time": 3.0098866213151925,
+          "energy": "0.0004536804"
+        },
+        {
+          "cluster_id": 84,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 1.5267120181405898,
+          "energy": "0.00044967257"
+        },
+        {
+          "cluster_id": 105,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 0.5587301587301587,
+          "energy": "0.00044951073"
+        },
+        {
+          "cluster_id": 209,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 6.84843537414966,
+          "energy": "0.00044470606"
+        },
+        {
+          "cluster_id": 62,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 0.4905215419501134,
+          "energy": "0.00044405845"
+        },
+        {
+          "cluster_id": 127,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 2.3248979591836734,
+          "energy": "0.00043943635"
+        },
+        {
+          "cluster_id": 217,
+          "centroid_freq": 4220.5078125,
+          "centroid_time": 3.500408163265306,
+          "energy": "0.00042020442"
+        },
+        {
+          "cluster_id": 96,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 2.667392290249433,
+          "energy": "0.00041075778"
+        },
+        {
+          "cluster_id": 65,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 0.6646712018140589,
+          "energy": "0.0004053231"
+        },
+        {
+          "cluster_id": 177,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 2.3597278911564623,
+          "energy": "0.00039632438"
+        },
+        {
+          "cluster_id": 157,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 1.6878004535147393,
+          "energy": "0.00038273842"
+        },
+        {
+          "cluster_id": 211,
+          "centroid_freq": 4048.2421875,
+          "centroid_time": 3.1317913832199546,
+          "energy": "0.0003822193"
+        },
+        {
+          "cluster_id": 67,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 1.4207709750566895,
+          "energy": "0.00037935353"
+        },
+        {
+          "cluster_id": 153,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 6.730884353741497,
+          "energy": "0.00037455716"
+        },
+        {
+          "cluster_id": 152,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 6.513197278911565,
+          "energy": "0.0003704474"
+        },
+        {
+          "cluster_id": 172,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 1.4570521541950114,
+          "energy": "0.0003632973"
+        },
+        {
+          "cluster_id": 156,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 1.3032199546485261,
+          "energy": "0.0003602752"
+        },
+        {
+          "cluster_id": 202,
+          "centroid_freq": 3789.84375,
+          "centroid_time": 5.67437641723356,
+          "energy": "0.0003502695"
+        },
+        {
+          "cluster_id": 207,
+          "centroid_freq": 3962.109375,
+          "centroid_time": 5.826757369614513,
+          "energy": "0.0003472738"
+        },
+        {
+          "cluster_id": 59,
+          "centroid_freq": 2239.453125,
+          "centroid_time": 7.85124716553288,
+          "energy": "0.0003445932"
+        },
+        {
+          "cluster_id": 125,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 1.1551927437641725,
+          "energy": "0.00033533655"
+        },
+        {
+          "cluster_id": 204,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 6.32453514739229,
+          "energy": "0.00032860244"
+        },
+        {
+          "cluster_id": 143,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 1.5644444444444445,
+          "energy": "0.00032721565"
+        },
+        {
+          "cluster_id": 149,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 6.093786848072563,
+          "energy": "0.00031817443"
+        },
+        {
+          "cluster_id": 216,
+          "centroid_freq": 4048.2421875,
+          "centroid_time": 3.4205895691609975,
+          "energy": "0.00030545038"
+        },
+        {
+          "cluster_id": 203,
+          "centroid_freq": 3789.84375,
+          "centroid_time": 6.170702947845806,
+          "energy": "0.0002990009"
+        },
+        {
+          "cluster_id": 106,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 1.015873015873016,
+          "energy": "0.00029457995"
+        },
+        {
+          "cluster_id": 192,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 6.469659863945578,
+          "energy": "0.00027775287"
+        },
+        {
+          "cluster_id": 154,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 7.018231292517007,
+          "energy": "0.00027611485"
+        },
+        {
+          "cluster_id": 169,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 6.144580498866214,
+          "energy": "0.00027023238"
+        },
+        {
+          "cluster_id": 174,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 1.581859410430839,
+          "energy": "0.00025683214"
+        },
+        {
+          "cluster_id": 221,
+          "centroid_freq": 4220.5078125,
+          "centroid_time": 3.2812698412698413,
+          "energy": "0.00025602174"
+        },
+        {
+          "cluster_id": 201,
+          "centroid_freq": 3789.84375,
+          "centroid_time": 4.912471655328798,
+          "energy": "0.0002552506"
+        },
+        {
+          "cluster_id": 63,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 0.3787755102040816,
+          "energy": "0.00025149633"
+        },
+        {
+          "cluster_id": 218,
+          "centroid_freq": 4048.2421875,
+          "centroid_time": 4.519183673469388,
+          "energy": "0.00025051992"
+        },
+        {
+          "cluster_id": 191,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 5.716462585034014,
+          "energy": "0.00024413785"
+        },
+        {
+          "cluster_id": 107,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 1.2611337868480728,
+          "energy": "0.00024259224"
+        },
+        {
+          "cluster_id": 0,
+          "centroid_freq": 1636.5234375,
+          "centroid_time": 0.14222222222222222,
+          "energy": "0.00024011041"
+        },
+        {
+          "cluster_id": 91,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 0.8780045351473923,
+          "energy": "0.00023748807"
+        },
+        {
+          "cluster_id": 92,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 0.9142857142857143,
+          "energy": "0.00023677544"
+        },
+        {
+          "cluster_id": 173,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 1.4889795918367348,
+          "energy": "0.0002284931"
+        },
+        {
+          "cluster_id": 214,
+          "centroid_freq": 4048.2421875,
+          "centroid_time": 1.6123356009070295,
+          "energy": "0.00022786301"
+        },
+        {
+          "cluster_id": 196,
+          "centroid_freq": 3789.84375,
+          "centroid_time": 1.3583673469387756,
+          "energy": "0.00022450997"
+        },
+        {
+          "cluster_id": 155,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 7.500045351473923,
+          "energy": "0.00020700681"
+        },
+        {
+          "cluster_id": 208,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 6.060408163265307,
+          "energy": "0.00020488989"
+        },
+        {
+          "cluster_id": 205,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 1.510748299319728,
+          "energy": "0.00020258437"
+        },
+        {
+          "cluster_id": 187,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 7.424580498866214,
+          "energy": "0.00020101632"
+        },
+        {
+          "cluster_id": 197,
+          "centroid_freq": 3789.84375,
+          "centroid_time": 1.6761904761904762,
+          "energy": "0.00017960028"
+        },
+        {
+          "cluster_id": 124,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 1.0376417233560091,
+          "energy": "0.00017907997"
+        },
+        {
+          "cluster_id": 193,
+          "centroid_freq": 3789.84375,
+          "centroid_time": 6.890521541950114,
+          "energy": "0.00017523367"
+        },
+        {
+          "cluster_id": 194,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 7.225759637188209,
+          "energy": "0.00017330021"
+        },
+        {
+          "cluster_id": 140,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 0.5209977324263039,
+          "energy": "0.00017163857"
+        },
+        {
+          "cluster_id": 64,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 0.42666666666666664,
+          "energy": "0.00016812685"
+        },
+        {
+          "cluster_id": 141,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 0.7865759637188209,
+          "energy": "0.00016304357"
+        },
+        {
+          "cluster_id": 195,
+          "centroid_freq": 3789.84375,
+          "centroid_time": 1.3409523809523811,
+          "energy": "0.00015830844"
+        },
+        {
+          "cluster_id": 215,
+          "centroid_freq": 4048.2421875,
+          "centroid_time": 2.3089342403628117,
+          "energy": "0.00015400125"
+        },
+        {
+          "cluster_id": 60,
+          "centroid_freq": 2325.5859375,
+          "centroid_time": 7.865759637188209,
+          "energy": "0.00014467727"
+        },
+        {
+          "cluster_id": 210,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 7.272199546485261,
+          "energy": "0.00014280886"
+        },
+        {
+          "cluster_id": 213,
+          "centroid_freq": 3962.109375,
+          "centroid_time": 6.1315192743764175,
+          "energy": "0.00013840685"
+        },
+        {
+          "cluster_id": 61,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 0.33378684807256237,
+          "energy": "0.0001381108"
+        },
+        {
+          "cluster_id": 1,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.12045351473922904,
+          "energy": "0.00012852745"
+        },
+        {
+          "cluster_id": 123,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 0.5035827664399093,
+          "energy": "0.00012739921"
+        }
+      ]
     },
     {
       "file": "turboprop_distant.wav",
@@ -15,7 +1348,7 @@
       "sample_rate": 44100,
       "estimated_snr_db": "18.437883",
       "n_components_detected": 0,
-      "detection_time_s": 4.059416770935059,
+      "detection_time_s": 8.7293119430542,
       "components": []
     },
     {
@@ -24,7 +1357,7 @@
       "sample_rate": 44100,
       "estimated_snr_db": "18.318426",
       "n_components_detected": 0,
-      "detection_time_s": 2.0045769214630127,
+      "detection_time_s": 4.305931806564331,
       "components": []
     },
     {
@@ -32,62 +1365,380 @@
       "duration_s": 4.0,
       "sample_rate": 44100,
       "estimated_snr_db": "22.974005",
-      "n_components_detected": 9,
-      "detection_time_s": 1.6070659160614014,
+      "n_components_detected": 62,
+      "detection_time_s": 12.68490195274353,
       "components": [
-        {
-          "cluster_id": 5,
-          "centroid_freq": 2067.1875,
-          "centroid_time": 2.284263038548753,
-          "energy": "0.045170613"
-        },
-        {
-          "cluster_id": 2,
-          "centroid_freq": 1894.921875,
-          "centroid_time": 1.5151020408163267,
-          "energy": "0.03717357"
-        },
-        {
-          "cluster_id": 3,
-          "centroid_freq": 1894.921875,
-          "centroid_time": 1.5876643990929706,
-          "energy": "0.037109334"
-        },
         {
           "cluster_id": 4,
           "centroid_freq": 1981.0546875,
-          "centroid_time": 1.8982312925170068,
-          "energy": "0.035374302"
+          "centroid_time": 2.169614512471655,
+          "energy": "11.355932"
         },
         {
           "cluster_id": 6,
-          "centroid_freq": 2239.453125,
-          "centroid_time": 3.11437641723356,
-          "energy": "0.025228668"
+          "centroid_freq": 3962.109375,
+          "centroid_time": 2.011428571428571,
+          "energy": "7.3593416"
+        },
+        {
+          "cluster_id": 2,
+          "centroid_freq": 1033.59375,
+          "centroid_time": 2.4105215419501134,
+          "energy": "5.1070333"
         },
         {
           "cluster_id": 7,
-          "centroid_freq": 2239.453125,
-          "centroid_time": 3.1927437641723353,
-          "energy": "0.019582767"
+          "centroid_freq": 5943.1640625,
+          "centroid_time": 2.0128798185941044,
+          "energy": "4.735309"
         },
         {
-          "cluster_id": 0,
-          "centroid_freq": 1722.65625,
-          "centroid_time": 0.4237641723356009,
-          "energy": "0.016356368"
+          "cluster_id": 3,
+          "centroid_freq": 1033.59375,
+          "centroid_time": 3.3160997732426303,
+          "energy": "3.6093855"
         },
         {
           "cluster_id": 1,
-          "centroid_freq": 1722.65625,
-          "centroid_time": 0.5050340136054422,
-          "energy": "0.01377439"
+          "centroid_freq": 1033.59375,
+          "centroid_time": 1.9853061224489796,
+          "energy": "0.21597207"
+        },
+        {
+          "cluster_id": 0,
+          "centroid_freq": 1033.59375,
+          "centroid_time": 1.863401360544218,
+          "energy": "0.030892255"
+        },
+        {
+          "cluster_id": 23,
+          "centroid_freq": 7149.0234375,
+          "centroid_time": 1.655873015873016,
+          "energy": "0.001959954"
+        },
+        {
+          "cluster_id": 21,
+          "centroid_freq": 7407.421875,
+          "centroid_time": 1.6224943310657598,
+          "energy": "0.0017577326"
+        },
+        {
+          "cluster_id": 10,
+          "centroid_freq": 6890.625,
+          "centroid_time": 0.7285260770975056,
+          "energy": "0.0017483216"
+        },
+        {
+          "cluster_id": 14,
+          "centroid_freq": 6890.625,
+          "centroid_time": 1.3743310657596373,
+          "energy": "0.0011007604"
+        },
+        {
+          "cluster_id": 11,
+          "centroid_freq": 6632.2265625,
+          "centroid_time": 0.9200907029478458,
+          "energy": "0.0010977078"
+        },
+        {
+          "cluster_id": 12,
+          "centroid_freq": 6718.359375,
+          "centroid_time": 1.075374149659864,
+          "energy": "0.0010071439"
+        },
+        {
+          "cluster_id": 25,
+          "centroid_freq": 7149.0234375,
+          "centroid_time": 1.3307936507936509,
+          "energy": "0.00095714035"
+        },
+        {
+          "cluster_id": 13,
+          "centroid_freq": 6718.359375,
+          "centroid_time": 0.8097959183673469,
+          "energy": "0.000756151"
+        },
+        {
+          "cluster_id": 29,
+          "centroid_freq": 7579.6875,
+          "centroid_time": 1.799546485260771,
+          "energy": "0.00075604435"
+        },
+        {
+          "cluster_id": 47,
+          "centroid_freq": 7751.953125,
+          "centroid_time": 1.7734240362811793,
+          "energy": "0.0007394872"
+        },
+        {
+          "cluster_id": 22,
+          "centroid_freq": 7235.15625,
+          "centroid_time": 1.0985941043083902,
+          "energy": "0.00072540145"
+        },
+        {
+          "cluster_id": 9,
+          "centroid_freq": 6546.09375,
+          "centroid_time": 0.6632199546485261,
+          "energy": "0.0007196941"
+        },
+        {
+          "cluster_id": 35,
+          "centroid_freq": 7579.6875,
+          "centroid_time": 1.9156462585034015,
+          "energy": "0.0007196445"
+        },
+        {
+          "cluster_id": 15,
+          "centroid_freq": 7062.890625,
+          "centroid_time": 0.5456689342403628,
+          "energy": "0.0007178501"
+        },
+        {
+          "cluster_id": 30,
+          "centroid_freq": 7321.2890625,
+          "centroid_time": 1.185668934240363,
+          "energy": "0.00068020046"
+        },
+        {
+          "cluster_id": 19,
+          "centroid_freq": 6890.625,
+          "centroid_time": 1.3612698412698414,
+          "energy": "0.00065069133"
+        },
+        {
+          "cluster_id": 48,
+          "centroid_freq": 7838.0859375,
+          "centroid_time": 1.825668934240363,
+          "energy": "0.0005715678"
+        },
+        {
+          "cluster_id": 17,
+          "centroid_freq": 6976.7578125,
+          "centroid_time": 0.6182312925170068,
+          "energy": "0.00056911894"
+        },
+        {
+          "cluster_id": 33,
+          "centroid_freq": 7579.6875,
+          "centroid_time": 1.0173242630385488,
+          "energy": "0.00056776666"
+        },
+        {
+          "cluster_id": 18,
+          "centroid_freq": 6890.625,
+          "centroid_time": 1.1377777777777778,
+          "energy": "0.0005229842"
+        },
+        {
+          "cluster_id": 49,
+          "centroid_freq": 7665.8203125,
+          "centroid_time": 2.4351927437641723,
+          "energy": "0.0005004682"
+        },
+        {
+          "cluster_id": 51,
+          "centroid_freq": 7751.953125,
+          "centroid_time": 1.9896598639455783,
+          "energy": "0.000489685"
+        },
+        {
+          "cluster_id": 45,
+          "centroid_freq": 7579.6875,
+          "centroid_time": 1.4643083900226759,
+          "energy": "0.0004571225"
+        },
+        {
+          "cluster_id": 37,
+          "centroid_freq": 7493.5546875,
+          "centroid_time": 1.1609977324263039,
+          "energy": "0.00039252546"
+        },
+        {
+          "cluster_id": 16,
+          "centroid_freq": 6890.625,
+          "centroid_time": 1.3104761904761906,
+          "energy": "0.00037456374"
+        },
+        {
+          "cluster_id": 40,
+          "centroid_freq": 7493.5546875,
+          "centroid_time": 2.265396825396825,
+          "energy": "0.00036717384"
+        },
+        {
+          "cluster_id": 27,
+          "centroid_freq": 7149.0234375,
+          "centroid_time": 1.4918820861678006,
+          "energy": "0.00036568957"
+        },
+        {
+          "cluster_id": 58,
+          "centroid_freq": 7924.21875,
+          "centroid_time": 2.8400907029478457,
+          "energy": "0.0003586853"
+        },
+        {
+          "cluster_id": 26,
+          "centroid_freq": 7149.0234375,
+          "centroid_time": 1.4091609977324264,
+          "energy": "0.0003574293"
+        },
+        {
+          "cluster_id": 31,
+          "centroid_freq": 7321.2890625,
+          "centroid_time": 1.8924263038548754,
+          "energy": "0.00034170493"
+        },
+        {
+          "cluster_id": 38,
+          "centroid_freq": 7493.5546875,
+          "centroid_time": 1.8503401360544218,
+          "energy": "0.0003378264"
+        },
+        {
+          "cluster_id": 36,
+          "centroid_freq": 7493.5546875,
+          "centroid_time": 2.049160997732426,
+          "energy": "0.00032552524"
+        },
+        {
+          "cluster_id": 44,
+          "centroid_freq": 7579.6875,
+          "centroid_time": 1.2016326530612247,
+          "energy": "0.0003164876"
+        },
+        {
+          "cluster_id": 53,
+          "centroid_freq": 7838.0859375,
+          "centroid_time": 1.1421315192743766,
+          "energy": "0.00031489818"
         },
         {
           "cluster_id": 8,
-          "centroid_freq": 2239.453125,
-          "centroid_time": 3.3639909297052153,
-          "energy": "0.011483843"
+          "centroid_freq": 6373.828125,
+          "centroid_time": 0.43537414965986393,
+          "energy": "0.00031482388"
+        },
+        {
+          "cluster_id": 42,
+          "centroid_freq": 7665.8203125,
+          "centroid_time": 0.8504308390022676,
+          "energy": "0.00030831574"
+        },
+        {
+          "cluster_id": 39,
+          "centroid_freq": 7665.8203125,
+          "centroid_time": 2.12172335600907,
+          "energy": "0.00029775608"
+        },
+        {
+          "cluster_id": 59,
+          "centroid_freq": 8182.6171875,
+          "centroid_time": 1.8546938775510204,
+          "energy": "0.00028358193"
+        },
+        {
+          "cluster_id": 5,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.10158730158730159,
+          "energy": "0.00028246822"
+        },
+        {
+          "cluster_id": 43,
+          "centroid_freq": 7579.6875,
+          "centroid_time": 1.0608616780045352,
+          "energy": "0.00028242686"
+        },
+        {
+          "cluster_id": 46,
+          "centroid_freq": 7665.8203125,
+          "centroid_time": 1.281451247165533,
+          "energy": "0.00026983707"
+        },
+        {
+          "cluster_id": 41,
+          "centroid_freq": 7579.6875,
+          "centroid_time": 0.5804988662131519,
+          "energy": "0.0002614449"
+        },
+        {
+          "cluster_id": 34,
+          "centroid_freq": 7407.421875,
+          "centroid_time": 1.5528344671201815,
+          "energy": "0.00024732327"
+        },
+        {
+          "cluster_id": 24,
+          "centroid_freq": 7149.0234375,
+          "centroid_time": 0.7909297052154195,
+          "energy": "0.00024431763"
+        },
+        {
+          "cluster_id": 32,
+          "centroid_freq": 7407.421875,
+          "centroid_time": 0.5659863945578231,
+          "energy": "0.00021970495"
+        },
+        {
+          "cluster_id": 56,
+          "centroid_freq": 7924.21875,
+          "centroid_time": 1.3307936507936509,
+          "energy": "0.00021626736"
+        },
+        {
+          "cluster_id": 50,
+          "centroid_freq": 7751.953125,
+          "centroid_time": 0.9287981859410431,
+          "energy": "0.00020490622"
+        },
+        {
+          "cluster_id": 60,
+          "centroid_freq": 8096.484375,
+          "centroid_time": 2.0854421768707483,
+          "energy": "0.00020327757"
+        },
+        {
+          "cluster_id": 20,
+          "centroid_freq": 6890.625,
+          "centroid_time": 3.8443537414965987,
+          "energy": "0.00019287696"
+        },
+        {
+          "cluster_id": 52,
+          "centroid_freq": 7924.21875,
+          "centroid_time": 2.596281179138322,
+          "energy": "0.0001909413"
+        },
+        {
+          "cluster_id": 55,
+          "centroid_freq": 7838.0859375,
+          "centroid_time": 2.9155555555555552,
+          "energy": "0.00016987971"
+        },
+        {
+          "cluster_id": 54,
+          "centroid_freq": 7838.0859375,
+          "centroid_time": 2.5019501133786846,
+          "energy": "0.0001585558"
+        },
+        {
+          "cluster_id": 57,
+          "centroid_freq": 7924.21875,
+          "centroid_time": 2.6354648526077096,
+          "energy": "0.00015296065"
+        },
+        {
+          "cluster_id": 28,
+          "centroid_freq": 7235.15625,
+          "centroid_time": 0.6922448979591836,
+          "energy": "0.00014453894"
+        },
+        {
+          "cluster_id": 61,
+          "centroid_freq": 8182.6171875,
+          "centroid_time": 2.1405895691609977,
+          "energy": "0.00014024526"
         }
       ]
     },
@@ -96,9 +1747,1258 @@
       "duration_s": 5.0,
       "sample_rate": 44100,
       "estimated_snr_db": "18.213066",
-      "n_components_detected": 0,
-      "detection_time_s": 1.9471917152404785,
-      "components": []
+      "n_components_detected": 208,
+      "detection_time_s": 5.211432933807373,
+      "components": [
+        {
+          "cluster_id": 36,
+          "centroid_freq": 2756.25,
+          "centroid_time": 1.5296145124716554,
+          "energy": "0.0059374054"
+        },
+        {
+          "cluster_id": 11,
+          "centroid_freq": 2325.5859375,
+          "centroid_time": 1.3235374149659864,
+          "energy": "0.005183462"
+        },
+        {
+          "cluster_id": 35,
+          "centroid_freq": 2670.1171875,
+          "centroid_time": 1.5049433106575965,
+          "energy": "0.004776619"
+        },
+        {
+          "cluster_id": 90,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 3.9807709750566893,
+          "energy": "0.0047190115"
+        },
+        {
+          "cluster_id": 77,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 4.543854875283447,
+          "energy": "0.004507017"
+        },
+        {
+          "cluster_id": 53,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 0.8881632653061224,
+          "energy": "0.0042280406"
+        },
+        {
+          "cluster_id": 5,
+          "centroid_freq": 2325.5859375,
+          "centroid_time": 2.4250340136054422,
+          "energy": "0.004219277"
+        },
+        {
+          "cluster_id": 96,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 1.4570521541950114,
+          "energy": "0.0040685683"
+        },
+        {
+          "cluster_id": 49,
+          "centroid_freq": 2670.1171875,
+          "centroid_time": 2.690612244897959,
+          "energy": "0.004061963"
+        },
+        {
+          "cluster_id": 64,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 1.6863492063492065,
+          "energy": "0.0040300065"
+        },
+        {
+          "cluster_id": 14,
+          "centroid_freq": 2325.5859375,
+          "centroid_time": 3.6310204081632653,
+          "energy": "0.0039192173"
+        },
+        {
+          "cluster_id": 38,
+          "centroid_freq": 2583.984375,
+          "centroid_time": 1.6529705215419501,
+          "energy": "0.0037285062"
+        },
+        {
+          "cluster_id": 40,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 2.3103854875283445,
+          "energy": "0.003597513"
+        },
+        {
+          "cluster_id": 79,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 0.38458049886621315,
+          "energy": "0.003585763"
+        },
+        {
+          "cluster_id": 111,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 2.8792743764172335,
+          "energy": "0.0035405231"
+        },
+        {
+          "cluster_id": 39,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 1.740045351473923,
+          "energy": "0.0034497543"
+        },
+        {
+          "cluster_id": 20,
+          "centroid_freq": 2411.71875,
+          "centroid_time": 3.321904761904762,
+          "energy": "0.0033691337"
+        },
+        {
+          "cluster_id": 27,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 3.5323356009070292,
+          "energy": "0.0031945333"
+        },
+        {
+          "cluster_id": 7,
+          "centroid_freq": 2153.3203125,
+          "centroid_time": 3.343673469387755,
+          "energy": "0.0031349948"
+        },
+        {
+          "cluster_id": 57,
+          "centroid_freq": 2756.25,
+          "centroid_time": 3.0809977324263036,
+          "energy": "0.00306654"
+        },
+        {
+          "cluster_id": 92,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 4.297142857142857,
+          "energy": "0.0030299143"
+        },
+        {
+          "cluster_id": 17,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 1.027482993197279,
+          "energy": "0.0028958467"
+        },
+        {
+          "cluster_id": 73,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 4.015600907029479,
+          "energy": "0.0028608579"
+        },
+        {
+          "cluster_id": 50,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 2.7573696145124718,
+          "energy": "0.00274138"
+        },
+        {
+          "cluster_id": 18,
+          "centroid_freq": 2583.984375,
+          "centroid_time": 1.753106575963719,
+          "energy": "0.0027400195"
+        },
+        {
+          "cluster_id": 136,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 4.495963718820862,
+          "energy": "0.0026032345"
+        },
+        {
+          "cluster_id": 12,
+          "centroid_freq": 2239.453125,
+          "centroid_time": 2.0259410430839,
+          "energy": "0.002544513"
+        },
+        {
+          "cluster_id": 10,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 1.1087528344671203,
+          "energy": "0.0025349963"
+        },
+        {
+          "cluster_id": 48,
+          "centroid_freq": 2670.1171875,
+          "centroid_time": 2.340861678004535,
+          "energy": "0.0024521442"
+        },
+        {
+          "cluster_id": 31,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 4.382766439909298,
+          "energy": "0.0024459376"
+        },
+        {
+          "cluster_id": 56,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 1.8140589569160999,
+          "energy": "0.002438955"
+        },
+        {
+          "cluster_id": 83,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 2.1797732426303855,
+          "energy": "0.0024279035"
+        },
+        {
+          "cluster_id": 2,
+          "centroid_freq": 2411.71875,
+          "centroid_time": 1.354013605442177,
+          "energy": "0.0023981973"
+        },
+        {
+          "cluster_id": 74,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 4.040272108843538,
+          "energy": "0.0023951393"
+        },
+        {
+          "cluster_id": 128,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 4.403083900226758,
+          "energy": "0.002349732"
+        },
+        {
+          "cluster_id": 69,
+          "centroid_freq": 2756.25,
+          "centroid_time": 3.282721088435374,
+          "energy": "0.0022738497"
+        },
+        {
+          "cluster_id": 59,
+          "centroid_freq": 2756.25,
+          "centroid_time": 4.064943310657597,
+          "energy": "0.0022620307"
+        },
+        {
+          "cluster_id": 160,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 2.1289795918367345,
+          "energy": "0.0022496223"
+        },
+        {
+          "cluster_id": 0,
+          "centroid_freq": 2239.453125,
+          "centroid_time": 0.7024036281179138,
+          "energy": "0.0022447861"
+        },
+        {
+          "cluster_id": 115,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 4.471292517006803,
+          "energy": "0.0021820401"
+        },
+        {
+          "cluster_id": 1,
+          "centroid_freq": 2239.453125,
+          "centroid_time": 0.9810430839002268,
+          "energy": "0.0021762725"
+        },
+        {
+          "cluster_id": 133,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 0.7735147392290249,
+          "energy": "0.0021626942"
+        },
+        {
+          "cluster_id": 146,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 3.350929705215419,
+          "energy": "0.0021521598"
+        },
+        {
+          "cluster_id": 142,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 1.6384580498866215,
+          "energy": "0.002149676"
+        },
+        {
+          "cluster_id": 71,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 3.452517006802721,
+          "energy": "0.0021286202"
+        },
+        {
+          "cluster_id": 80,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 0.846077097505669,
+          "energy": "0.0020792566"
+        },
+        {
+          "cluster_id": 54,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 1.1798639455782314,
+          "energy": "0.0019701053"
+        },
+        {
+          "cluster_id": 125,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 3.375600907029478,
+          "energy": "0.0019679929"
+        },
+        {
+          "cluster_id": 120,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 1.9751473922902496,
+          "energy": "0.001962834"
+        },
+        {
+          "cluster_id": 30,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 4.260861678004535,
+          "energy": "0.0019256411"
+        },
+        {
+          "cluster_id": 149,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 0.7256235827664399,
+          "energy": "0.0019077155"
+        },
+        {
+          "cluster_id": 47,
+          "centroid_freq": 2670.1171875,
+          "centroid_time": 2.1652607709750566,
+          "energy": "0.0018853686"
+        },
+        {
+          "cluster_id": 119,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 1.401904761904762,
+          "energy": "0.0018608577"
+        },
+        {
+          "cluster_id": 70,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 3.413333333333333,
+          "energy": "0.0018170543"
+        },
+        {
+          "cluster_id": 60,
+          "centroid_freq": 2756.25,
+          "centroid_time": 4.414693877551021,
+          "energy": "0.001793145"
+        },
+        {
+          "cluster_id": 174,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 2.2624943310657595,
+          "energy": "0.0017804644"
+        },
+        {
+          "cluster_id": 44,
+          "centroid_freq": 2583.984375,
+          "centroid_time": 4.350839002267574,
+          "energy": "0.0017214948"
+        },
+        {
+          "cluster_id": 153,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 3.0273015873015874,
+          "energy": "0.0016646719"
+        },
+        {
+          "cluster_id": 165,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 4.20281179138322,
+          "energy": "0.0016571213"
+        },
+        {
+          "cluster_id": 113,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 3.130340136054422,
+          "energy": "0.0016329284"
+        },
+        {
+          "cluster_id": 152,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 2.0665759637188206,
+          "energy": "0.0016302586"
+        },
+        {
+          "cluster_id": 9,
+          "centroid_freq": 2153.3203125,
+          "centroid_time": 3.4960544217687075,
+          "energy": "0.0016185975"
+        },
+        {
+          "cluster_id": 126,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 3.5976417233560087,
+          "energy": "0.0016028447"
+        },
+        {
+          "cluster_id": 37,
+          "centroid_freq": 2583.984375,
+          "centroid_time": 1.55718820861678,
+          "energy": "0.0015838003"
+        },
+        {
+          "cluster_id": 124,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 3.256598639455782,
+          "energy": "0.0015815024"
+        },
+        {
+          "cluster_id": 116,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 0.5558276643990929,
+          "energy": "0.001570594"
+        },
+        {
+          "cluster_id": 114,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 4.147664399092971,
+          "energy": "0.0015671842"
+        },
+        {
+          "cluster_id": 101,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 3.8835374149659865,
+          "energy": "0.001553032"
+        },
+        {
+          "cluster_id": 4,
+          "centroid_freq": 2153.3203125,
+          "centroid_time": 2.220408163265306,
+          "energy": "0.0015481552"
+        },
+        {
+          "cluster_id": 13,
+          "centroid_freq": 2239.453125,
+          "centroid_time": 3.2667573696145125,
+          "energy": "0.001545073"
+        },
+        {
+          "cluster_id": 72,
+          "centroid_freq": 2756.25,
+          "centroid_time": 3.65859410430839,
+          "energy": "0.0015227372"
+        },
+        {
+          "cluster_id": 108,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 1.607981859410431,
+          "energy": "0.0015203152"
+        },
+        {
+          "cluster_id": 156,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 3.485895691609977,
+          "energy": "0.0014863504"
+        },
+        {
+          "cluster_id": 82,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 1.4338321995464853,
+          "energy": "0.0014743304"
+        },
+        {
+          "cluster_id": 109,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 2.0331972789115644,
+          "energy": "0.0014699338"
+        },
+        {
+          "cluster_id": 97,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 1.583310657596372,
+          "energy": "0.0014557454"
+        },
+        {
+          "cluster_id": 148,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 0.6429024943310657,
+          "energy": "0.0014207555"
+        },
+        {
+          "cluster_id": 22,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 1.2350113378684808,
+          "energy": "0.001369527"
+        },
+        {
+          "cluster_id": 25,
+          "centroid_freq": 2411.71875,
+          "centroid_time": 3.173877551020408,
+          "energy": "0.0013621685"
+        },
+        {
+          "cluster_id": 33,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 0.39909297052154197,
+          "energy": "0.0013546642"
+        },
+        {
+          "cluster_id": 46,
+          "centroid_freq": 2583.984375,
+          "centroid_time": 1.2858049886621317,
+          "energy": "0.001349135"
+        },
+        {
+          "cluster_id": 76,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 4.318911564625851,
+          "energy": "0.0013402627"
+        },
+        {
+          "cluster_id": 66,
+          "centroid_freq": 2756.25,
+          "centroid_time": 2.3814965986394556,
+          "energy": "0.0013358856"
+        },
+        {
+          "cluster_id": 8,
+          "centroid_freq": 2153.3203125,
+          "centroid_time": 3.4249433106575964,
+          "energy": "0.0013346777"
+        },
+        {
+          "cluster_id": 41,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 2.980861678004535,
+          "energy": "0.0013321338"
+        },
+        {
+          "cluster_id": 51,
+          "centroid_freq": 2670.1171875,
+          "centroid_time": 3.513469387755102,
+          "energy": "0.001323224"
+        },
+        {
+          "cluster_id": 91,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 4.2390929705215425,
+          "energy": "0.0013020587"
+        },
+        {
+          "cluster_id": 98,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 1.8924263038548754,
+          "energy": "0.0012784039"
+        },
+        {
+          "cluster_id": 121,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 1.9954648526077097,
+          "energy": "0.0012396171"
+        },
+        {
+          "cluster_id": 29,
+          "centroid_freq": 2411.71875,
+          "centroid_time": 3.6019954648526076,
+          "energy": "0.0012177565"
+        },
+        {
+          "cluster_id": 168,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 1.0840816326530613,
+          "energy": "0.0012141496"
+        },
+        {
+          "cluster_id": 89,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 3.8661224489795916,
+          "energy": "0.0012026131"
+        },
+        {
+          "cluster_id": 102,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 4.085260770975057,
+          "energy": "0.00119898"
+        },
+        {
+          "cluster_id": 85,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 2.4395464852607707,
+          "energy": "0.0011765815"
+        },
+        {
+          "cluster_id": 34,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 0.5979138321995465,
+          "energy": "0.0011713352"
+        },
+        {
+          "cluster_id": 138,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 0.628390022675737,
+          "energy": "0.0011707661"
+        },
+        {
+          "cluster_id": 43,
+          "centroid_freq": 2583.984375,
+          "centroid_time": 3.781950113378685,
+          "energy": "0.0011675999"
+        },
+        {
+          "cluster_id": 3,
+          "centroid_freq": 2239.453125,
+          "centroid_time": 2.0709297052154194,
+          "energy": "0.0011430307"
+        },
+        {
+          "cluster_id": 16,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 0.4295691609977324,
+          "energy": "0.0011377541"
+        },
+        {
+          "cluster_id": 177,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 2.0912471655328795,
+          "energy": "0.0011028439"
+        },
+        {
+          "cluster_id": 155,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 3.3131972789115647,
+          "energy": "0.0010912721"
+        },
+        {
+          "cluster_id": 95,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 0.73578231292517,
+          "energy": "0.0010829429"
+        },
+        {
+          "cluster_id": 181,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 3.533786848072562,
+          "energy": "0.0010611974"
+        },
+        {
+          "cluster_id": 6,
+          "centroid_freq": 2153.3203125,
+          "centroid_time": 2.8183219954648524,
+          "energy": "0.0010600579"
+        },
+        {
+          "cluster_id": 112,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 3.017142857142857,
+          "energy": "0.0010244822"
+        },
+        {
+          "cluster_id": 24,
+          "centroid_freq": 2411.71875,
+          "centroid_time": 2.946031746031746,
+          "energy": "0.0010074546"
+        },
+        {
+          "cluster_id": 86,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 2.776235827664399,
+          "energy": "0.00100654"
+        },
+        {
+          "cluster_id": 100,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 3.4975056689342403,
+          "energy": "0.0010041194"
+        },
+        {
+          "cluster_id": 42,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 3.6832653061224487,
+          "energy": "0.0009988629"
+        },
+        {
+          "cluster_id": 23,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 2.097052154195011,
+          "energy": "0.0009883936"
+        },
+        {
+          "cluster_id": 117,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 0.9317006802721088,
+          "energy": "0.0009665368"
+        },
+        {
+          "cluster_id": 139,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 0.6820861678004535,
+          "energy": "0.00096530764"
+        },
+        {
+          "cluster_id": 162,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 2.352471655328798,
+          "energy": "0.0009452448"
+        },
+        {
+          "cluster_id": 84,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 2.268299319727891,
+          "energy": "0.00094341295"
+        },
+        {
+          "cluster_id": 144,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 2.9997278911564624,
+          "energy": "0.0009429751"
+        },
+        {
+          "cluster_id": 94,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 0.35410430839002266,
+          "energy": "0.0009401038"
+        },
+        {
+          "cluster_id": 182,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 4.236190476190477,
+          "energy": "0.0009360708"
+        },
+        {
+          "cluster_id": 134,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 1.8343764172335602,
+          "energy": "0.0009316895"
+        },
+        {
+          "cluster_id": 45,
+          "centroid_freq": 2583.984375,
+          "centroid_time": 4.580136054421769,
+          "energy": "0.0009072043"
+        },
+        {
+          "cluster_id": 145,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 3.207256235827664,
+          "energy": "0.0008901858"
+        },
+        {
+          "cluster_id": 19,
+          "centroid_freq": 2325.5859375,
+          "centroid_time": 2.835736961451247,
+          "energy": "0.0008900588"
+        },
+        {
+          "cluster_id": 75,
+          "centroid_freq": 2756.25,
+          "centroid_time": 4.157823129251701,
+          "energy": "0.0008859655"
+        },
+        {
+          "cluster_id": 167,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 0.5268027210884354,
+          "energy": "0.00086865964"
+        },
+        {
+          "cluster_id": 163,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 2.6020861678004534,
+          "energy": "0.0008657157"
+        },
+        {
+          "cluster_id": 132,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 0.6675736961451247,
+          "energy": "0.0008435523"
+        },
+        {
+          "cluster_id": 110,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 2.4801814058956917,
+          "energy": "0.00084255566"
+        },
+        {
+          "cluster_id": 28,
+          "centroid_freq": 2411.71875,
+          "centroid_time": 3.5584580498866214,
+          "energy": "0.0008412647"
+        },
+        {
+          "cluster_id": 151,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 1.2350113378684808,
+          "energy": "0.00084059173"
+        },
+        {
+          "cluster_id": 166,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 0.4455328798185941,
+          "energy": "0.0008368759"
+        },
+        {
+          "cluster_id": 52,
+          "centroid_freq": 2670.1171875,
+          "centroid_time": 0.48036281179138324,
+          "energy": "0.00083138706"
+        },
+        {
+          "cluster_id": 164,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 4.167981859410431,
+          "energy": "0.00082541554"
+        },
+        {
+          "cluster_id": 93,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 4.709297052154195,
+          "energy": "0.00081542414"
+        },
+        {
+          "cluster_id": 63,
+          "centroid_freq": 2756.25,
+          "centroid_time": 1.0840816326530613,
+          "energy": "0.0008070499"
+        },
+        {
+          "cluster_id": 26,
+          "centroid_freq": 2497.8515625,
+          "centroid_time": 3.2203174603174602,
+          "energy": "0.0008058147"
+        },
+        {
+          "cluster_id": 186,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 2.3016780045351473,
+          "energy": "0.00079887314"
+        },
+        {
+          "cluster_id": 185,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 1.0202267573696147,
+          "energy": "0.00078883563"
+        },
+        {
+          "cluster_id": 55,
+          "centroid_freq": 2670.1171875,
+          "centroid_time": 1.2045351473922903,
+          "energy": "0.0007888033"
+        },
+        {
+          "cluster_id": 106,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 0.5268027210884354,
+          "energy": "0.00078515447"
+        },
+        {
+          "cluster_id": 123,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 2.9155555555555552,
+          "energy": "0.0007692215"
+        },
+        {
+          "cluster_id": 81,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 0.9491156462585034,
+          "energy": "0.00076477916"
+        },
+        {
+          "cluster_id": 154,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 3.1825850340136053,
+          "energy": "0.00075701135"
+        },
+        {
+          "cluster_id": 67,
+          "centroid_freq": 2756.25,
+          "centroid_time": 2.8299319727891157,
+          "energy": "0.00075636455"
+        },
+        {
+          "cluster_id": 58,
+          "centroid_freq": 2756.25,
+          "centroid_time": 3.581678004535147,
+          "energy": "0.00073530845"
+        },
+        {
+          "cluster_id": 62,
+          "centroid_freq": 2756.25,
+          "centroid_time": 1.0579591836734694,
+          "energy": "0.0007289145"
+        },
+        {
+          "cluster_id": 141,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 1.0724716553287983,
+          "energy": "0.00072859175"
+        },
+        {
+          "cluster_id": 179,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 2.5063038548752834,
+          "energy": "0.00072803284"
+        },
+        {
+          "cluster_id": 159,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 1.245170068027211,
+          "energy": "0.0007269315"
+        },
+        {
+          "cluster_id": 129,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 4.733968253968254,
+          "energy": "0.0007030873"
+        },
+        {
+          "cluster_id": 158,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 0.42811791383219955,
+          "energy": "0.0006963669"
+        },
+        {
+          "cluster_id": 170,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 2.0172335600907028,
+          "energy": "0.0006962958"
+        },
+        {
+          "cluster_id": 87,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 2.8517006802721085,
+          "energy": "0.0006953009"
+        },
+        {
+          "cluster_id": 88,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 3.6731065759637187,
+          "energy": "0.0006910405"
+        },
+        {
+          "cluster_id": 99,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 3.246439909297052,
+          "energy": "0.0006838476"
+        },
+        {
+          "cluster_id": 118,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 1.0231292517006805,
+          "energy": "0.0006821078"
+        },
+        {
+          "cluster_id": 140,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 0.9868480725623583,
+          "energy": "0.0006808795"
+        },
+        {
+          "cluster_id": 105,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 0.29315192743764173,
+          "energy": "0.00066170545"
+        },
+        {
+          "cluster_id": 184,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 0.4731065759637188,
+          "energy": "0.00065408956"
+        },
+        {
+          "cluster_id": 176,
+          "centroid_freq": 3962.109375,
+          "centroid_time": 1.8663038548752835,
+          "energy": "0.0006514223"
+        },
+        {
+          "cluster_id": 68,
+          "centroid_freq": 2583.984375,
+          "centroid_time": 3.0490702947845802,
+          "energy": "0.0006495832"
+        },
+        {
+          "cluster_id": 150,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 0.9099319727891156,
+          "energy": "0.00062944007"
+        },
+        {
+          "cluster_id": 172,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 2.6688435374149657,
+          "energy": "0.0006266694"
+        },
+        {
+          "cluster_id": 127,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 4.340680272108844,
+          "energy": "0.00062592165"
+        },
+        {
+          "cluster_id": 65,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 1.9287074829931974,
+          "energy": "0.000623132"
+        },
+        {
+          "cluster_id": 189,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 4.4451700680272115,
+          "energy": "0.00061973307"
+        },
+        {
+          "cluster_id": 78,
+          "centroid_freq": 2842.3828125,
+          "centroid_time": 4.681723356009071,
+          "energy": "0.0006193046"
+        },
+        {
+          "cluster_id": 32,
+          "centroid_freq": 2411.71875,
+          "centroid_time": 4.4930612244897965,
+          "energy": "0.000609382"
+        },
+        {
+          "cluster_id": 107,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 1.126167800453515,
+          "energy": "0.000608214"
+        },
+        {
+          "cluster_id": 169,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 1.3075736961451248,
+          "energy": "0.00060306466"
+        },
+        {
+          "cluster_id": 196,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 3.861768707482993,
+          "energy": "0.00060304126"
+        },
+        {
+          "cluster_id": 137,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 4.639637188208617,
+          "energy": "0.00060185965"
+        },
+        {
+          "cluster_id": 180,
+          "centroid_freq": 3789.84375,
+          "centroid_time": 2.9170068027210885,
+          "energy": "0.0005953063"
+        },
+        {
+          "cluster_id": 193,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 1.9403174603174604,
+          "energy": "0.0005696923"
+        },
+        {
+          "cluster_id": 131,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 0.4890702947845805,
+          "energy": "0.00055998215"
+        },
+        {
+          "cluster_id": 187,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 4.115736961451248,
+          "energy": "0.0005579308"
+        },
+        {
+          "cluster_id": 171,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 2.21750566893424,
+          "energy": "0.00055382866"
+        },
+        {
+          "cluster_id": 122,
+          "centroid_freq": 3100.78125,
+          "centroid_time": 2.7326984126984124,
+          "energy": "0.0005485536"
+        },
+        {
+          "cluster_id": 147,
+          "centroid_freq": 3273.046875,
+          "centroid_time": 3.8429024943310655,
+          "energy": "0.0005459893"
+        },
+        {
+          "cluster_id": 195,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 3.1071201814058957,
+          "energy": "0.000496449"
+        },
+        {
+          "cluster_id": 103,
+          "centroid_freq": 3014.6484375,
+          "centroid_time": 4.612063492063492,
+          "energy": "0.00048423346"
+        },
+        {
+          "cluster_id": 61,
+          "centroid_freq": 2670.1171875,
+          "centroid_time": 4.659954648526077,
+          "energy": "0.0004736018"
+        },
+        {
+          "cluster_id": 203,
+          "centroid_freq": 4134.375,
+          "centroid_time": 0.6051700680272109,
+          "energy": "0.0004710909"
+        },
+        {
+          "cluster_id": 161,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 2.329251700680272,
+          "energy": "0.00045795066"
+        },
+        {
+          "cluster_id": 143,
+          "centroid_freq": 3359.1796875,
+          "centroid_time": 1.921451247165533,
+          "energy": "0.00043701287"
+        },
+        {
+          "cluster_id": 198,
+          "centroid_freq": 3962.109375,
+          "centroid_time": 0.7125623582766439,
+          "energy": "0.00043571094"
+        },
+        {
+          "cluster_id": 135,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 3.9183673469387754,
+          "energy": "0.00043250067"
+        },
+        {
+          "cluster_id": 173,
+          "centroid_freq": 3531.4453125,
+          "centroid_time": 2.9416780045351474,
+          "energy": "0.00042336332"
+        },
+        {
+          "cluster_id": 175,
+          "centroid_freq": 3617.578125,
+          "centroid_time": 3.3988208616780042,
+          "energy": "0.00041660602"
+        },
+        {
+          "cluster_id": 130,
+          "centroid_freq": 3186.9140625,
+          "centroid_time": 0.2365532879818594,
+          "energy": "0.00041063433"
+        },
+        {
+          "cluster_id": 191,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 1.1609977324263039,
+          "energy": "0.00040082153"
+        },
+        {
+          "cluster_id": 178,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 2.184126984126984,
+          "energy": "0.00039233483"
+        },
+        {
+          "cluster_id": 192,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 1.5034920634920637,
+          "energy": "0.00039018443"
+        },
+        {
+          "cluster_id": 183,
+          "centroid_freq": 3703.7109375,
+          "centroid_time": 4.56562358276644,
+          "energy": "0.00038854245"
+        },
+        {
+          "cluster_id": 199,
+          "centroid_freq": 4048.2421875,
+          "centroid_time": 0.796734693877551,
+          "energy": "0.00037487055"
+        },
+        {
+          "cluster_id": 188,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 4.313106575963719,
+          "energy": "0.00036018612"
+        },
+        {
+          "cluster_id": 206,
+          "centroid_freq": 4134.375,
+          "centroid_time": 3.065034013605442,
+          "energy": "0.00034576998"
+        },
+        {
+          "cluster_id": 197,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 4.183945578231293,
+          "energy": "0.00033314392"
+        },
+        {
+          "cluster_id": 200,
+          "centroid_freq": 4048.2421875,
+          "centroid_time": 1.7197278911564626,
+          "energy": "0.0003189665"
+        },
+        {
+          "cluster_id": 15,
+          "centroid_freq": 2325.5859375,
+          "centroid_time": 0.2438095238095238,
+          "energy": "0.00031649286"
+        },
+        {
+          "cluster_id": 194,
+          "centroid_freq": 3875.9765625,
+          "centroid_time": 2.2334693877551017,
+          "energy": "0.0002926315"
+        },
+        {
+          "cluster_id": 201,
+          "centroid_freq": 4048.2421875,
+          "centroid_time": 3.909659863945578,
+          "energy": "0.00027876341"
+        },
+        {
+          "cluster_id": 104,
+          "centroid_freq": 2928.515625,
+          "centroid_time": 4.694784580498866,
+          "energy": "0.00027500064"
+        },
+        {
+          "cluster_id": 157,
+          "centroid_freq": 3445.3125,
+          "centroid_time": 0.338140589569161,
+          "energy": "0.00024181911"
+        },
+        {
+          "cluster_id": 207,
+          "centroid_freq": 4306.640625,
+          "centroid_time": 4.368253968253969,
+          "energy": "0.0002402699"
+        },
+        {
+          "cluster_id": 204,
+          "centroid_freq": 4134.375,
+          "centroid_time": 1.5528344671201815,
+          "energy": "0.00021366986"
+        },
+        {
+          "cluster_id": 190,
+          "centroid_freq": 3962.109375,
+          "centroid_time": 0.5079365079365079,
+          "energy": "0.00019350881"
+        },
+        {
+          "cluster_id": 202,
+          "centroid_freq": 4048.2421875,
+          "centroid_time": 4.091065759637188,
+          "energy": "0.0001869975"
+        },
+        {
+          "cluster_id": 21,
+          "centroid_freq": 2411.71875,
+          "centroid_time": 0.21623582766439908,
+          "energy": "0.0001818295"
+        },
+        {
+          "cluster_id": 205,
+          "centroid_freq": 4134.375,
+          "centroid_time": 2.173968253968254,
+          "energy": "0.00015884671"
+        }
+      ]
     },
     {
       "file": "cessna_172_approach.wav",
@@ -106,7 +3006,7 @@
       "sample_rate": 44100,
       "estimated_snr_db": "18.343096",
       "n_components_detected": 0,
-      "detection_time_s": 2.3365817070007324,
+      "detection_time_s": 5.07566499710083,
       "components": []
     }
   ]
