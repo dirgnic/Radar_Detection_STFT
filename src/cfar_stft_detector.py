@@ -87,61 +87,47 @@ class CFAR2D:
         total_v = self.N_G_v + self.N_T_v
         total_h = self.N_G_h + self.N_T_h
         
+        # Pre-calculăm media globală pentru referință
+        global_mean = np.mean(stft_magnitude)
+        
         for k in range(total_v, n_freq - total_v):
             for m in range(total_h, n_time - total_h):
                 # Celula sub test (CUT)
                 cut_value = stft_magnitude[k, m]
                 
                 # Calculăm estimarea zgomotului din celulele de antrenament
-                # Excludem celulele de gardă
+                # Metoda CA-CFAR (Cell Averaging) simplificată
                 
-                # Regiuni: sus, jos, stânga, dreapta
-                noise_estimates = []
+                # Definim regiunea completă de antrenament (exclude garda și CUT)
+                region = stft_magnitude[
+                    max(0, k - total_v) : min(n_freq, k + total_v + 1),
+                    max(0, m - total_h) : min(n_time, m + total_h + 1)
+                ].copy()
                 
-                # Sus (frecvențe mai mari)
-                region_up = stft_magnitude[
-                    k + self.N_G_v + 1 : k + total_v + 1,
-                    m - total_h : m + total_h + 1
-                ]
-                if region_up.size > 0:
-                    noise_estimates.append(np.mean(region_up))
+                # Setăm zona de gardă + CUT la 0 pentru a nu le include
+                guard_k_start = total_v - self.N_G_v
+                guard_k_end = total_v + self.N_G_v + 1
+                guard_m_start = total_h - self.N_G_h
+                guard_m_end = total_h + self.N_G_h + 1
                 
-                # Jos (frecvențe mai mici)
-                region_down = stft_magnitude[
-                    k - total_v : k - self.N_G_v,
-                    m - total_h : m + total_h + 1
-                ]
-                if region_down.size > 0:
-                    noise_estimates.append(np.mean(region_down))
+                # Cream masca pentru celulele de antrenament
+                mask = np.ones(region.shape, dtype=bool)
+                if guard_k_end <= region.shape[0] and guard_m_end <= region.shape[1]:
+                    mask[guard_k_start:guard_k_end, guard_m_start:guard_m_end] = False
                 
-                # Stânga (timp anterior)
-                region_left = stft_magnitude[
-                    k - total_v : k + total_v + 1,
-                    m - total_h : m - self.N_G_h
-                ]
-                if region_left.size > 0:
-                    noise_estimates.append(np.mean(region_left))
+                training_cells = region[mask]
                 
-                # Dreapta (timp posterior)
-                region_right = stft_magnitude[
-                    k - total_v : k + total_v + 1,
-                    m + self.N_G_h + 1 : m + total_h + 1
-                ]
-                if region_right.size > 0:
-                    noise_estimates.append(np.mean(region_right))
-                
-                if len(noise_estimates) == 0:
+                if len(training_cells) == 0:
                     continue
                 
-                # GOCA-CFAR: Greatest Of Cell Averaging
-                # Folosim maximul estimărilor pentru robustețe la distribuții heterogene
-                noise_estimate = np.max(noise_estimates)
+                # CA-CFAR: estimarea zgomotului ca medie
+                noise_estimate = np.mean(training_cells)
                 
-                # Calculăm pragul adaptiv: T = R * C (ecuația 6)
+                # Pragul adaptiv: T = R * C
                 threshold = self.R * noise_estimate
                 
-                # Decizie binară (ecuația 5)
-                if cut_value >= threshold:
+                # Decizie binară
+                if cut_value >= threshold and cut_value > global_mean * 1.5:
                     detection_map[k, m] = True
         
         return detection_map

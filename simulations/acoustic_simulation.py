@@ -1,8 +1,12 @@
 """
 Simulare Completă: Detecție Acustică de Avioane
 ===============================================
-Folosește analiza Fourier (FFT/STFT) pentru detectarea și 
+Folosește analiza Fourier (FFT/STFT) și tehnici CFAR pentru detectarea și 
 localizarea aeronavelor bazat pe semnăturile acustice.
+
+Bazat pe:
+- Abratkiewicz, K. (2022). Radar Detection-Inspired Signal Retrieval 
+  from the Short-Time Fourier Transform. Sensors, 22(16), 5954.
 
 Autor: Radar Detection Project
 Data: 2024
@@ -22,6 +26,14 @@ from acoustic_aircraft_detection import (
     generate_synthetic_aircraft_sound,
     AcousticTarget
 )
+
+# Import CFAR-STFT detector
+try:
+    from cfar_stft_detector import CFARSTFTDetector, AcousticCFARDetector
+    CFAR_AVAILABLE = True
+except ImportError:
+    CFAR_AVAILABLE = False
+    print("   ⚠ CFAR detector not available, using basic detection")
 
 
 def create_multi_aircraft_scenario(duration: float = 10.0, 
