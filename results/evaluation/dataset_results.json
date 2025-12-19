@@ -1,0 +1,113 @@
+{
+  "files": [
+    {
+      "file": "boeing_737_flyover.wav",
+      "duration_s": 8.0,
+      "sample_rate": 44100,
+      "estimated_snr_db": "23.550327",
+      "n_components_detected": 0,
+      "detection_time_s": 3.173732042312622,
+      "components": []
+    },
+    {
+      "file": "turboprop_distant.wav",
+      "duration_s": 10.0,
+      "sample_rate": 44100,
+      "estimated_snr_db": "18.437883",
+      "n_components_detected": 0,
+      "detection_time_s": 4.059416770935059,
+      "components": []
+    },
+    {
+      "file": "helicopter_hover.wav",
+      "duration_s": 5.0,
+      "sample_rate": 44100,
+      "estimated_snr_db": "18.318426",
+      "n_components_detected": 0,
+      "detection_time_s": 2.0045769214630127,
+      "components": []
+    },
+    {
+      "file": "fighter_jet_fast.wav",
+      "duration_s": 4.0,
+      "sample_rate": 44100,
+      "estimated_snr_db": "22.974005",
+      "n_components_detected": 9,
+      "detection_time_s": 1.6070659160614014,
+      "components": [
+        {
+          "cluster_id": 5,
+          "centroid_freq": 2067.1875,
+          "centroid_time": 2.284263038548753,
+          "energy": "0.045170613"
+        },
+        {
+          "cluster_id": 2,
+          "centroid_freq": 1894.921875,
+          "centroid_time": 1.5151020408163267,
+          "energy": "0.03717357"
+        },
+        {
+          "cluster_id": 3,
+          "centroid_freq": 1894.921875,
+          "centroid_time": 1.5876643990929706,
+          "energy": "0.037109334"
+        },
+        {
+          "cluster_id": 4,
+          "centroid_freq": 1981.0546875,
+          "centroid_time": 1.8982312925170068,
+          "energy": "0.035374302"
+        },
+        {
+          "cluster_id": 6,
+          "centroid_freq": 2239.453125,
+          "centroid_time": 3.11437641723356,
+          "energy": "0.025228668"
+        },
+        {
+          "cluster_id": 7,
+          "centroid_freq": 2239.453125,
+          "centroid_time": 3.1927437641723353,
+          "energy": "0.019582767"
+        },
+        {
+          "cluster_id": 0,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.4237641723356009,
+          "energy": "0.016356368"
+        },
+        {
+          "cluster_id": 1,
+          "centroid_freq": 1722.65625,
+          "centroid_time": 0.5050340136054422,
+          "energy": "0.01377439"
+        },
+        {
+          "cluster_id": 8,
+          "centroid_freq": 2239.453125,
+          "centroid_time": 3.3639909297052153,
+          "energy": "0.011483843"
+        }
+      ]
+    },
+    {
+      "file": "drone_quadcopter.wav",
+      "duration_s": 5.0,
+      "sample_rate": 44100,
+      "estimated_snr_db": "18.213066",
+      "n_components_detected": 0,
+      "detection_time_s": 1.9471917152404785,
+      "components": []
+    },
+    {
+      "file": "cessna_172_approach.wav",
+      "duration_s": 6.0,
+      "sample_rate": 44100,
+      "estimated_snr_db": "18.343096",
+      "n_components_detected": 0,
+      "detection_time_s": 2.3365817070007324,
+      "components": []
+    }
+  ]
+}
