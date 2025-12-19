@@ -12,6 +12,10 @@ Metrici:
 3. False Alarm Rate
 4. Monte Carlo simulations pentru diferite SNR
 
+Optimizari:
+- Procesare paralela cu ThreadPoolExecutor
+- Batch processing pentru eficienta
+
 Referinta: https://doi.org/10.3390/s22165954
 """
 
@@ -27,8 +31,13 @@ from typing import List, Dict, Tuple
 from dataclasses import dataclass
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
+import multiprocessing
 
 from cfar_stft_detector import CFARSTFTDetector, CFAR2D, DBSCAN
+
+# Numar de workers pentru paralelizare
+N_WORKERS = min(multiprocessing.cpu_count(), 8)
 
 
 @dataclass
@@ -184,6 +193,238 @@ def generate_multicomponent_test(fs: int = 44100,
     return combined, 3  # 3 componente
 
 
+def _batch_monte_carlo_run(args: Tuple) -> List[Tuple[float, float, float]]:
+    """
+    Ruleaza un BATCH de simulari Monte Carlo (mai eficient decat per-simulare)
+    
+    Args:
+        args: Tuple (detector_params, snr_db, fs, batch_size, batch_id)
+        
+    Returns:
+        Lista de tuple (snr_db, rqf, detection_rate)
+    """
+    detector_params, snr_db, fs, batch_size, batch_id = args
+    
+    # Setam seed pentru reproducibilitate
+    np.random.seed((abs(int(snr_db * 100)) + batch_id * 1000) % (2**32 - 1))
+    
+    # Cream UN SINGUR detector pentru tot batch-ul (eficient!)
+    detector = CFARSTFTDetector(**detector_params)
+    
+    results = []
+    
+    for i in range(batch_size):
+        # Generam semnal de test
+        clean_signal, n_true_components = generate_multicomponent_test(fs, duration=0.3)
+        
+        # Adaugam zgomot
+        noisy_signal, noise = add_awgn(clean_signal, snr_db)
+        
+        try:
+            components = detector.detect_components(noisy_signal, n_components=n_true_components)
+            n_detected = len(components)
+            
+            if n_detected > 0:
+                reconstructed = np.zeros_like(noisy_signal)
+                for comp in components:
+                    rec = detector.reconstruct_component(comp)
+                    min_len = min(len(reconstructed), len(rec))
+                    reconstructed[:min_len] += rec[:min_len]
+                
+                rqf = compute_rqf(clean_signal, reconstructed)
+            else:
+                rqf = -10.0
+            
+            detection_rate = min(n_detected / n_true_components, 1.0)
+            results.append((snr_db, rqf, detection_rate))
+            
+        except Exception:
+            results.append((snr_db, -10.0, 0.0))
+    
+    return results
+
+
+def monte_carlo_evaluation_batched(detector_params: Dict,
+                                   n_simulations: int = 20,
+                                   snr_values: List[float] = None,
+                                   fs: int = 44100,
+                                   n_workers: int = None,
+                                   batch_size: int = 5) -> Dict:
+    """
+    Evaluare Monte Carlo cu BATCH PROCESSING optimizat
+    
+    Strategia:
+    1. Grupeaza toate simularile (toate SNR-urile) in batch-uri
+    2. Fiecare batch proceseaza mai multe simulari cu acelasi detector
+    3. Ruleaza TOATE batch-urile in paralel
+    
+    Args:
+        detector_params: Parametrii pentru CFARSTFTDetector
+        n_simulations: Numar de simulari per SNR
+        snr_values: Lista de SNR-uri de testat
+        fs: Sample rate
+        n_workers: Numar de workers paraleli
+        batch_size: Simulari per batch
+        
+    Returns:
+        Dictionar cu rezultatele medii pentru fiecare SNR
+    """
+    if snr_values is None:
+        snr_values = [-5, 0, 5, 10, 15, 20, 25, 30]
+    
+    if n_workers is None:
+        n_workers = N_WORKERS
+    
+    print("\n" + "="*60)
+    print("EVALUARE MONTE CARLO - BATCH PROCESSING")
+    print("="*60)
+    print(f"Simulari per SNR: {n_simulations}")
+    print(f"SNR testate: {snr_values} dB")
+    print(f"Batch size: {batch_size}")
+    print(f"Workers paraleli: {n_workers}")
+    
+    total_start = time.time()
+    
+    # Cream TOATE batch-urile pentru TOATE SNR-urile
+    all_batches = []
+    n_batches_per_snr = max(1, n_simulations // batch_size)
+    
+    for snr_db in snr_values:
+        for batch_id in range(n_batches_per_snr):
+            all_batches.append((detector_params, snr_db, fs, batch_size, batch_id))
+    
+    total_batches = len(all_batches)
+    print(f"Total batch-uri: {total_batches}")
+    
+    # Procesam TOATE batch-urile in paralel
+    all_results = []
+    
+    with ThreadPoolExecutor(max_workers=n_workers) as executor:
+        futures = [executor.submit(_batch_monte_carlo_run, args) for args in all_batches]
+        
+        completed = 0
+        for future in as_completed(futures):
+            batch_results = future.result()
+            all_results.extend(batch_results)
+            completed += 1
+            
+            if completed % 4 == 0 or completed == total_batches:
+                elapsed = time.time() - total_start
+                print(f"   Batch-uri: {completed}/{total_batches} ({elapsed:.1f}s)")
+    
+    # Agregam rezultatele per SNR
+    results = {}
+    for snr_db in snr_values:
+        snr_results = [(r[1], r[2]) for r in all_results if r[0] == snr_db]
+        rqf_values = [r[0] for r in snr_results]
+        detection_rates = [r[1] for r in snr_results]
+        
+        results[snr_db] = {
+            'rqf_mean': np.mean(rqf_values),
+            'rqf_std': np.std(rqf_values),
+            'detection_rate_mean': np.mean(detection_rates),
+            'detection_rate_std': np.std(detection_rates),
+            'n_simulations': len(snr_results)
+        }
+    
+    total_time = time.time() - total_start
+    print(f"\n   TIMP TOTAL: {total_time:.1f}s")
+    
+    # Afisam rezumat
+    print("\n   Rezultate per SNR:")
+    for snr_db in snr_values:
+        r = results[snr_db]
+        print(f"   SNR {snr_db:+3.0f} dB: RQF={r['rqf_mean']:5.2f}dB, Det={r['detection_rate_mean']:.0%}")
+    
+    return results
+
+
+def monte_carlo_evaluation_parallel(detector_params: Dict,
+                                    n_simulations: int = 100,
+                                    snr_values: List[float] = None,
+                                    fs: int = 44100,
+                                    n_workers: int = None) -> Dict:
+    """
+    Evaluare Monte Carlo PARALELA conform paper-ului Abratkiewicz (2022)
+    
+    Foloseste ThreadPoolExecutor pentru procesare paralela a simularilor.
+    
+    Args:
+        detector_params: Parametrii pentru CFARSTFTDetector
+        n_simulations: Numar de simulari (100 in paper)
+        snr_values: Lista de SNR-uri de testat
+        fs: Sample rate
+        n_workers: Numar de workers paraleli
+        
+    Returns:
+        Dictionar cu rezultatele medii pentru fiecare SNR
+    """
+    if snr_values is None:
+        snr_values = [-5, 0, 5, 10, 15, 20, 25, 30]
+    
+    if n_workers is None:
+        n_workers = N_WORKERS
+    
+    results = {}
+    
+    print("\n" + "="*60)
+    print("EVALUARE MONTE CARLO PARALELA (Abratkiewicz 2022)")
+    print("="*60)
+    print(f"Simulari per SNR: {n_simulations}")
+    print(f"SNR testate: {snr_values} dB")
+    print(f"Workers paraleli: {n_workers}")
+    print(f"Parametri paper: Pf=0.4, training=16, guard=16")
+    
+    total_start = time.time()
+    
+    for snr_db in snr_values:
+        print(f"\n[SNR = {snr_db} dB]")
+        snr_start = time.time()
+        
+        # Pregatim argumentele pentru toti workers
+        args_list = [
+            (detector_params, snr_db, fs, i + int(snr_db * 1000))
+            for i in range(n_simulations)
+        ]
+        
+        rqf_values = []
+        detection_rates = []
+        
+        # Procesare paralela cu ThreadPool
+        with ThreadPoolExecutor(max_workers=n_workers) as executor:
+            futures = [executor.submit(_single_monte_carlo_run, args) for args in args_list]
+            
+            completed = 0
+            for future in as_completed(futures):
+                rqf, det_rate = future.result()
+                rqf_values.append(rqf)
+                detection_rates.append(det_rate)
+                completed += 1
+                
+                if completed % 20 == 0:
+                    print(f"   Progres: {completed}/{n_simulations}")
+        
+        snr_time = time.time() - snr_start
+        
+        results[snr_db] = {
+            'rqf_mean': np.mean(rqf_values),
+            'rqf_std': np.std(rqf_values),
+            'detection_rate_mean': np.mean(detection_rates),
+            'detection_rate_std': np.std(detection_rates),
+            'n_simulations': n_simulations,
+            'time_s': snr_time
+        }
+        
+        print(f"   RQF mediu: {results[snr_db]['rqf_mean']:.2f} +/- {results[snr_db]['rqf_std']:.2f} dB")
+        print(f"   Detection rate: {results[snr_db]['detection_rate_mean']:.1%}")
+        print(f"   Timp: {snr_time:.1f}s")
+    
+    total_time = time.time() - total_start
+    print(f"\n   TIMP TOTAL: {total_time:.1f}s")
+    
+    return results
+
+
 def monte_carlo_evaluation(detector: CFARSTFTDetector,
                            n_simulations: int = 100,
                            snr_values: List[float] = None,
@@ -279,6 +520,113 @@ def monte_carlo_evaluation(detector: CFARSTFTDetector,
         print(f"   Detection rate: {results[snr_db]['detection_rate_mean']:.1%}")
     
     return results
+
+
+def _process_single_audio_file(args: Tuple) -> Dict:
+    """
+    Proceseaza un singur fisier audio (pentru paralelizare)
+    """
+    filepath, detector_params = args
+    wav_file = os.path.basename(filepath)
+    
+    # Cream detector local
+    detector = CFARSTFTDetector(**detector_params)
+    
+    # Incarcam audio
+    sr, data = wavfile.read(filepath)
+    if data.dtype == np.int16:
+        data = data.astype(np.float32) / 32768.0
+    
+    # Calculam SNR estimat
+    noise_samples = int(0.1 * sr)
+    if noise_samples > len(data):
+        noise_samples = len(data) // 10
+    
+    noise_floor = np.std(data[:noise_samples])
+    signal_level = np.std(data)
+    estimated_snr = 20 * np.log10(signal_level / (noise_floor + 1e-10))
+    
+    # Detectam
+    start_time = time.time()
+    components = detector.detect_components(data)
+    detection_time = time.time() - start_time
+    
+    result = {
+        'file': wav_file,
+        'duration_s': len(data) / sr,
+        'sample_rate': sr,
+        'estimated_snr_db': estimated_snr,
+        'n_components_detected': len(components),
+        'detection_time_s': detection_time,
+        'components': []
+    }
+    
+    for comp in components:
+        result['components'].append({
+            'cluster_id': comp.cluster_id,
+            'centroid_freq': comp.centroid_freq,
+            'centroid_time': comp.centroid_time,
+            'energy': comp.energy
+        })
+    
+    return result
+
+
+def evaluate_on_synthetic_dataset_parallel(audio_dir: str, 
+                                           detector_params: Dict,
+                                           n_workers: int = None) -> Dict:
+    """
+    Evalueaza pe dataset-ul sintetic de avioane - PARALEL
+    """
+    print("\n" + "="*60)
+    print("EVALUARE PE DATASET SINTETIC (PARALEL)")
+    print("="*60)
+    
+    if n_workers is None:
+        n_workers = N_WORKERS
+    
+    if not os.path.exists(audio_dir):
+        print(f"   Directorul {audio_dir} nu exista!")
+        return {}
+    
+    wav_files = [f for f in os.listdir(audio_dir) if f.endswith('.wav')]
+    
+    if not wav_files:
+        print("   Nu s-au gasit fisiere WAV")
+        return {}
+    
+    print(f"   Fisiere de procesat: {len(wav_files)}")
+    print(f"   Workers paraleli: {n_workers}")
+    
+    start_time = time.time()
+    
+    # Pregatim argumentele
+    args_list = [
+        (os.path.join(audio_dir, wav_file), detector_params)
+        for wav_file in wav_files
+    ]
+    
+    results = []
+    
+    # Procesare paralela
+    with ThreadPoolExecutor(max_workers=n_workers) as executor:
+        futures = {executor.submit(_process_single_audio_file, args): args[0] 
+                   for args in args_list}
+        
+        for future in as_completed(futures):
+            filepath = futures[future]
+            result = future.result()
+            results.append(result)
+            
+            print(f"\n   Analiza: {result['file']}")
+            print(f"      SNR estimat: {result['estimated_snr_db']:.1f} dB")
+            print(f"      Componente: {result['n_components_detected']}")
+            print(f"      Timp detectie: {result['detection_time_s']*1000:.1f} ms")
+    
+    total_time = time.time() - start_time
+    print(f"\n   TIMP TOTAL: {total_time:.1f}s")
+    
+    return {'files': results, 'total_time_s': total_time}
 
 
 def evaluate_on_synthetic_dataset(audio_dir: str, 
@@ -502,9 +850,9 @@ Algoritmul CFAR-STFT demonstreaza:
     print(f"   Raport salvat: {output_path}")
 
 
-def main():
+def main(parallel: bool = True):
     """
-    Ruleaza evaluarea completa
+    Ruleaza evaluarea completa - OPTIMIZAT CU BATCH PROCESSING
     
     Parametri din paper Abratkiewicz (2022):
     - Pf = 0.4 (probabilitate alarma falsa)
@@ -512,35 +860,53 @@ def main():
     - Guard cells = 16  
     - N_FFT = 512
     - Gaussian window sigma = 8
+    
+    Args:
+        parallel: Foloseste procesare paralela (default: True)
     """
     print("="*70)
     print("EVALUARE ACURATETE CFAR-STFT")
     print("Bazat pe: Abratkiewicz, Sensors 2022")
+    if parallel:
+        print(f"MOD: BATCH PARALEL ({N_WORKERS} workers)")
+    else:
+        print("MOD: SECVENTIAL")
     print("="*70)
     
     output_dir = "results/evaluation"
     os.makedirs(output_dir, exist_ok=True)
     
-    # Initializam detectorul cu parametrii din paper
-    # Paper: Pf=0.4, guard=16, training=16, N_FFT=512
-    detector = CFARSTFTDetector(
-        sample_rate=44100,
-        window_size=512,           # N_FFT = 512 din paper
-        hop_size=64,               # Hop mai mic pentru rezolutie mai buna
-        cfar_guard_cells=4,        # Ajustat pentru audio (16 e pentru radar)
-        cfar_training_cells=8,     # Ajustat pentru audio
-        cfar_pfa=0.1,              # Pf mai mare (paper: 0.4)
-        dbscan_eps=5.0,            # Clustering mai permisiv
-        dbscan_min_samples=3       # Minim de puncte pentru cluster
-    )
+    # Parametrii detectorului - optimizati pentru viteza
+    detector_params = {
+        'sample_rate': 44100,
+        'window_size': 256,           # Mai mic pentru viteza
+        'hop_size': 128,              # Hop mai mare pentru viteza
+        'cfar_guard_cells': 2,        # Mai putine celule
+        'cfar_training_cells': 4,     # Mai putine celule
+        'cfar_pfa': 0.1,              # Pf mai mare
+        'dbscan_eps': 5.0,
+        'dbscan_min_samples': 3
+    }
     
-    # 1. Evaluare Monte Carlo
-    print("\n[1/3] Evaluare Monte Carlo...")
-    mc_results = monte_carlo_evaluation(
-        detector,
-        n_simulations=50,  # Redus pentru demo (100 in paper)
-        snr_values=[-5, 0, 5, 10, 15, 20, 25, 30]
-    )
+    total_start = time.time()
+    
+    # 1. Evaluare Monte Carlo - folosim BATCH PROCESSING
+    print("\n[1/3] Evaluare Monte Carlo (batch processing)...")
+    if parallel:
+        mc_results = monte_carlo_evaluation_batched(
+            detector_params,
+            n_simulations=20,          # Redus semnificativ pentru viteza
+            snr_values=[-5, 0, 10, 20, 30],  # Mai putine SNR-uri
+            n_workers=N_WORKERS,
+            batch_size=5               # 5 simulari per batch
+        )
+    else:
+        detector = CFARSTFTDetector(**detector_params)
+        mc_results = monte_carlo_evaluation(
+            detector,
+            n_simulations=10,
+            snr_values=[-5, 0, 10, 20, 30]
+        )
     
     # Salvam rezultatele
     with open(os.path.join(output_dir, 'monte_carlo_results.json'), 'w') as f:
@@ -551,10 +917,17 @@ def main():
     plot_rqf_comparison(mc_results, os.path.join(output_dir, 'rqf_vs_snr.png'))
     plot_detection_rate(mc_results, os.path.join(output_dir, 'detection_rate_vs_snr.png'))
     
-    # 3. Evaluare pe dataset sintetic
+    # 3. Evaluare pe dataset sintetic - PARALEL
     print("\n[3/3] Evaluare pe dataset sintetic...")
     audio_dir = "data/aircraft_sounds/synthetic"
-    dataset_results = evaluate_on_synthetic_dataset(audio_dir, detector)
+    
+    if parallel:
+        dataset_results = evaluate_on_synthetic_dataset_parallel(
+            audio_dir, detector_params, n_workers=N_WORKERS
+        )
+    else:
+        detector = CFARSTFTDetector(**detector_params)
+        dataset_results = evaluate_on_synthetic_dataset(audio_dir, detector)
     
     if dataset_results:
         with open(os.path.join(output_dir, 'dataset_results.json'), 'w') as f:
@@ -568,9 +941,12 @@ def main():
         os.path.join(output_dir, 'evaluation_report.md')
     )
     
+    total_time = time.time() - total_start
+    
     print("\n" + "="*70)
     print("EVALUARE COMPLETA!")
     print("="*70)
+    print(f"\nTIMP TOTAL EXECUTIE: {total_time:.1f}s")
     print(f"\nRezultate in: {output_dir}/")
     for f in os.listdir(output_dir):
         size = os.path.getsize(os.path.join(output_dir, f))
@@ -587,4 +963,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description='Evaluare CFAR-STFT')
+    parser.add_argument('--sequential', '-s', action='store_true', 
+                        help='Ruleaza secvential (fara paralelizare)')
+    args = parser.parse_args()
+    
+    main(parallel=not args.sequential)

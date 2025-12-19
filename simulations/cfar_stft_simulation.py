@@ -22,8 +22,14 @@ import matplotlib.pyplot as plt
 from scipy import signal
 from scipy.io import wavfile
 import matplotlib.patches as mpatches
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import multiprocessing
 
 from cfar_stft_detector import CFARSTFTDetector, AcousticCFARDetector, CFAR2D, DBSCAN
+
+# Numar de workers pentru paralelizare
+N_WORKERS = min(multiprocessing.cpu_count(), 8)
 
 
 def create_multicomponent_signal(fs: int = 44100, duration: float = 5.0):
@@ -307,44 +313,100 @@ def visualize_cfar_principle(output_dir: str):
     plt.close()
 
 
-def analyze_real_aircraft_audio(audio_dir: str, output_dir: str):
+def _analyze_single_audio_file(args):
     """
-    Analizează fișierele audio sintetice de avioane cu CFAR-STFT
+    Analizeaza un singur fisier audio (pentru paralelizare)
+    """
+    filepath, sample_rate = args
+    wav_file = os.path.basename(filepath)
+    
+    # Cream detector local
+    detector = AcousticCFARDetector(sample_rate=sample_rate)
+    
+    # Incarcam audio
+    sr, data = wavfile.read(filepath)
+    if data.dtype == np.int16:
+        data = data.astype(np.float32) / 32768.0
+    
+    # Analizam cu CFAR
+    start_time = time.time()
+    result = detector.analyze(data)
+    analysis_time = time.time() - start_time
+    
+    return {
+        'file': wav_file,
+        'result': result,
+        'analysis_time': analysis_time
+    }
+
+
+def analyze_real_aircraft_audio(audio_dir: str, output_dir: str, parallel: bool = True):
+    """
+    Analizeaza fisierele audio sintetice de avioane cu CFAR-STFT
+    Suporta procesare paralela pentru performanta mai buna.
     """
     print("\n" + "="*60)
-    print("ANALIZĂ CFAR-STFT PE DATE AUDIO AVIOANE")
+    print("ANALIZA CFAR-STFT PE DATE AUDIO AVIOANE")
+    if parallel:
+        print(f"MOD: PARALEL ({N_WORKERS} workers)")
+    else:
+        print("MOD: SECVENTIAL")
     print("="*60)
     
     if not os.path.exists(audio_dir):
-        print(f"   ⚠ Directorul {audio_dir} nu există!")
+        print(f"   Directorul {audio_dir} nu exista!")
         return
     
     wav_files = [f for f in os.listdir(audio_dir) if f.endswith('.wav')]
     
     if not wav_files:
-        print("   ⚠ Nu s-au găsit fișiere WAV")
+        print("   Nu s-au gasit fisiere WAV")
         return
     
-    # Inițializăm detectorul
-    detector = AcousticCFARDetector(sample_rate=44100)
+    print(f"   Fisiere de procesat: {len(wav_files)}")
     
+    total_start = time.time()
     results = []
     
-    for wav_file in wav_files[:3]:  # Limităm la 3 pentru demo
-        filepath = os.path.join(audio_dir, wav_file)
-        print(f"\n📂 Analizez: {wav_file}")
+    if parallel:
+        # Procesare paralela
+        args_list = [
+            (os.path.join(audio_dir, wav_file), 44100)
+            for wav_file in wav_files[:6]  # Limitam la 6
+        ]
         
-        # Încărcăm audio
-        sr, data = wavfile.read(filepath)
-        if data.dtype == np.int16:
-            data = data.astype(np.float32) / 32768.0
+        with ThreadPoolExecutor(max_workers=N_WORKERS) as executor:
+            futures = {executor.submit(_analyze_single_audio_file, args): args[0] 
+                       for args in args_list}
+            
+            for future in as_completed(futures):
+                result = future.result()
+                results.append(result)
+                print(f"\n   Analizat: {result['file']} ({result['analysis_time']:.1f}s)")
+    else:
+        # Procesare secventiala (original)
+        detector = AcousticCFARDetector(sample_rate=44100)
         
-        # Analizăm cu CFAR
-        result = detector.analyze(data)
-        results.append({
-            'file': wav_file,
-            'result': result
-        })
+        for wav_file in wav_files[:3]:
+            filepath = os.path.join(audio_dir, wav_file)
+            print(f"\n   Analizez: {wav_file}")
+            
+            sr, data = wavfile.read(filepath)
+            if data.dtype == np.int16:
+                data = data.astype(np.float32) / 32768.0
+            
+            start_time = time.time()
+            result = detector.analyze(data)
+            analysis_time = time.time() - start_time
+            
+            results.append({
+                'file': wav_file,
+                'result': result,
+                'analysis_time': analysis_time
+            })
+    
+    total_time = time.time() - total_start
+    print(f"\n   TIMP TOTAL: {total_time:.1f}s")
     
     # Generăm figura sumară
     fig, axes = plt.subplots(len(results), 2, figsize=(14, 4*len(results)))
@@ -381,73 +443,90 @@ def analyze_real_aircraft_audio(audio_dir: str, output_dir: str):
     plt.close()
 
 
-def main():
+def main(parallel: bool = True):
     """
-    Rulează simularea completă CFAR-STFT
+    Ruleaza simularea completa CFAR-STFT - OPTIMIZAT
+    
+    Args:
+        parallel: Foloseste procesare paralela (default: True)
     """
     print("="*70)
-    print("SIMULARE CFAR-STFT: Extracția Componentelor din Plan Timp-Frecvență")
+    print("SIMULARE CFAR-STFT: Extractia Componentelor din Plan Timp-Frecventa")
     print("Bazat pe: Abratkiewicz, K. (2022). Sensors, 22(16), 5954")
+    if parallel:
+        print(f"MOD: PARALEL ({N_WORKERS} workers)")
+    else:
+        print("MOD: SECVENTIAL")
     print("="*70)
     
+    total_start = time.time()
     output_dir = "results/cfar_stft"
     os.makedirs(output_dir, exist_ok=True)
     
-    # Pasul 1: Vizualizăm principiul CFAR
+    # Pasul 1: Vizualizam principiul CFAR
     print("\n[1/4] Generare vizualizare principiu CFAR...")
     visualize_cfar_principle(output_dir)
     
-    # Pasul 2: Creăm semnal multicomponent
+    # Pasul 2: Cream semnal multicomponent - DURATA REDUSA
     print("\n[2/4] Generare semnal multicomponent de test...")
     fs = 44100
-    signal_data, t, components_info = create_multicomponent_signal(fs, duration=5.0)
+    signal_data, t, components_info = create_multicomponent_signal(fs, duration=2.0)  # Redus de la 5s la 2s
     
-    print("   Componente în semnal:")
+    print("   Componente in semnal:")
     for comp in components_info:
-        print(f"      • {comp['name']}: {comp['freq']} ({comp['time']})")
+        print(f"      - {comp['name']}: {comp['freq']} ({comp['time']})")
     
-    # Salvăm audio-ul de test
+    # Salvam audio-ul de test
     audio_path = os.path.join(output_dir, "test_multicomponent.wav")
     wavfile.write(audio_path, fs, (signal_data * 32767).astype(np.int16))
-    print(f"   ✓ Audio salvat: {audio_path}")
+    print(f"   Salvat: {audio_path}")
     
-    # Pasul 3: Aplicăm algoritmul CFAR-STFT
+    # Pasul 3: Aplicam algoritmul CFAR-STFT - PARAMETRI OPTIMIZATI
     print("\n[3/4] Aplicare algoritm CFAR-STFT...")
     detector = CFARSTFTDetector(
         sample_rate=fs,
-        window_size=2048,
-        hop_size=256,
+        window_size=1024,    # Redus de la 2048
+        hop_size=512,        # Marit de la 256
         cfar_guard_cells=2,
         cfar_training_cells=4,
-        cfar_pfa=5e-3,
+        cfar_pfa=0.01,       # Marit pentru detectie mai rapida
         dbscan_eps=10.0,
-        dbscan_min_samples=8
+        dbscan_min_samples=5  # Redus
     )
     
     components = visualize_cfar_stft_algorithm(detector, signal_data, output_dir)
     
-    # Pasul 4: Analizăm audio de avioane
-    print("\n[4/4] Analiză fișiere audio avioane...")
+    # Pasul 4: Analizam audio de avioane
+    print("\n[4/4] Analiza fisiere audio avioane...")
     audio_dir = "data/aircraft_sounds/synthetic"
-    analyze_real_aircraft_audio(audio_dir, output_dir)
+    analyze_real_aircraft_audio(audio_dir, output_dir, parallel=parallel)
     
-    # Generăm raport
+    total_time = time.time() - total_start
+    
+    # Generam raport
     print("\n" + "="*70)
-    print("✅ SIMULARE COMPLETĂ!")
+    print("SIMULARE COMPLETA!")
     print("="*70)
+    print(f"\nTIMP TOTAL EXECUTIE: {total_time:.1f}s")
     
-    print(f"\nRezultate în: {output_dir}/")
-    print("\nFișiere generate:")
+    print(f"\nRezultate in: {output_dir}/")
+    print("\nFisiere generate:")
     for f in sorted(os.listdir(output_dir)):
         size = os.path.getsize(os.path.join(output_dir, f))
-        print(f"   • {f} ({size/1024:.1f} KB)")
+        print(f"   - {f} ({size/1024:.1f} KB)")
     
     print("\n" + "="*70)
-    print("REFERINȚĂ: Abratkiewicz, K. (2022). Radar Detection-Inspired Signal")
+    print("REFERINTA: Abratkiewicz, K. (2022). Radar Detection-Inspired Signal")
     print("          Retrieval from the Short-Time Fourier Transform.")
     print("          Sensors, 22(16), 5954. DOI: 10.3390/s22165954")
     print("="*70)
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description='Simulare CFAR-STFT')
+    parser.add_argument('--sequential', '-s', action='store_true', 
+                        help='Ruleaza secvential (fara paralelizare)')
+    args = parser.parse_args()
+    
+    main(parallel=not args.sequential)

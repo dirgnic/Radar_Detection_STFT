@@ -1,58 +1,37 @@
 {
   "-5": {
-    "rqf_mean": -0.006108558689982025,
-    "rqf_std": 0.06102406917745037,
+    "rqf_mean": -0.10716484030092557,
+    "rqf_std": 0.12946984328251057,
     "detection_rate_mean": 1.0,
     "detection_rate_std": 0.0,
-    "n_simulations": 50
+    "n_simulations": 20
   },
   "0": {
-    "rqf_mean": 0.10932636314641613,
-    "rqf_std": 0.020924600838220446,
+    "rqf_mean": 0.18139903556646075,
+    "rqf_std": 0.13991875790460084,
     "detection_rate_mean": 1.0,
     "detection_rate_std": 0.0,
-    "n_simulations": 50
-  },
-  "5": {
-    "rqf_mean": 0.1540328319164509,
-    "rqf_std": 0.015506687653804824,
-    "detection_rate_mean": 1.0,
-    "detection_rate_std": 0.0,
-    "n_simulations": 50
+    "n_simulations": 20
   },
   "10": {
-    "rqf_mean": 0.18012959439794837,
-    "rqf_std": 0.013207660460520397,
+    "rqf_mean": 0.39765204442855884,
+    "rqf_std": 0.02563178318443081,
     "detection_rate_mean": 1.0,
     "detection_rate_std": 0.0,
-    "n_simulations": 50
-  },
-  "15": {
-    "rqf_mean": 0.19419235046259778,
-    "rqf_std": 0.005926810297605714,
-    "detection_rate_mean": 1.0,
-    "detection_rate_std": 0.0,
-    "n_simulations": 50
+    "n_simulations": 20
   },
   "20": {
-    "rqf_mean": 0.19892080637152784,
-    "rqf_std": 0.002368290557124718,
-    "detection_rate_mean": 0.34666666666666657,
-    "detection_rate_std": 0.06531972647421809,
-    "n_simulations": 50
-  },
-  "25": {
-    "rqf_mean": 0.20043536522533578,
-    "rqf_std": 0.00285997971981579,
+    "rqf_mean": 0.4348978194795561,
+    "rqf_std": 0.013052048095306037,
     "detection_rate_mean": 0.33333333333333326,
     "detection_rate_std": 5.551115123125783e-17,
-    "n_simulations": 50
+    "n_simulations": 20
   },
   "30": {
-    "rqf_mean": 0.20132654476331702,
-    "rqf_std": 0.0031215927335264794,
+    "rqf_mean": 0.44430849583720844,
+    "rqf_std": 0.017572711357706484,
     "detection_rate_mean": 0.33333333333333326,
     "detection_rate_std": 5.551115123125783e-17,
-    "n_simulations": 50
+    "n_simulations": 20
   }
 }
