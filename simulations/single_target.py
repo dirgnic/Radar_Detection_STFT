@@ -67,7 +67,7 @@ def simulate_single_target():
     peaks = processor.peak_detection(spectrum, threshold_db=-60, min_distance=10)
     targets = detector.detect_targets(freqs, spectrum, threshold_db=-60)
     
-    print(f"\n✓ Detectate {len(targets)} ținte:")
+    print(f"\n[OK] Detectate {len(targets)} ținte:")
     for i, target in enumerate(targets, 1):
         print(f"\nȚinta {i}:")
         print(f"  Distanță: {target.range/1000:.3f} km")
@@ -95,7 +95,7 @@ def simulate_single_target():
         viz.plot_ppi(targets, radar.get_max_range(),
                     save_path='results/single_target_ppi.png')
     
-    print("\n✓ Simulare completă! Rezultatele au fost salvate în directorul 'results/'")
+    print("\n[OK] Simulare completă! Rezultatele au fost salvate în directorul 'results/'")
     print("="*60 + "\n")
 
 

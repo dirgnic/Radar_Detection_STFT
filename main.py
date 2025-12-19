@@ -37,30 +37,30 @@ def show_system_info():
     print("INFORMAȚII SISTEM RADAR")
     print("="*60)
     print("\nPrincipi de funcționare:")
-    print("  • Tip radar: FMCW (Frequency Modulated Continuous Wave)")
-    print("  • Bandă frecvență: X-band (10 GHz)")
-    print("  • Analiză: FFT pentru detectare în frecvență")
-    print("  • Detectare: Algoritm CFAR + peak detection")
+    print("  - Tip radar: FMCW (Frequency Modulated Continuous Wave)")
+    print("  - Bandă frecvență: X-band (10 GHz)")
+    print("  - Analiză: FFT pentru detectare în frecvență")
+    print("  - Detectare: Algoritm CFAR + peak detection")
     
     print("\nCapabilități:")
-    print("  ✓ Detectare ținte multiple simultane")
-    print("  ✓ Estimare distanță prin frequency beat")
-    print("  ✓ Estimare viteză prin efectul Doppler")
-    print("  ✓ Tracking ținte în mișcare")
-    print("  ✓ Analiză spectru de putere")
-    print("  ✓ Spectrogramă timp-frecvență")
+    print("  [OK] Detectare ținte multiple simultane")
+    print("  [OK] Estimare distanță prin frequency beat")
+    print("  [OK] Estimare viteză prin efectul Doppler")
+    print("  [OK] Tracking ținte în mișcare")
+    print("  [OK] Analiză spectru de putere")
+    print("  [OK] Spectrogramă timp-frecvență")
     
     print("\nParametri default:")
-    print("  • Frecvență purtătoare: 10 GHz")
-    print("  • Bandwidth: 100 MHz")
-    print("  • Sweep time: 1 ms")
-    print("  • Sample rate: 1 MHz")
-    print("  • Putere TX: 1 kW")
+    print("  - Frecvență purtătoare: 10 GHz")
+    print("  - Bandwidth: 100 MHz")
+    print("  - Sweep time: 1 ms")
+    print("  - Sample rate: 1 MHz")
+    print("  - Putere TX: 1 kW")
     
     print("\nPerformanță:")
-    print("  • Rază maximă: ~150 km")
-    print("  • Rezoluție distanță: ~1.5 m")
-    print("  • Viteză maximă: ~375 m/s")
+    print("  - Rază maximă: ~150 km")
+    print("  - Rezoluție distanță: ~1.5 m")
+    print("  - Viteză maximă: ~375 m/s")
     
     print("="*60)
 
@@ -102,7 +102,7 @@ def configure_radar() -> RadarSystem:
         tx_power=pt
     )
     
-    print("\n✓ Radar configurat cu succes!")
+    print("\n[OK] Radar configurat cu succes!")
     radar.print_system_specs()
     
     return radar
@@ -155,7 +155,7 @@ def main():
             
         elif choice == '0':
             # Ieșire
-            print("\n✓ La revedere!")
+            print("\n[OK] La revedere!")
             print("="*60 + "\n")
             break
             
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n✓ Program întrerupt de utilizator.")
+        print("\n\n[OK] Program întrerupt de utilizator.")
         print("="*60 + "\n")
         sys.exit(0)
     except Exception as e:

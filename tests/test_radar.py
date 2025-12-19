@@ -22,7 +22,7 @@ def test_radar_initialization():
     assert radar.B == 100e6, "Bandwidth incorect"
     assert radar.c == 3e8, "Viteză lumină incorectă"
     
-    print("  ✓ Inițializare OK")
+    print("  [OK] Inițializare OK")
 
 
 def test_signal_generation():
@@ -35,7 +35,7 @@ def test_signal_generation():
     assert len(tx_signal) == radar.N, "Lungime semnal incorectă"
     assert np.iscomplexobj(tx_signal), "Semnalul trebuie să fie complex"
     
-    print(f"  ✓ Semnal generat: {len(tx_signal)} eșantioane")
+    print(f"  [OK] Semnal generat: {len(tx_signal)} eșantioane")
 
 
 def test_target_echo():
@@ -54,7 +54,7 @@ def test_target_echo():
     assert len(echo) == len(tx_signal), "Lungime ecou incorectă"
     assert np.iscomplexobj(echo), "Ecoul trebuie să fie complex"
     
-    print(f"  ✓ Ecou simulat pentru țintă la {distance/1000} km")
+    print(f"  [OK] Ecou simulat pentru țintă la {distance/1000} km")
 
 
 def test_fft_processing():
@@ -72,7 +72,7 @@ def test_fft_processing():
     assert len(freqs) > 0, "Frecvențe goale"
     assert len(spectrum) == len(freqs), "Dimensiuni incompatibile"
     
-    print(f"  ✓ FFT calculat: {len(freqs)} puncte de frecvență")
+    print(f"  [OK] FFT calculat: {len(freqs)} puncte de frecvență")
 
 
 def test_target_detection():
@@ -97,7 +97,7 @@ def test_target_detection():
     detector = TargetDetector(radar)
     detected = detector.detect_targets(freqs, spectrum, threshold_db=-40)
     
-    print(f"  ✓ Detectate {len(detected)} ținte din {len(targets)} simulate")
+    print(f"  [OK] Detectate {len(detected)} ținte din {len(targets)} simulate")
     
     if detected:
         for i, target in enumerate(detected, 1):
@@ -118,8 +118,8 @@ def test_range_calculations():
     doppler = 1000  # 1 kHz
     velocity = radar.velocity_from_doppler(doppler)
     
-    print(f"  ✓ Frecvență {freq/1e3} kHz → Distanță {distance/1000:.2f} km")
-    print(f"  ✓ Doppler {doppler/1e3} kHz → Viteză {velocity:.2f} m/s")
+    print(f"  [OK] Frecvență {freq/1e3} kHz -> Distanță {distance/1000:.2f} km")
+    print(f"  [OK] Doppler {doppler/1e3} kHz -> Viteză {velocity:.2f} m/s")
 
 
 def test_specifications():
@@ -132,9 +132,9 @@ def test_specifications():
     range_res = radar.get_range_resolution()
     max_vel = radar.get_max_velocity()
     
-    print(f"  ✓ Rază maximă: {max_range/1000:.2f} km")
-    print(f"  ✓ Rezoluție distanță: {range_res:.2f} m")
-    print(f"  ✓ Viteză maximă: {max_vel:.2f} m/s")
+    print(f"  [OK] Rază maximă: {max_range/1000:.2f} km")
+    print(f"  [OK] Rezoluție distanță: {range_res:.2f} m")
+    print(f"  [OK] Viteză maximă: {max_vel:.2f} m/s")
     
     assert max_range > 0, "Rază maximă invalidă"
     assert range_res > 0, "Rezoluție invalidă"

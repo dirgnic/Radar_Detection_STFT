@@ -210,7 +210,7 @@ def simulate_moving_targets():
         viz.plot_spectrogram(times_spec, freqs_spec, spectrogram,
                            save_path='results/moving_targets_spectrogram.png')
     
-    print("\n✓ Simulare completă! Rezultatele au fost salvate în directorul 'results/'")
+    print("\n[OK] Simulare completă! Rezultatele au fost salvate în directorul 'results/'")
     print("="*60 + "\n")
     
     return all_detections

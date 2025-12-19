@@ -67,7 +67,7 @@ def simulate_multiple_targets():
     peaks = processor.peak_detection(spectrum, threshold_db=-50, min_distance=10)
     detected_targets = detector.detect_targets(freqs, spectrum, threshold_db=-50)
     
-    print(f"\n✓ Detectate {len(detected_targets)} ținte din {len(targets_config)} simulate:")
+    print(f"\n[OK] Detectate {len(detected_targets)} ținte din {len(targets_config)} simulate:")
     for i, target in enumerate(detected_targets, 1):
         print(f"\nȚinta {i}:")
         print(f"  Distanță: {target.range/1000:.3f} km")
@@ -103,7 +103,7 @@ def simulate_multiple_targets():
     print("\nCalculare spectru de putere...")
     freqs_psd, psd = processor.compute_power_spectrum(if_signal, window='hamming')
     
-    print("\n✓ Simulare completă! Rezultatele au fost salvate în directorul 'results/'")
+    print("\n[OK] Simulare completă! Rezultatele au fost salvate în directorul 'results/'")
     print("="*60 + "\n")
     
     return detected_targets, targets_config
