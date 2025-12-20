@@ -40,8 +40,10 @@ def create_multicomponent_signal(fs: int = 44100, duration: float = 5.0):
     1. Chirp liniar (FM) - simulează Doppler
     2. Ton sinusoidal - componentă armonică stabilă  
     3. Puls scurt - componentă tranzientă
+    4. Helicopter (doar dacă duration >= 3s)
     """
     t = np.linspace(0, duration, int(fs * duration))
+    n_samples = len(t)
     
     # Componentă 1: Chirp (Linear FM) - frecvență crește de la 300 la 1500 Hz
     chirp_signal = signal.chirp(t, 300, duration, 1500, method='linear') * 0.7
@@ -54,23 +56,35 @@ def create_multicomponent_signal(fs: int = 44100, duration: float = 5.0):
     
     # Componentă 3: Puls scurt (tranzient) - simulează trecere rapidă
     pulse_signal = np.zeros_like(t)
-    pulse_center = int(1.5 * fs)
-    pulse_width = int(0.3 * fs)
-    pulse_window = signal.windows.gaussian(pulse_width, pulse_width/6)
-    pulse_start = pulse_center - pulse_width // 2
-    pulse_end = pulse_start + pulse_width
-    pulse_signal[pulse_start:pulse_end] = pulse_window * np.sin(2 * np.pi * 2000 * t[pulse_start:pulse_end])
+    pulse_center = min(int(1.5 * fs), n_samples - 1)
+    pulse_width = min(int(0.3 * fs), n_samples // 4)
+    if pulse_width > 10:
+        pulse_window = signal.windows.gaussian(pulse_width, pulse_width/6)
+        pulse_start = max(0, pulse_center - pulse_width // 2)
+        pulse_end = min(n_samples, pulse_start + pulse_width)
+        actual_width = pulse_end - pulse_start
+        pulse_signal[pulse_start:pulse_end] = pulse_window[:actual_width] * np.sin(2 * np.pi * 2000 * t[pulse_start:pulse_end])
     
     # Componentă 4: Ton variabil (helicopter rotor) - frecvență joasă
+    # Doar dacă avem suficientă durată
     helicopter_signal = np.zeros_like(t)
-    heli_start = int(2.5 * fs)
-    heli_end = int(4.5 * fs)
-    t_heli = t[heli_start:heli_end] - t[heli_start]
-    helicopter_signal[heli_start:heli_end] = (
-        np.sin(2 * np.pi * 50 * t_heli) * 0.4 +
-        np.sin(2 * np.pi * 100 * t_heli) * 0.3 +
-        np.sin(2 * np.pi * 150 * t_heli) * 0.2
-    )
+    components_info = [
+        {'name': 'Chirp (Doppler)', 'freq': '300-1500 Hz', 'time': f'0-{duration}s'},
+        {'name': 'Ton Elice', 'freq': '800+1600+2400 Hz', 'time': f'0-{duration}s'},
+        {'name': 'Puls Tranzient', 'freq': '2000 Hz', 'time': '~1.5s'},
+    ]
+    
+    if duration >= 3.0:
+        heli_start = int(0.5 * duration * fs)
+        heli_end = min(int(0.9 * duration * fs), n_samples)
+        if heli_end > heli_start:
+            t_heli = t[heli_start:heli_end] - t[heli_start]
+            helicopter_signal[heli_start:heli_end] = (
+                np.sin(2 * np.pi * 50 * t_heli) * 0.4 +
+                np.sin(2 * np.pi * 100 * t_heli) * 0.3 +
+                np.sin(2 * np.pi * 150 * t_heli) * 0.2
+            )
+            components_info.append({'name': 'Helicopter', 'freq': '50+100+150 Hz', 'time': f'{0.5*duration:.1f}-{0.9*duration:.1f}s'})
     
     # Zgomot Gaussian
     noise = np.random.randn(len(t)) * 0.08
@@ -80,13 +94,6 @@ def create_multicomponent_signal(fs: int = 44100, duration: float = 5.0):
     
     # Normalizare
     combined = combined / np.max(np.abs(combined))
-    
-    components_info = [
-        {'name': 'Chirp (Doppler)', 'freq': '300→1500 Hz', 'time': '0-5s'},
-        {'name': 'Ton Elice', 'freq': '800+1600+2400 Hz', 'time': '0-5s'},
-        {'name': 'Puls Tranzient', 'freq': '2000 Hz', 'time': '~1.5s'},
-        {'name': 'Helicopter', 'freq': '50+100+150 Hz', 'time': '2.5-4.5s'},
-    ]
     
     return combined, t, components_info
 
