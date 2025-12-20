@@ -1,19 +1,19 @@
 """
-Detector CFAR-STFT Avansat pentru Extracție de Semnale
+Detector CFAR-STFT Avansat pentru Extractie de Semnale
 ======================================================
 
-Implementare bazată pe articolul:
+Implementare bazata pe articolul:
 "Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform"
 Karol Abratkiewicz, Sensors 2022
 
 Algoritm:
-1. Calculează STFT (Short-Time Fourier Transform)
-2. Aplică CFAR 2D (Constant False Alarm Rate) pentru detecție adaptivă
-3. Grupează punctele detectate cu DBSCAN
-4. Extinde măștile TF către zerourile spectrogramei
-5. Aplică mascarea și reconstruiește semnalul
+1. Calculeaza STFT (Short-Time Fourier Transform) cu fereastra Gaussiana
+2. Aplica GOCA-CFAR 2D (Greatest Of Cell Averaging) pentru detectie adaptiva
+3. Grupeaza punctele detectate cu DBSCAN (coordonate reale Hz/sec)
+4. Extinde mastile TF catre zerourile spectrogramei (geodesic dilation)
+5. Aplica mascarea si reconstruieste semnalul prin iSTFT
 
-Referință: https://doi.org/10.3390/s22165954
+Referinta: https://doi.org/10.3390/s22165954
 """
 
 import numpy as np
@@ -27,7 +27,7 @@ import warnings
 
 @dataclass
 class DetectedComponent:
-    """Componentă detectată din planul timp-frecvență"""
+    """Componenta detectata din planul timp-frecventa"""
     cluster_id: int
     time_indices: np.ndarray
     freq_indices: np.ndarray
@@ -40,10 +40,14 @@ class DetectedComponent:
 
 class CFAR2D:
     """
-    Detector CFAR bidimensional pentru planul timp-frecvență
+    Detector GOCA-CFAR bidimensional pentru planul timp-frecventa
     
-    Bazat pe tehnica GOCA-CFAR (Greatest Of Cell Averaging)
-    utilizată în sistemele radar pentru detecție adaptivă.
+    Implementeaza GOCA-CFAR (Greatest Of Cell Averaging) conform
+    tehnicilor standard radar pentru detectie adaptiva.
+    
+    GOCA imparte regiunea de antrenament in 4 sub-regiuni (sus/jos/stanga/dreapta),
+    calculeaza media pentru fiecare si ia MAXIMUL ca estimare de zgomot.
+    Acest lucru ofera robustete la clutter neuniform.
     """
     
     def __init__(self,
@@ -54,11 +58,11 @@ class CFAR2D:
                  pfa: float = 1e-3):
         """
         Args:
-            guard_cells_v: Celule de gardă verticale (frecvență)
-            guard_cells_h: Celule de gardă orizontale (timp)
+            guard_cells_v: Celule de garda verticale (frecventa)
+            guard_cells_h: Celule de garda orizontale (timp)
             training_cells_v: Celule de antrenament verticale
             training_cells_h: Celule de antrenament orizontale
-            pfa: Probabilitatea de alarmă falsă (10^-6 la 10^-3)
+            pfa: Probabilitatea de alarma falsa (10^-6 la 10^-3)
         """
         self.N_G_v = guard_cells_v
         self.N_G_h = guard_cells_h
@@ -66,19 +70,35 @@ class CFAR2D:
         self.N_T_h = training_cells_h
         self.pfa = pfa
         
-        # Calculăm factorul de scalare R din ecuația (7) din paper
-        self.N_T = 2 * (training_cells_v + training_cells_h)
-        self.R = self.N_T * (pfa ** (-1/self.N_T) - 1)
+        # Calculam N_T corect: numarul REAL de celule de antrenament
+        # Formula: aria totala - aria garda - CUT
+        total_v = guard_cells_v + training_cells_v
+        total_h = guard_cells_h + training_cells_h
+        total_area = (2 * total_v + 1) * (2 * total_h + 1)
+        guard_area = (2 * guard_cells_v + 1) * (2 * guard_cells_h + 1)
+        self.N_T = total_area - guard_area  # Nu scadem CUT, e inclus in guard_area
+        
+        # Factorul de scalare R din ecuatia (7) din paper
+        # Pentru CA-CFAR cu zgomot Rayleigh: R = N_T * (Pfa^(-1/N_T) - 1)
+        if self.N_T > 0:
+            self.R = self.N_T * (pfa ** (-1 / self.N_T) - 1)
+        else:
+            self.R = 1.0
     
     def detect(self, stft_magnitude: np.ndarray) -> np.ndarray:
         """
-        Aplică detecția CFAR 2D pe magnitudinea STFT
+        Aplica detectia GOCA-CFAR 2D pe magnitudinea STFT
+        
+        GOCA (Greatest Of Cell Averaging):
+        - Imparte regiunea de antrenament in 4 sub-regiuni
+        - Calculeaza media fiecarei sub-regiuni
+        - Ia MAXIMUL ca estimare de zgomot (robust la clutter)
         
         Args:
             stft_magnitude: |F_x^h[m,k]| - magnitudinea STFT
             
         Returns:
-            Mască binară de detecție (1 = detectat, 0 = zgomot)
+            Masca binara de detectie (True = detectat, False = zgomot)
         """
         n_freq, n_time = stft_magnitude.shape
         detection_map = np.zeros_like(stft_magnitude, dtype=bool)
@@ -87,48 +107,98 @@ class CFAR2D:
         total_v = self.N_G_v + self.N_T_v
         total_h = self.N_G_h + self.N_T_h
         
-        # Pre-calculăm media globală pentru referință
-        global_mean = np.mean(stft_magnitude)
-        
         for k in range(total_v, n_freq - total_v):
             for m in range(total_h, n_time - total_h):
                 # Celula sub test (CUT)
                 cut_value = stft_magnitude[k, m]
                 
-                # Calculăm estimarea zgomotului din celulele de antrenament
-                # Metoda CA-CFAR (Cell Averaging) simplificată
+                # GOCA-CFAR: calculam 4 estimari de zgomot din sub-regiuni
+                # Sub-regiunea SUS (above CUT)
+                region_up = stft_magnitude[
+                    k - total_v : k - self.N_G_v,
+                    m - total_h : m + total_h + 1
+                ]
                 
-                # Definim regiunea completă de antrenament (exclude garda și CUT)
-                region = stft_magnitude[
-                    max(0, k - total_v) : min(n_freq, k + total_v + 1),
-                    max(0, m - total_h) : min(n_time, m + total_h + 1)
-                ].copy()
+                # Sub-regiunea JOS (below CUT)
+                region_down = stft_magnitude[
+                    k + self.N_G_v + 1 : k + total_v + 1,
+                    m - total_h : m + total_h + 1
+                ]
                 
-                # Setăm zona de gardă + CUT la 0 pentru a nu le include
-                guard_k_start = total_v - self.N_G_v
-                guard_k_end = total_v + self.N_G_v + 1
-                guard_m_start = total_h - self.N_G_h
-                guard_m_end = total_h + self.N_G_h + 1
+                # Sub-regiunea STANGA (left of CUT, fara sus/jos)
+                region_left = stft_magnitude[
+                    k - self.N_G_v : k + self.N_G_v + 1,
+                    m - total_h : m - self.N_G_h
+                ]
                 
-                # Cream masca pentru celulele de antrenament
-                mask = np.ones(region.shape, dtype=bool)
-                if guard_k_end <= region.shape[0] and guard_m_end <= region.shape[1]:
-                    mask[guard_k_start:guard_k_end, guard_m_start:guard_m_end] = False
+                # Sub-regiunea DREAPTA (right of CUT, fara sus/jos)
+                region_right = stft_magnitude[
+                    k - self.N_G_v : k + self.N_G_v + 1,
+                    m + self.N_G_h + 1 : m + total_h + 1
+                ]
                 
-                training_cells = region[mask]
+                # Calculam media fiecarei regiuni (ignoram regiunile goale)
+                estimates = []
+                for region in [region_up, region_down, region_left, region_right]:
+                    if region.size > 0:
+                        estimates.append(np.mean(region))
                 
-                if len(training_cells) == 0:
+                if len(estimates) == 0:
                     continue
                 
-                # CA-CFAR: estimarea zgomotului ca medie
-                noise_estimate = np.mean(training_cells)
+                # GOCA: luam MAXIMUL estimarilor (robust la clutter)
+                noise_estimate = max(estimates)
                 
-                # Pragul adaptiv: T = R * C
+                # Pragul adaptiv: T = R * noise_estimate
                 threshold = self.R * noise_estimate
                 
-                # Decizie binară
-                if cut_value >= threshold and cut_value > global_mean * 1.5:
+                # Decizie binara
+                if cut_value >= threshold:
                     detection_map[k, m] = True
+        
+        return detection_map
+    
+    def detect_vectorized(self, stft_magnitude: np.ndarray) -> np.ndarray:
+        """
+        Versiune vectorizata (mai rapida) a detectiei CFAR
+        Foloseste convolutii 2D pentru calculul mediilor locale
+        """
+        n_freq, n_time = stft_magnitude.shape
+        
+        total_v = self.N_G_v + self.N_T_v
+        total_h = self.N_G_h + self.N_T_h
+        
+        # Cream kernel pentru training cells (1 in training, 0 in guard/CUT)
+        kernel_size_v = 2 * total_v + 1
+        kernel_size_h = 2 * total_h + 1
+        
+        kernel = np.ones((kernel_size_v, kernel_size_h))
+        
+        # Setam guard zone + CUT la 0
+        guard_v_start = self.N_T_v
+        guard_v_end = self.N_T_v + 2 * self.N_G_v + 1
+        guard_h_start = self.N_T_h
+        guard_h_end = self.N_T_h + 2 * self.N_G_h + 1
+        kernel[guard_v_start:guard_v_end, guard_h_start:guard_h_end] = 0
+        
+        # Numarul de celule de antrenament
+        n_training = np.sum(kernel)
+        kernel = kernel / n_training
+        
+        # Convolutie pentru media locala
+        noise_estimate = ndimage.convolve(stft_magnitude, kernel, mode='constant')
+        
+        # Prag adaptiv
+        threshold = self.R * noise_estimate
+        
+        # Detectie
+        detection_map = stft_magnitude >= threshold
+        
+        # Eliminam marginile (unde convolutia nu e valida)
+        detection_map[:total_v, :] = False
+        detection_map[-total_v:, :] = False
+        detection_map[:, :total_h] = False
+        detection_map[:, -total_h:] = False
         
         return detection_map
 
@@ -138,24 +208,35 @@ class DBSCAN:
     Implementare DBSCAN pentru clustering punctelor detectate
     
     DBSCAN (Density-Based Spatial Clustering of Applications with Noise)
-    grupează punctele apropiate și identifică outliers.
+    grupeaza punctele apropiate si identifica outliers.
+    
+    IMPORTANT: Lucreaza pe coordonate NORMALIZATE (Hz, secunde) pentru
+    ca eps sa fie interpretabil si transferabil intre setari STFT diferite.
     """
     
-    def __init__(self, eps: float = 3.0, min_samples: int = 5):
+    def __init__(self, eps: float = 3.0, min_samples: int = 5,
+                 freq_scale: float = 100.0, time_scale: float = 0.05):
         """
         Args:
-            eps: Distanța maximă între două puncte pentru a fi vecini
-            min_samples: Numărul minim de puncte pentru a forma un cluster
+            eps: Distanta maxima intre doua puncte pentru a fi vecini
+            min_samples: Numarul minim de puncte pentru a forma un cluster
+            freq_scale: Scala pentru normalizare frecventa (Hz)
+            time_scale: Scala pentru normalizare timp (secunde)
         """
         self.eps = eps
         self.min_samples = min_samples
+        self.freq_scale = freq_scale
+        self.time_scale = time_scale
     
-    def fit(self, points: np.ndarray) -> np.ndarray:
+    def fit(self, points: np.ndarray, freqs: np.ndarray = None, 
+            times: np.ndarray = None) -> np.ndarray:
         """
-        Aplică DBSCAN pe punctele 2D
+        Aplica DBSCAN pe punctele 2D
         
         Args:
-            points: Array (N, 2) cu coordonatele punctelor
+            points: Array (N, 2) cu coordonatele punctelor (freq_idx, time_idx)
+            freqs: Array de frecvente (Hz) pentru conversie
+            times: Array de timpi (secunde) pentru conversie
             
         Returns:
             Array cu etichetele clusterelor (-1 = zgomot)
@@ -163,7 +244,19 @@ class DBSCAN:
         if len(points) == 0:
             return np.array([])
         
-        n_points = len(points)
+        # Convertim la coordonate reale daca avem freqs/times
+        if freqs is not None and times is not None:
+            # Convertim indici la valori reale
+            real_points = np.zeros_like(points, dtype=float)
+            freq_indices = np.clip(points[:, 0].astype(int), 0, len(freqs)-1)
+            time_indices = np.clip(points[:, 1].astype(int), 0, len(times)-1)
+            real_points[:, 0] = freqs[freq_indices] / self.freq_scale
+            real_points[:, 1] = times[time_indices] / self.time_scale
+            points_to_use = real_points
+        else:
+            points_to_use = points.astype(float)
+        
+        n_points = len(points_to_use)
         labels = np.full(n_points, -1, dtype=int)  # -1 = neetichetat/zgomot
         cluster_id = 0
         
@@ -171,25 +264,21 @@ class DBSCAN:
             if labels[i] != -1:
                 continue
             
-            # Găsim vecinii punctului i
-            neighbors = self._region_query(points, i)
+            # Gasim vecinii punctului i
+            neighbors = self._region_query(points_to_use, i)
             
             if len(neighbors) < self.min_samples:
                 # Punct de zgomot
                 continue
             
-            # Începem un nou cluster
+            # Incepem un nou cluster
             labels[i] = cluster_id
             
-            # Expandăm clusterul
+            # Expandam clusterul
             seed_set = list(neighbors)
             j = 0
             while j < len(seed_set):
                 q = seed_set[j]
-                
-                if labels[q] == -1:
-                    # Punct de zgomot devine punct de frontieră
-                    pass
                 
                 if labels[q] != -1:
                     j += 1
@@ -197,11 +286,11 @@ class DBSCAN:
                 
                 labels[q] = cluster_id
                 
-                # Găsim vecinii lui q
-                q_neighbors = self._region_query(points, q)
+                # Gasim vecinii lui q
+                q_neighbors = self._region_query(points_to_use, q)
                 
                 if len(q_neighbors) >= self.min_samples:
-                    # Punct central - adăugăm vecinii
+                    # Punct central - adaugam vecinii
                     for neighbor in q_neighbors:
                         if neighbor not in seed_set:
                             seed_set.append(neighbor)
@@ -213,21 +302,21 @@ class DBSCAN:
         return labels
     
     def _region_query(self, points: np.ndarray, idx: int) -> List[int]:
-        """Găsește toți vecinii unui punct în raza eps"""
+        """Gaseste toti vecinii unui punct in raza eps"""
         distances = np.sqrt(np.sum((points - points[idx]) ** 2, axis=1))
         return list(np.where(distances <= self.eps)[0])
 
 
 class CFARSTFTDetector:
     """
-    Detector principal CFAR-STFT pentru extracția componentelor
+    Detector principal CFAR-STFT pentru extractia componentelor
     
-    Implementează algoritmul complet din paper:
-    1. STFT cu fereastră Gaussiană
-    2. Detecție CFAR 2D adaptivă
-    3. Clustering DBSCAN
-    4. Extindere măști cu zerouri spectrogramă
-    5. Reconstrucție semnal prin STFT inversă
+    Implementeaza algoritmul complet din paper:
+    1. STFT cu fereastra Gaussiana
+    2. Detectie GOCA-CFAR 2D adaptiva
+    3. Clustering DBSCAN (coordonate reale Hz/sec)
+    4. Extindere masti cu geodesic dilation catre zerourile spectrogramei
+    5. Reconstructie semnal prin STFT inversa
     """
     
     def __init__(self,
@@ -238,25 +327,31 @@ class CFARSTFTDetector:
                  cfar_training_cells: int = 4,
                  cfar_pfa: float = 1e-3,
                  dbscan_eps: float = 5.0,
-                 dbscan_min_samples: int = 10):
+                 dbscan_min_samples: int = 10,
+                 use_vectorized_cfar: bool = True,
+                 zero_threshold_percentile: float = 5.0):
         """
-        Inițializare detector
+        Initializare detector
         
         Args:
-            sample_rate: Rata de eșantionare (Hz)
+            sample_rate: Rata de esantionare (Hz)
             window_size: Dimensiunea ferestrei STFT (samples)
-            hop_size: Pasul între ferestre (samples)
-            cfar_guard_cells: Celule de gardă CFAR
+            hop_size: Pasul intre ferestre (samples)
+            cfar_guard_cells: Celule de garda CFAR
             cfar_training_cells: Celule de antrenament CFAR
-            cfar_pfa: Probabilitatea de alarmă falsă
-            dbscan_eps: Raza DBSCAN
+            cfar_pfa: Probabilitatea de alarma falsa
+            dbscan_eps: Raza DBSCAN (in spatiu normalizat)
             dbscan_min_samples: Puncte minime pentru cluster
+            use_vectorized_cfar: Foloseste CFAR vectorizat (mai rapid)
+            zero_threshold_percentile: Percentila pentru detectia zerourilor
         """
         self.fs = sample_rate
         self.window_size = window_size
         self.hop_size = hop_size
+        self.use_vectorized_cfar = use_vectorized_cfar
+        self.zero_threshold_percentile = zero_threshold_percentile
         
-        # Inițializăm componentele
+        # Initializam componentele
         self.cfar = CFAR2D(
             guard_cells_v=cfar_guard_cells,
             guard_cells_h=cfar_guard_cells,
@@ -265,24 +360,33 @@ class CFARSTFTDetector:
             pfa=cfar_pfa
         )
         
-        self.dbscan = DBSCAN(eps=dbscan_eps, min_samples=dbscan_min_samples)
+        # DBSCAN cu scale pentru coordonate reale
+        # freq_scale=100Hz, time_scale=0.05s inseamna ca eps=1 corespunde
+        # la o distanta de ~100Hz sau ~50ms
+        self.dbscan = DBSCAN(
+            eps=dbscan_eps, 
+            min_samples=dbscan_min_samples,
+            freq_scale=100.0,
+            time_scale=0.05
+        )
         
         # Cache pentru rezultate
         self.stft_result = None
         self.detection_map = None
+        self.zero_map = None
         self.components = []
     
     def compute_stft(self, signal_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Calculează STFT cu fereastră Gaussiană
+        Calculeaza STFT cu fereastra Gaussiana
         
-        Ecuația (3) din paper:
-        F_x^h[m,k] = Σ x[n] h[n-m] e^(-j2πk(n-m)/N)
+        Ecuatia (3) din paper:
+        F_x^h[m,k] = Sum x[n] h[n-m] e^(-j2*pi*k*(n-m)/N)
         
         Returns:
             (stft_complex, frequencies, times)
         """
-        # Fereastră Gaussiană (conform paper)
+        # Fereastra Gaussiana (conform paper)
         sigma = self.window_size / 6  # Standard deviation
         window = signal.windows.gaussian(self.window_size, sigma)
         
@@ -296,42 +400,91 @@ class CFARSTFTDetector:
             return_onesided=True
         )
         
+        magnitude = np.abs(Zxx)
+        
         self.stft_result = {
             'complex': Zxx,
-            'magnitude': np.abs(Zxx),
+            'magnitude': magnitude,
             'phase': np.angle(Zxx),
             'freqs': freqs,
             'times': times
         }
         
+        # Calculam harta de zerouri (pentru mask expansion)
+        # Zerouri = puncte cu magnitudine sub percentila zero_threshold_percentile
+        threshold = np.percentile(magnitude, self.zero_threshold_percentile)
+        self.zero_map = magnitude < threshold
+        
         return Zxx, freqs, times
+    
+    def _expand_mask_geodesic(self, mask: np.ndarray, max_iterations: int = 10) -> np.ndarray:
+        """
+        Extinde masca folosind geodesic dilation catre zerourile spectrogramei
+        
+        Aceasta metoda creste masca clusterului pana la barierele definite
+        de zerourile spectrogramei, conform ideii din paper.
+        
+        Args:
+            mask: Masca initiala (boolean)
+            max_iterations: Numar maxim de iteratii de dilatare
+            
+        Returns:
+            Masca extinsa
+        """
+        if self.zero_map is None:
+            # Fallback la dilatare simpla
+            return ndimage.binary_dilation(mask, iterations=2)
+        
+        # Regiunea permisa = unde NU e zero
+        allowed = ~self.zero_map
+        
+        # Geodesic dilation: dilatam dar ramanem in regiunea permisa
+        expanded = mask.copy()
+        structure = ndimage.generate_binary_structure(2, 1)  # 4-connectivity
+        
+        for _ in range(max_iterations):
+            # Dilatam
+            dilated = ndimage.binary_dilation(expanded, structure=structure)
+            # Aplicam bariera
+            new_expanded = dilated & allowed
+            
+            # Verificam convergenta
+            if np.array_equal(new_expanded, expanded):
+                break
+            
+            expanded = new_expanded
+        
+        return expanded
     
     def detect_components(self, signal_data: np.ndarray, 
                          n_components: int = None) -> List[DetectedComponent]:
         """
-        Detectează și extrage componente din semnal
+        Detecteaza si extrage componente din semnal
         
-        Pașii algoritmului (conform paper):
-        1. Calculează STFT
-        2. Detectează regiuni cu CFAR 2D
-        3. Grupează cu DBSCAN
-        4. Sortează după energie
-        5. Creează măști TF
+        Pasii algoritmului (conform paper):
+        1. Calculeaza STFT
+        2. Detecteaza regiuni cu GOCA-CFAR 2D
+        3. Grupeaza cu DBSCAN (coordonate Hz/sec)
+        4. Extinde mastile cu geodesic dilation
+        5. Sorteaza dupa energie
         
         Args:
             signal_data: Semnalul de analizat
-            n_components: Numărul de componente de extras (None = toate)
+            n_components: Numarul de componente de extras (None = toate)
             
         Returns:
             Lista componentelor detectate
         """
-        # Pasul 1: Calculăm STFT
+        # Pasul 1: Calculam STFT
         Zxx, freqs, times = self.compute_stft(signal_data)
         magnitude = np.abs(Zxx)
         
-        # Pasul 2: Detecție CFAR 2D
-        print("   [CFAR] Aplicare detecție adaptivă 2D...")
-        self.detection_map = self.cfar.detect(magnitude)
+        # Pasul 2: Detectie GOCA-CFAR 2D
+        print("   [CFAR] Aplicare detectie adaptiva 2D...")
+        if self.use_vectorized_cfar:
+            self.detection_map = self.cfar.detect_vectorized(magnitude)
+        else:
+            self.detection_map = self.cfar.detect(magnitude)
         
         n_detected = np.sum(self.detection_map)
         print(f"   [CFAR] Puncte detectate: {n_detected}")
@@ -339,16 +492,17 @@ class CFARSTFTDetector:
         if n_detected == 0:
             return []
         
-        # Pasul 3: Clustering DBSCAN
+        # Pasul 3: Clustering DBSCAN cu coordonate reale (Hz, sec)
         print("   [DBSCAN] Grupare puncte detectate...")
         detected_points = np.array(np.where(self.detection_map)).T  # (N, 2)
         
-        cluster_labels = self.dbscan.fit(detected_points)
+        # Folosim DBSCAN cu conversie la coordonate reale
+        cluster_labels = self.dbscan.fit(detected_points, freqs, times)
         unique_labels = set(cluster_labels) - {-1}  # Excludem zgomotul
         
-        print(f"   [DBSCAN] Clustere găsite: {len(unique_labels)}")
+        print(f"   [DBSCAN] Clustere gasite: {len(unique_labels)}")
         
-        # Pasul 4: Creăm componente și le sortăm după energie
+        # Pasul 4: Cream componente cu masti extinse geodesic
         components = []
         
         for cluster_id in unique_labels:
@@ -358,19 +512,19 @@ class CFARSTFTDetector:
             freq_indices = cluster_points[:, 0]
             time_indices = cluster_points[:, 1]
             
-            # Calculăm energia componentei
+            # Calculam energia componentei
             energy = np.sum(magnitude[freq_indices, time_indices] ** 2)
             
-            # Centroidul
-            centroid_freq = freqs[int(np.mean(freq_indices))]
-            centroid_time = times[int(np.mean(time_indices))]
+            # Centroidul (in valori reale)
+            centroid_freq = np.mean(freqs[freq_indices])
+            centroid_time = np.mean(times[time_indices])
             
-            # Creăm masca TF
+            # Cream masca TF initiala
             mask = np.zeros_like(magnitude, dtype=bool)
             mask[freq_indices, time_indices] = True
             
-            # Extindem masca (pas simplificat - în paper se folosesc zerouri)
-            mask = ndimage.binary_dilation(mask, iterations=2)
+            # Extindem masca cu geodesic dilation catre zerouri
+            mask = self._expand_mask_geodesic(mask)
             
             component = DetectedComponent(
                 cluster_id=int(cluster_id),
@@ -384,32 +538,39 @@ class CFARSTFTDetector:
             
             components.append(component)
         
-        # Sortăm după energie (descrescător)
+        # Sortam dupa energie (descrescator)
         components.sort(key=lambda x: x.energy, reverse=True)
         
-        # Limităm la n_components dacă specificat
+        # Limitam la n_components daca specificat
         if n_components is not None:
             components = components[:n_components]
         
         self.components = components
         
-        print(f"   [SORT] Componente sortate după energie: {len(components)}")
+        print(f"   [SORT] Componente sortate dupa energie: {len(components)}")
         
         return components
     
     def reconstruct_component(self, component: DetectedComponent) -> np.ndarray:
         """
-        Reconstruiește un semnal din componentă folosind STFT inversă
+        Reconstruieste un semnal din componenta folosind STFT inversa
         
-        Pasul 7 din algoritm: Aplicăm masca și ISTFT
+        Pasul 7 din algoritm: Aplicam masca si ISTFT
+        
+        Optional: netezeste masca inainte pentru a reduce artefactele
         """
         if self.stft_result is None:
-            raise ValueError("Trebuie să rulezi detect_components mai întâi")
+            raise ValueError("Trebuie sa rulezi detect_components mai intai")
         
-        # Aplicăm masca pe STFT complex
-        masked_stft = self.stft_result['complex'] * component.mask
+        # Optional: smoothing pe masca pentru a reduce "musical noise"
+        # Aplicam morphological closing pentru a umple gaurile mici
+        smoothed_mask = ndimage.binary_closing(component.mask, iterations=1)
+        smoothed_mask = ndimage.binary_opening(smoothed_mask, iterations=1)
         
-        # ISTFT pentru reconstrucție
+        # Aplicam masca pe STFT complex
+        masked_stft = self.stft_result['complex'] * smoothed_mask
+        
+        # ISTFT pentru reconstructie
         sigma = self.window_size / 6
         window = signal.windows.gaussian(self.window_size, sigma)
         
@@ -425,7 +586,7 @@ class CFARSTFTDetector:
         return reconstructed
     
     def get_spectrogram_db(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Returnează spectrograma în dB"""
+        """Returneaza spectrograma in dB"""
         if self.stft_result is None:
             return None, None, None
         
@@ -437,11 +598,14 @@ class AcousticCFARDetector:
     """
     Detector acustic de avioane bazat pe CFAR-STFT
     
-    Combină tehnicile din paper cu semnăturile spectrale ale avioanelor
-    pentru detecție și clasificare precisă.
+    Combina tehnicile din paper cu semnaturile spectrale ale avioanelor
+    pentru detectie si clasificare.
+    
+    NOTA: Clasificarea este bazata pe reguli (heuristic), nu ML.
+    Pentru clasificare ML, ar trebui folosit un model antrenat pe AudioSet.
     """
     
-    # Semnături spectrale îmbunătățite
+    # Semnaturi spectrale (hardcodate - nu ML)
     AIRCRAFT_SIGNATURES = {
         'jet_engine': {
             'freq_range': (500, 8000),
@@ -485,32 +649,33 @@ class AcousticCFARDetector:
         self.cfar_detector = CFARSTFTDetector(
             sample_rate=sample_rate,
             window_size=2048,
-            hop_size=256,  # Mai multă rezoluție temporală
+            hop_size=256,  # Mai multa rezolutie temporala
             cfar_pfa=5e-4,  # Prag mai relaxat pentru audio
             dbscan_eps=8.0,
-            dbscan_min_samples=15
+            dbscan_min_samples=15,
+            use_vectorized_cfar=True
         )
     
     def analyze(self, audio_data: np.ndarray) -> Dict:
         """
-        Analizează complet un semnal audio
+        Analizeaza complet un semnal audio
         
         Returns:
-            Dicționar cu rezultate complete
+            Dictionar cu rezultate complete
         """
-        print("\n[ANALIZĂ CFAR-STFT]")
+        print("\n[ANALIZA CFAR-STFT]")
         print("="*50)
         
-        # Detectăm componente
+        # Detectam componente
         components = self.cfar_detector.detect_components(audio_data)
         
-        # Clasificăm fiecare componentă
+        # Clasificam fiecare componenta (heuristic, nu ML)
         classifications = []
         
         for comp in components:
             aircraft_type, confidence = self._classify_component(comp)
             
-            # Estimăm distanța
+            # Estimam distanta
             distance = self._estimate_distance(comp)
             
             classifications.append({
@@ -523,10 +688,10 @@ class AcousticCFARDetector:
                 'energy': comp.energy
             })
             
-            print(f"\n   Componentă {comp.cluster_id}:")
-            print(f"      Tip: {aircraft_type} (încredere: {confidence:.1%})")
-            print(f"      Frecvență: {comp.centroid_freq:.0f} Hz")
-            print(f"      Distanță est.: {distance:.0f} m")
+            print(f"\n   Componenta {comp.cluster_id}:")
+            print(f"      Tip: {aircraft_type} (incredere: {confidence:.1%})")
+            print(f"      Frecventa: {comp.centroid_freq:.0f} Hz")
+            print(f"      Distanta est.: {distance:.0f} m")
         
         return {
             'n_components': len(components),
@@ -537,7 +702,11 @@ class AcousticCFARDetector:
     
     def _classify_component(self, component: DetectedComponent) -> Tuple[str, float]:
         """
-        Clasifică o componentă bazat pe frecvența centrală și armonice
+        Clasificare bazata pe reguli (heuristic)
+        
+        Pentru clasificare ML, ar trebui:
+        1. Extras features (log-mel, spectral centroid, etc.)
+        2. Folosit un model antrenat (SVM, RandomForest, CNN)
         """
         freq = component.centroid_freq
         best_match = 'unknown'
@@ -546,15 +715,15 @@ class AcousticCFARDetector:
         for aircraft_type, sig in self.AIRCRAFT_SIGNATURES.items():
             f_min, f_max = sig['freq_range']
             
-            # Verificăm dacă frecvența e în interval
+            # Verificam daca frecventa e in interval
             if f_min <= freq <= f_max:
-                # Scor bazat pe distanța de la fundamental
+                # Scor bazat pe distanta de la fundamental
                 dist_to_fund = abs(freq - sig['fundamental']) / sig['fundamental']
                 base_score = max(0, 1 - dist_to_fund)
                 
                 # Bonus pentru armonice
                 for harmonic in sig['harmonics']:
-                    if abs(freq - harmonic) < harmonic * 0.1:  # 10% toleranță
+                    if abs(freq - harmonic) < harmonic * 0.1:  # 10% toleranta
                         base_score += 0.2
                 
                 if base_score > best_score:
@@ -566,59 +735,61 @@ class AcousticCFARDetector:
     
     def _estimate_distance(self, component: DetectedComponent) -> float:
         """
-        Estimează distanța bazat pe energie și atenuare acustică
+        Estimare distanta bazata pe energie (model simplificat)
         
-        Model: Atenuare geometrică (spherical spreading) + absorție atmosferică
-        L(d) = L_0 - 20*log10(d/d_0) - α*d
+        Model: Atenuare geometrica (spherical spreading) + absorbtie atmosferica
+        L(d) = L_0 - 20*log10(d/d_0) - alpha*d
+        
+        NOTA: Aceasta este o aproximare; distanta reala depinde de:
+        - Calibrarea microfonului
+        - Nivelul SPL al sursei
+        - Conditiile atmosferice
+        - Absorbtia dependenta de frecventa
         """
-        # Energie normalizată (presupunem o referință)
+        # Energie normalizata
         energy_db = 10 * np.log10(component.energy + 1e-10)
         
-        # Parametri model
-        ref_energy_db = 80  # Energie de referință la 100m
+        # Parametri model (placeholder)
+        ref_energy_db = 80  # Energie de referinta la 100m
         ref_distance = 100  # m
-        attenuation_coef = 0.005  # dB/m (absorție atmosferică)
         
-        # Rezolvăm pentru distanță
-        # energy_db = ref_energy_db - 20*log10(d/ref_distance) - attenuation_coef*d
-        # Aproximare liniară pentru simplitate
+        # Estimare primara (doar spreading geometric)
         delta_db = ref_energy_db - energy_db
         
         if delta_db <= 0:
-            return ref_distance / 2  # Mai aproape de referință
+            return ref_distance / 2
         
-        # Estimare primară (doar spreading geometric)
         distance = ref_distance * (10 ** (delta_db / 20))
         
-        # Limitare realistă
+        # Limitare realista
         return max(10, min(distance, 20000))
 
 
 def demo_cfar_detection():
-    """Demo pentru detecția CFAR-STFT"""
+    """Demo pentru detectia CFAR-STFT"""
     print("="*70)
-    print("DEMO: Detecție CFAR-STFT (bazat pe paper)")
+    print("DEMO: Detectie GOCA-CFAR-STFT (bazat pe paper)")
     print("="*70)
     
-    # Generăm semnal de test multicomponent
+    # Generam semnal de test multicomponent
     fs = 44100
     duration = 5.0
     t = np.linspace(0, duration, int(fs * duration))
     
-    # Componentă 1: Chirp (semnal FM) - mai puternic
+    # Componenta 1: Chirp (semnal FM)
     f0, f1 = 500, 2000
     chirp = signal.chirp(t, f0, duration, f1) * 0.8
     
-    # Componentă 2: Ton constant
+    # Componenta 2: Ton constant
     tone = np.sin(2 * np.pi * 800 * t) * 0.6
     
-    # Componentă 3: Puls
+    # Componenta 3: Puls
     pulse = np.zeros_like(t)
     pulse_start = int(0.5 * fs)
     pulse_end = int(0.7 * fs)
     pulse[pulse_start:pulse_end] = np.sin(2 * np.pi * 1500 * t[pulse_start:pulse_end]) * 0.7
     
-    # Zgomot - mai mic
+    # Zgomot
     noise = np.random.randn(len(t)) * 0.05
     
     # Semnal total
@@ -627,23 +798,24 @@ def demo_cfar_detection():
     print(f"\nSemnal de test: {duration}s, {fs} Hz")
     print("Componente: chirp (500-2000 Hz), ton (800 Hz), puls (1500 Hz)")
     
-    # Aplicăm detectorul cu parametri ajustați
+    # Aplicam detectorul
     detector = CFARSTFTDetector(
         sample_rate=fs,
         window_size=1024,
         hop_size=256,
-        cfar_guard_cells=1,      # Mai puține celule de gardă
-        cfar_training_cells=3,   # Mai puține celule de antrenament
-        cfar_pfa=1e-2,           # Probabilitate mai mare de alarmă falsă
-        dbscan_eps=8.0,
-        dbscan_min_samples=5
+        cfar_guard_cells=2,
+        cfar_training_cells=4,
+        cfar_pfa=1e-2,
+        dbscan_eps=5.0,
+        dbscan_min_samples=5,
+        use_vectorized_cfar=True
     )
     
     components = detector.detect_components(test_signal)
     
-    print(f"\n✓ Componente detectate: {len(components)}")
+    print(f"\nComponente detectate: {len(components)}")
     for comp in components:
-        print(f"   • Cluster {comp.cluster_id}: freq={comp.centroid_freq:.0f} Hz, "
+        print(f"   Cluster {comp.cluster_id}: freq={comp.centroid_freq:.0f} Hz, "
               f"time={comp.centroid_time:.2f}s, energy={comp.energy:.2e}")
     
     return detector, components
