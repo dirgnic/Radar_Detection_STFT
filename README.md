@@ -1,80 +1,88 @@
-# Sistem Radar pentru Detecția Aeronavelor
+# Sistem Radar pentru Detecția Aeronavelor bazat pe Analiză CFAR-STFT
+
 ## Proiect de Prelucrarea Semnalelor
 
 ### Descriere
-Acest proiect implementează un sistem radar pentru detecția și analiza aeronavelor bazat pe analiza în frecvență. 
-Sistemul simulează emisia și recepția semnalelor radar, procesarea Doppler, și detectarea țintelor.
+Implementare a tehnicilor de detectie radar bazate pe analiza timp-frecvență, conform articolului:
 
-### Caracteristici
-- Generare semnale radar (FMCW - Frequency Modulated Continuous Wave)
-- Simulare ecou radar de la aeronave
-- Analiza FFT pentru detectarea țintelor
-- Estimarea vitezei prin efectul Doppler
-- Estimarea distanței prin time-of-flight
-- Vizualizări interactive
+> **Abratkiewicz, K. (2022)**. "Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform"  
+> *Sensors*, 22(16), 5954. DOI: [10.3390/s22165954](https://doi.org/10.3390/s22165954)
+
+### Caracteristici Principale
+- **GOCA-CFAR 2D** - Detectie adaptivă în planul timp-frecvență
+- **DBSCAN Clustering** - Gruparea componentelor detectate
+- **RQF Metric** - Evaluarea calității reconstrucției (ecuația 15 din paper)
+- **Evaluare Monte Carlo** - 100 simulări per SNR, 8 niveluri SNR
 
 ### Structura Proiectului
 ```
 PS_proj/
 ├── src/
-│   ├── radar_system.py       # Clasa principală sistem radar
-│   ├── signal_processing.py  # Procesare semnal și FFT
-│   ├── target_detection.py   # Algoritmi de detecție
-│   └── visualization.py      # Vizualizări și grafice
+│   ├── cfar_stft_detector.py       # Detector CFAR-STFT principal
+│   └── acoustic_aircraft_detection.py
 ├── simulations/
-│   ├── single_target.py      # Simulare o țintă
-│   ├── multiple_targets.py   # Simulare ținte multiple
-│   └── moving_targets.py     # Simulare ținte în mișcare
-├── tests/
-│   └── test_radar.py
-├── results/                   # Directorul pentru rezultate
-├── requirements.txt
-└── main.py                    # Aplicație principală
+│   ├── evaluate_accuracy.py        # Evaluare Monte Carlo
+│   ├── cfar_stft_simulation.py     # Simulări CFAR
+│   └── demo_cfar_stft.py           # Demo interactiv
+├── scripts/
+│   ├── download_aerosonicdb.py     # Download AeroSonicDB
+│   └── download_zenodo_aircraft.py # Download date Zenodo
+├── results/evaluation/             # Rezultate evaluare
+├── haskell_optimize/               # Optimizări Haskell (TODO)
+├── presentation/                   # Prezentare LaTeX
+└── main.py
 ```
 
 ### Instalare
 ```bash
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
 ### Utilizare
+
+#### Evaluare Monte Carlo (rapid, ~11 secunde)
 ```bash
-python main.py
+python simulations/evaluate_accuracy.py --monte-carlo-only
 ```
 
-### Parametri Radar
-- Frecvență purtătoare: 10 GHz (banda X)
-- Bandwidth: 100 MHz
-- Putere transmisie: 1 kW
-- Rată de repetiție: 1000 Hz
-- Durata pulsului: 1 μs
+#### Demo interactiv
+```bash
+python simulations/demo_cfar_stft.py
+```
+
+#### Download date reale (opțional)
+```bash
+python scripts/download_aerosonicdb.py
+```
+
+### Rezultate Monte Carlo
+
+| SNR (dB) | RQF (dB) | Detection Rate |
+|----------|----------|----------------|
+| -5 | -4.94 | 80% |
+| 0 | -2.24 | 80% |
+| +5 | -0.83 | 81% |
+| +10 | -0.28 | 80% |
+| +15 | -0.09 | 83% |
+| +20 | -0.03 | 80% |
+| +25 | -0.01 | 83% |
+| +30 | -0.00 | 75% |
 
 ### Tehnologii
 - Python 3.8+
-- NumPy - Calcul numeric
-- SciPy - Procesare semnal
+- NumPy, SciPy - Procesare semnal
 - Matplotlib - Vizualizări
-- Seaborn - Grafice avansate
+- ThreadPoolExecutor - Procesare paralelă
 
-### Rezultate Experimentale
-Sistemul a fost testat extensiv cu următoarele scenarii:
-- ✅ **Experiment 1**: Detecție o țintă la 5 km
-- ✅ **Experiment 2**: Detecție 5 ținte simultane (3-25 km)
-- ✅ **Experiment 3**: Tracking 3 ținte în mișcare
-
-📊 Detalii complete în [docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md)
-
-### Documente Available
-- 📖 [README.md](README.md) - Acest fișier
-- 📘 [DOCUMENTATION.md](DOCUMENTATION.md) - Documentație tehnică completă
-- 🚀 [QUICKSTART.md](QUICKSTART.md) - Ghid rapid de pornire
-- 🔬 [docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md) - Rezultate experimentale
-- 🎓 [presentation/radar_presentation.pdf](presentation/radar_presentation.pdf) - Prezentare Beamer
-- 📄 [paper/radar_paper.pdf](paper/radar_paper.pdf) - Lucrare științifică
+### Referințe
+- Paper sursă: `source_paper.pdf`
+- [Rezultate evaluare](results/evaluation/evaluation_report.md)
+- [Prezentare](presentation/radar_presentation.pdf)
 
 ### Autor
 Ingrid Corobana - An III
 
 ### Data
 Decembrie 2025
-# Radar_Detection_STFT
