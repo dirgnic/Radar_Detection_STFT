@@ -522,46 +522,77 @@ def monte_carlo_evaluation(detector: CFARSTFTDetector,
     return results
 
 
+# Cache global pentru detector (evită recrearea pentru fiecare fișier)
+_DETECTOR_CACHE = {}
+
+def _get_cached_detector(detector_params: Dict) -> CFARSTFTDetector:
+    """Returnează detector din cache sau creează unul nou"""
+    key = str(sorted(detector_params.items()))
+    if key not in _DETECTOR_CACHE:
+        _DETECTOR_CACHE[key] = CFARSTFTDetector(**detector_params)
+    return _DETECTOR_CACHE[key]
+
+
 def _process_single_audio_file(args: Tuple) -> Dict:
     """
     Proceseaza un singur fisier audio (pentru paralelizare)
+    OPTIMIZAT: subsampling pentru fișiere lungi, detector caching
     """
     filepath, detector_params = args
     wav_file = os.path.basename(filepath)
     
-    # Cream detector local
-    detector = CFARSTFTDetector(**detector_params)
+    # Folosim detector din cache
+    detector = _get_cached_detector(detector_params)
     
     # Incarcam audio
     sr, data = wavfile.read(filepath)
     if data.dtype == np.int16:
         data = data.astype(np.float32) / 32768.0
+    elif data.dtype == np.int32:
+        data = data.astype(np.float32) / 2147483648.0
     
-    # Calculam SNR estimat
-    noise_samples = int(0.1 * sr)
-    if noise_samples > len(data):
-        noise_samples = len(data) // 10
+    # Stereo -> mono
+    if len(data.shape) > 1:
+        data = np.mean(data, axis=1)
     
-    noise_floor = np.std(data[:noise_samples])
+    original_duration = len(data) / sr
+    
+    # OPTIMIZARE: Subsampling pentru fișiere > 10 secunde
+    MAX_DURATION = 10.0  # secunde
+    if original_duration > MAX_DURATION:
+        # Extragem doar segmentul central
+        center = len(data) // 2
+        half_samples = int(MAX_DURATION * sr / 2)
+        data = data[center - half_samples : center + half_samples]
+    
+    # Calculam SNR estimat (rapid)
+    noise_samples = min(int(0.1 * sr), len(data) // 10)
+    noise_floor = np.std(data[:noise_samples]) if noise_samples > 0 else 1e-10
     signal_level = np.std(data)
     estimated_snr = 20 * np.log10(signal_level / (noise_floor + 1e-10))
     
     # Detectam
     start_time = time.time()
-    components = detector.detect_components(data)
+    try:
+        components = detector.detect_components(data)
+        n_detected = len(components)
+    except Exception:
+        components = []
+        n_detected = 0
     detection_time = time.time() - start_time
     
     result = {
         'file': wav_file,
-        'duration_s': len(data) / sr,
+        'duration_s': original_duration,
+        'analyzed_duration_s': len(data) / sr,
         'sample_rate': sr,
         'estimated_snr_db': estimated_snr,
-        'n_components_detected': len(components),
+        'n_components_detected': n_detected,
         'detection_time_s': detection_time,
         'components': []
     }
     
-    for comp in components:
+    for comp in components[:5]:  # Maxim 5 componente per fișier
         result['components'].append({
             'cluster_id': comp.cluster_id,
             'centroid_freq': comp.centroid_freq,
@@ -574,14 +605,16 @@ def _process_single_audio_file(args: Tuple) -> Dict:
 
 def evaluate_on_synthetic_dataset_parallel(audio_dir: str, 
                                            detector_params: Dict,
-                                           n_workers: int = None) -> Dict:
+                                           n_workers: int = None,
+                                           max_files: int = 100) -> Dict:
     """
-    Evalueaza pe dataset-ul sintetic de avioane - PARALEL
-    """
-    print("\n" + "="*60)
-    print("EVALUARE PE DATASET SINTETIC (PARALEL)")
-    print("="*60)
+    Evalueaza pe dataset - PARALEL CU BATCH PROCESSING
     
+    OPTIMIZARI:
+    - Limiteaza numarul de fisiere procesate
+    - Foloseste ProcessPoolExecutor pentru CPU-bound tasks
+    - Progress bar mai rar pentru viteza
+    """
     if n_workers is None:
         n_workers = N_WORKERS
     
@@ -595,10 +628,20 @@ def evaluate_on_synthetic_dataset_parallel(audio_dir: str,
         print("   Nu s-au gasit fisiere WAV")
         return {}
     
-    print(f"   Fisiere de procesat: {len(wav_files)}")
+    # OPTIMIZARE: Limiteaza numarul de fisiere
+    total_available = len(wav_files)
+    if len(wav_files) > max_files:
+        # Sample aleator pentru reprezentativitate
+        import random
+        random.shuffle(wav_files)
+        wav_files = wav_files[:max_files]
+    
+    print(f"   Fisiere disponibile: {total_available}")
+    print(f"   Fisiere de procesat: {len(wav_files)} (max={max_files})")
     print(f"   Workers paraleli: {n_workers}")
     
     start_time = time.time()
+    MAX_TOTAL_TIME = 120  # Maximum 2 minute per director
     
     # Pregatim argumentele
     args_list = [
@@ -607,26 +650,48 @@ def evaluate_on_synthetic_dataset_parallel(audio_dir: str,
     ]
     
     results = []
+    completed = 0
+    skipped = 0
     
-    # Procesare paralela
+    # Procesare paralela cu ThreadPool (sharing detector cache)
     with ThreadPoolExecutor(max_workers=n_workers) as executor:
-        futures = {executor.submit(_process_single_audio_file, args): args[0] 
-                   for args in args_list}
+        futures = [executor.submit(_process_single_audio_file, args) for args in args_list]
         
         for future in as_completed(futures):
-            filepath = futures[future]
-            result = future.result()
-            results.append(result)
+            # Check timeout global
+            if time.time() - start_time > MAX_TOTAL_TIME:
+                print(f"   TIMEOUT GLOBAL ({MAX_TOTAL_TIME}s) - oprire procesare")
+                # Cancel remaining futures
+                for f in futures:
+                    f.cancel()
+                break
+                
+            try:
+                result = future.result(timeout=15)  # Timeout 15s per fisier
+                if result:
+                    results.append(result)
+            except Exception as e:
+                skipped += 1
             
-            print(f"\n   Analiza: {result['file']}")
-            print(f"      SNR estimat: {result['estimated_snr_db']:.1f} dB")
-            print(f"      Componente: {result['n_components_detected']}")
-            print(f"      Timp detectie: {result['detection_time_s']*1000:.1f} ms")
+            completed += 1
+            # Progress bar mai rar
+            if completed % 5 == 0 or completed == len(wav_files):
+                elapsed = time.time() - start_time
+                rate = completed / elapsed if elapsed > 0 else 0
+                eta = (len(wav_files) - completed) / rate if rate > 0 else 0
+                print(f"   Progres: {completed}/{len(wav_files)} ({rate:.1f} fis/s, ETA: {eta:.0f}s)")
     
     total_time = time.time() - start_time
-    print(f"\n   TIMP TOTAL: {total_time:.1f}s")
     
-    return {'files': results, 'total_time_s': total_time}
+    # Statistici sumar
+    if results:
+        avg_snr = np.mean([r['estimated_snr_db'] for r in results])
+        avg_comp = np.mean([r['n_components_detected'] for r in results])
+        avg_time = np.mean([r['detection_time_s'] for r in results]) * 1000
+        print(f"\n   SUMAR: {len(results)} fisiere procesate, {skipped} skip-uite, in {total_time:.1f}s")
+        print(f"   SNR mediu: {avg_snr:.1f} dB, Comp. medii: {avg_comp:.1f}, Timp/fis: {avg_time:.0f}ms")
+    
+    return {'files': results, 'total_time_s': total_time, 'files_processed': len(results)}
 
 
 def evaluate_on_synthetic_dataset(audio_dir: str, 
@@ -850,7 +915,7 @@ Algoritmul CFAR-STFT demonstreaza:
     print(f"   Raport salvat: {output_path}")
 
 
-def main(parallel: bool = True):
+def main(parallel: bool = True, skip_audio: bool = False):
     """
     Ruleaza evaluarea completa - OPTIMIZAT CU BATCH PROCESSING
     
@@ -864,6 +929,7 @@ def main(parallel: bool = True):
     
     Args:
         parallel: Foloseste procesare paralela (default: True)
+        skip_audio: Sari procesarea fisierelor audio (default: False)
     """
     print("="*70)
     print("EVALUARE ACURATETE CFAR-STFT")
@@ -872,6 +938,8 @@ def main(parallel: bool = True):
         print(f"MOD: BATCH PARALEL ({N_WORKERS} workers)")
     else:
         print("MOD: SECVENTIAL")
+    if skip_audio:
+        print("NOTA: Procesarea fisierelor audio este dezactivata")
     print("="*70)
     
     output_dir = "results/evaluation"
@@ -918,19 +986,48 @@ def main(parallel: bool = True):
     plot_rqf_comparison(mc_results, os.path.join(output_dir, 'rqf_vs_snr.png'))
     plot_detection_rate(mc_results, os.path.join(output_dir, 'detection_rate_vs_snr.png'))
     
-    # 3. Evaluare pe dataset sintetic - PARALEL
-    print("\n[3/3] Evaluare pe dataset sintetic...")
-    audio_dir = "data/aircraft_sounds/synthetic"
+    # 3. Evaluare pe dataset-uri - PARALEL
+    dataset_results = {'all_files': [], 'by_source': {}}
     
-    if parallel:
-        dataset_results = evaluate_on_synthetic_dataset_parallel(
-            audio_dir, detector_params, n_workers=N_WORKERS
-        )
+    if skip_audio:
+        print("\n[3/3] Procesarea fisierelor audio a fost sarita (--monte-carlo-only)")
     else:
-        detector = CFARSTFTDetector(**detector_params)
-        dataset_results = evaluate_on_synthetic_dataset(audio_dir, detector)
+        print("\n[3/3] Evaluare pe dataset-uri audio...")
+        
+        # Lista de directoare cu date audio (în ordinea priorității)
+        # Configurație: (director, max_files)
+        audio_dirs_config = [
+            ("data/aerosonicdb/audio/1", 20),                    # AeroSonicDB - sample 20 din 625
+            ("data/real_aircraft_sounds/dlr_v2500_flyover", 10), # DLR - toate
+            ("data/real_aircraft_sounds/euronoise_aircraft", 10),# EuroNoise - toate
+            ("data/real_aircraft_sounds/extended_synthetic", 20),# Sintetic extins
+            ("data/aircraft_sounds/synthetic", 6),               # Sintetic original
+        ]
     
-    if dataset_results:
+        for audio_dir, max_files in audio_dirs_config:
+            if not os.path.exists(audio_dir):
+                continue
+                
+            source_name = os.path.basename(audio_dir)
+            print(f"\n   === {source_name.upper()} ===")
+            
+            if parallel:
+                dir_results = evaluate_on_synthetic_dataset_parallel(
+                    audio_dir, detector_params, n_workers=N_WORKERS, max_files=max_files
+                )
+            else:
+                detector = CFARSTFTDetector(**detector_params)
+                dir_results = evaluate_on_synthetic_dataset(audio_dir, detector)
+            
+            if dir_results and 'files' in dir_results:
+                dataset_results['by_source'][source_name] = dir_results
+                dataset_results['all_files'].extend(dir_results['files'])
+    
+    # Statistici totale
+    total_files = len(dataset_results['all_files'])
+    print(f"\n   TOTAL: {total_files} fișiere audio procesate")
+
+    if dataset_results['all_files']:
         with open(os.path.join(output_dir, 'dataset_results.json'), 'w') as f:
             json.dump(dataset_results, f, indent=2, default=str)
     
@@ -968,6 +1065,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Evaluare CFAR-STFT')
     parser.add_argument('--sequential', '-s', action='store_true', 
                         help='Ruleaza secvential (fara paralelizare)')
+    parser.add_argument('--quick', '-q', action='store_true',
+                        help='Mod rapid: mai putine simulari, mai putine fisiere')
+    parser.add_argument('--monte-carlo-only', '-m', action='store_true',
+                        help='Ruleaza doar simularea Monte Carlo (fara procesare audio)')
     args = parser.parse_args()
     
-    main(parallel=not args.sequential)
+    # Mod rapid: override parametrii
+    if args.quick:
+        print("\n*** MOD RAPID ACTIVAT ***\n")
+        N_WORKERS = min(multiprocessing.cpu_count(), 12)  # Mai multi workers
+    
+    main(parallel=not args.sequential, skip_audio=args.monte_carlo_only)

@@ -1,58 +1,58 @@
 {
   "-5": {
-    "rqf_mean": -0.16263325207920074,
-    "rqf_std": 0.03034961776445826,
-    "detection_rate_mean": 1.0,
-    "detection_rate_std": 0.0,
+    "rqf_mean": -4.939640379215609,
+    "rqf_std": 0.24619632365278546,
+    "detection_rate_mean": 0.8033333333333332,
+    "detection_rate_std": 0.22654408450061597,
     "n_simulations": 100
   },
   "0": {
-    "rqf_mean": -0.05299635491289669,
-    "rqf_std": 0.00898468692880014,
-    "detection_rate_mean": 1.0,
-    "detection_rate_std": 0.0,
+    "rqf_mean": -2.2418861455354833,
+    "rqf_std": 0.13039171285920442,
+    "detection_rate_mean": 0.8,
+    "detection_rate_std": 0.2449489742783178,
     "n_simulations": 100
   },
   "5": {
-    "rqf_mean": -0.01599905384056993,
-    "rqf_std": 0.003052407349041558,
-    "detection_rate_mean": 1.0,
-    "detection_rate_std": 0.0,
+    "rqf_mean": -0.8263086806159321,
+    "rqf_std": 0.06777390690850427,
+    "detection_rate_mean": 0.8099999999999998,
+    "detection_rate_std": 0.25497276543017516,
     "n_simulations": 100
   },
   "10": {
-    "rqf_mean": -0.005292701939762219,
-    "rqf_std": 0.0010779344042173282,
-    "detection_rate_mean": 1.0,
-    "detection_rate_std": 0.0,
+    "rqf_mean": -0.27944921295620423,
+    "rqf_std": 0.023839473730432287,
+    "detection_rate_mean": 0.7966666666666667,
+    "detection_rate_std": 0.23520676483090835,
     "n_simulations": 100
   },
   "15": {
-    "rqf_mean": -0.8007480378412246,
-    "rqf_std": 2.712711424860986,
-    "detection_rate_mean": 0.7566666666666668,
-    "detection_rate_std": 0.33284964907430636,
+    "rqf_mean": -0.09004804654646635,
+    "rqf_std": 0.007863897410711931,
+    "detection_rate_mean": 0.8266666666666665,
+    "detection_rate_std": 0.233238075793812,
     "n_simulations": 100
   },
   "20": {
-    "rqf_mean": -9.900001310883177,
-    "rqf_std": 0.9949743939836907,
-    "detection_rate_mean": 0.003333333333333333,
-    "detection_rate_std": 0.033166247903554,
+    "rqf_mean": -0.028914424369318,
+    "rqf_std": 0.0019088190288763201,
+    "detection_rate_mean": 0.8033333333333335,
+    "detection_rate_std": 0.2542745672605806,
     "n_simulations": 100
   },
   "25": {
-    "rqf_mean": -10.0,
-    "rqf_std": 0.0,
-    "detection_rate_mean": 0.0,
-    "detection_rate_std": 0.0,
+    "rqf_mean": -0.008810801085423144,
+    "rqf_std": 0.00086800781851137,
+    "detection_rate_mean": 0.83,
+    "detection_rate_std": 0.23330952259462825,
     "n_simulations": 100
   },
   "30": {
-    "rqf_mean": -10.0,
-    "rqf_std": 0.0,
-    "detection_rate_mean": 0.0,
-    "detection_rate_std": 0.0,
+    "rqf_mean": -0.002833156986431821,
+    "rqf_std": 0.00023411505917300584,
+    "detection_rate_mean": 0.7533333333333333,
+    "detection_rate_std": 0.24774538901416063,
     "n_simulations": 100
   }
 }
