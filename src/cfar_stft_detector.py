@@ -312,11 +312,19 @@ class CFARSTFTDetector:
     Detector principal CFAR-STFT pentru extractia componentelor
     
     Implementeaza algoritmul complet din paper:
-    1. STFT cu fereastra Gaussiana
-    2. Detectie GOCA-CFAR 2D adaptiva
+    "Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform"
+    Abratkiewicz, K. (2022). Sensors, 22(16), 5954.
+    
+    Algoritm:
+    1. STFT cu fereastra Gaussiana (Eq. 3)
+    2. Detectie GOCA-CFAR 2D adaptiva (Eq. 7)
     3. Clustering DBSCAN (coordonate reale Hz/sec)
     4. Extindere masti cu geodesic dilation catre zerourile spectrogramei
     5. Reconstructie semnal prin STFT inversa
+    
+    Suporta:
+    - Semnale REALE (audio, sintetic) - one-sided spectrum
+    - Semnale COMPLEXE (radar I/Q) - two-sided spectrum cu Doppler
     """
     
     def __init__(self,
@@ -329,27 +337,35 @@ class CFARSTFTDetector:
                  dbscan_eps: float = 5.0,
                  dbscan_min_samples: int = 10,
                  use_vectorized_cfar: bool = True,
-                 zero_threshold_percentile: float = 5.0):
+                 zero_threshold_percentile: float = 5.0,
+                 mode: str = 'auto'):
         """
         Initializare detector
         
         Args:
-            sample_rate: Rata de esantionare (Hz)
+            sample_rate: Rata de esantionare (Hz) sau PRF pentru radar
             window_size: Dimensiunea ferestrei STFT (samples)
             hop_size: Pasul intre ferestre (samples)
-            cfar_guard_cells: Celule de garda CFAR
-            cfar_training_cells: Celule de antrenament CFAR
-            cfar_pfa: Probabilitatea de alarma falsa
+            cfar_guard_cells: Celule de garda CFAR (paper: N_G = 16)
+            cfar_training_cells: Celule de antrenament CFAR (paper: N_T = 16)
+            cfar_pfa: Probabilitatea de alarma falsa (paper: P_f = 0.4)
             dbscan_eps: Raza DBSCAN (in spatiu normalizat)
             dbscan_min_samples: Puncte minime pentru cluster
             use_vectorized_cfar: Foloseste CFAR vectorizat (mai rapid)
             zero_threshold_percentile: Percentila pentru detectia zerourilor
+            mode: 'auto' | 'real' | 'complex' | 'radar'
+                  - 'auto': detecteaza automat din tipul datelor
+                  - 'real': forteaza procesare semnal real (one-sided)
+                  - 'complex': forteaza procesare semnal complex (two-sided)
+                  - 'radar': optimizat pentru I/Q radar (two-sided + Doppler)
         """
         self.fs = sample_rate
         self.window_size = window_size
         self.hop_size = hop_size
         self.use_vectorized_cfar = use_vectorized_cfar
         self.zero_threshold_percentile = zero_threshold_percentile
+        self.mode = mode
+        self._is_complex_input = False  # Set during processing
         
         # Initializam componentele
         self.cfar = CFAR2D(
@@ -383,22 +399,58 @@ class CFARSTFTDetector:
         Ecuatia (3) din paper:
         F_x^h[m,k] = Sum x[n] h[n-m] e^(-j2*pi*k*(n-m)/N)
         
+        Pentru semnale COMPLEXE (radar I/Q):
+        - Foloseste spectru two-sided (frecvente negative = Doppler negativ)
+        - Frecventele sunt centrate la 0 (fftshift)
+        
+        Pentru semnale REALE (audio):
+        - Foloseste spectru one-sided (doar frecvente pozitive)
+        
         Returns:
             (stft_complex, frequencies, times)
         """
-        # Fereastra Gaussiana (conform paper)
+        # Detectam tipul semnalului
+        self._is_complex_input = np.iscomplexobj(signal_data)
+        
+        # Determinam modul de procesare
+        if self.mode == 'auto':
+            use_twosided = self._is_complex_input
+        elif self.mode in ['complex', 'radar']:
+            use_twosided = True
+        else:  # 'real'
+            use_twosided = False
+        
+        # Fereastra Gaussiana (conform paper, sigma = N/6)
         sigma = self.window_size / 6  # Standard deviation
         window = signal.windows.gaussian(self.window_size, sigma)
         
-        # STFT
-        freqs, times, Zxx = signal.stft(
-            signal_data,
-            fs=self.fs,
-            window=window,
-            nperseg=self.window_size,
-            noverlap=self.window_size - self.hop_size,
-            return_onesided=True
-        )
+        if use_twosided:
+            # TWO-SIDED STFT pentru semnale complexe (radar I/Q)
+            # Permite detectia frecventelor negative (Doppler negativ = tinta se departeaza)
+            freqs, times, Zxx = signal.stft(
+                signal_data,
+                fs=self.fs,
+                window=window,
+                nperseg=self.window_size,
+                noverlap=self.window_size - self.hop_size,
+                return_onesided=False  # Two-sided pentru complex
+            )
+            
+            # Reordonam pentru a avea frecventele centrate la 0
+            # fftshift pe axa frecventelor (axa 0)
+            Zxx = np.fft.fftshift(Zxx, axes=0)
+            freqs = np.fft.fftshift(freqs)
+            
+        else:
+            # ONE-SIDED STFT pentru semnale reale
+            freqs, times, Zxx = signal.stft(
+                signal_data,
+                fs=self.fs,
+                window=window,
+                nperseg=self.window_size,
+                noverlap=self.window_size - self.hop_size,
+                return_onesided=True
+            )
         
         magnitude = np.abs(Zxx)
         
@@ -407,7 +459,9 @@ class CFARSTFTDetector:
             'magnitude': magnitude,
             'phase': np.angle(Zxx),
             'freqs': freqs,
-            'times': times
+            'times': times,
+            'is_twosided': use_twosided,
+            'is_complex_input': self._is_complex_input
         }
         
         # Calculam harta de zerouri (pentru mask expansion)
@@ -555,7 +609,10 @@ class CFARSTFTDetector:
         """
         Reconstruieste un semnal din componenta folosind STFT inversa
         
-        Pasul 7 din algoritm: Aplicam masca si ISTFT
+        Pasul 7 din algoritm (Eq. 12-13): Aplicam masca si ISTFT
+        
+        Pentru semnale complexe: pastreaza informatia de faza (Doppler)
+        Pentru semnale reale: returneaza parte reala
         
         Optional: netezeste masca inainte pentru a reduce artefactele
         """
@@ -568,7 +625,15 @@ class CFARSTFTDetector:
         smoothed_mask = ndimage.binary_opening(smoothed_mask, iterations=1)
         
         # Aplicam masca pe STFT complex
-        masked_stft = self.stft_result['complex'] * smoothed_mask
+        masked_stft = self.stft_result['complex'].copy()
+        
+        # Daca e two-sided, trebuie sa inversam fftshift inainte de ISTFT
+        if self.stft_result.get('is_twosided', False):
+            # Inverse fftshift pe masca si STFT
+            smoothed_mask = np.fft.ifftshift(smoothed_mask, axes=0)
+            masked_stft = np.fft.ifftshift(masked_stft, axes=0)
+        
+        masked_stft = masked_stft * smoothed_mask
         
         # ISTFT pentru reconstructie
         sigma = self.window_size / 6
@@ -579,8 +644,13 @@ class CFARSTFTDetector:
             fs=self.fs,
             window=window,
             nperseg=self.window_size,
-            noverlap=self.window_size - self.hop_size
+            noverlap=self.window_size - self.hop_size,
+            input_onesided=not self.stft_result.get('is_twosided', False)
         )
+        
+        # Pentru semnale care au fost reale, returnam partea reala
+        if not self.stft_result.get('is_complex_input', False):
+            reconstructed = np.real(reconstructed)
         
         component.reconstructed_signal = reconstructed
         return reconstructed
@@ -592,6 +662,67 @@ class CFARSTFTDetector:
         
         Sxx_db = 20 * np.log10(self.stft_result['magnitude'] + 1e-10)
         return self.stft_result['freqs'], self.stft_result['times'], Sxx_db
+    
+    def get_doppler_info(self, component: DetectedComponent) -> Dict:
+        """
+        Extrage informatii Doppler dintr-o componenta detectata (pentru radar)
+        
+        Pentru radar cu PRF=fs:
+        - Doppler frequency fd = frecventa in spectrograma
+        - Viteza radiala v = fd * c / (2 * f_RF)
+        
+        Args:
+            component: Componenta detectata
+            
+        Returns:
+            Dict cu informatii Doppler
+        """
+        if self.stft_result is None:
+            return {}
+        
+        freqs = self.stft_result['freqs']
+        
+        # Frecventa Doppler centrala
+        doppler_freq = component.centroid_freq
+        
+        # Banda Doppler (spread in frecventa)
+        freq_indices = component.freq_indices
+        if len(freq_indices) > 0:
+            valid_indices = np.clip(freq_indices, 0, len(freqs) - 1)
+            freq_values = freqs[valid_indices]
+            doppler_bandwidth = np.max(freq_values) - np.min(freq_values)
+            doppler_std = np.std(freq_values)
+        else:
+            doppler_bandwidth = 0
+            doppler_std = 0
+        
+        return {
+            'doppler_freq_hz': doppler_freq,
+            'doppler_bandwidth_hz': doppler_bandwidth,
+            'doppler_std_hz': doppler_std,
+            'centroid_time_s': component.centroid_time,
+            'energy': component.energy,
+            # Viteza estimata (necesita f_RF - aici folosim 9.39 GHz pentru IPIX)
+            'velocity_estimate_mps': self._doppler_to_velocity(doppler_freq, rf_ghz=9.39)
+        }
+    
+    def _doppler_to_velocity(self, fd: float, rf_ghz: float = 9.39) -> float:
+        """
+        Converteste frecventa Doppler in viteza radiala
+        
+        v = fd * c / (2 * f_RF)
+        
+        Args:
+            fd: Frecventa Doppler (Hz)
+            rf_ghz: Frecventa RF radar (GHz)
+            
+        Returns:
+            Viteza radiala (m/s), pozitiva = se apropie
+        """
+        c = 3e8  # Viteza luminii m/s
+        f_rf = rf_ghz * 1e9  # Hz
+        velocity = fd * c / (2 * f_rf)
+        return velocity
 
 
 class AcousticCFARDetector:

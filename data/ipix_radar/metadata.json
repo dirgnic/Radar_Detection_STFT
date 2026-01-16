@@ -1,0 +1,13 @@
+{
+  "dataset": "IPIX Dartmouth Sea Clutter",
+  "source": "McMaster University",
+  "url": "http://soma.ece.mcmaster.ca/ipix/dartmouth/",
+  "radar": {
+    "type": "IPIX X-band Polarimetric Coherent Radar",
+    "rf_frequency_ghz": 9.39,
+    "prf_hz": 1000,
+    "pulse_length_ns": 200,
+    "antenna_beamwidth_deg": 0.9
+  },
+  "files": {}
+}
