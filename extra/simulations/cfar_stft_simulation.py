@@ -15,7 +15,11 @@ Demonstrează:
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+from pathlib import Path
+
+# Ensure project src/ is on sys.path when running from extra/simulations
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT / 'src'))
 
 import numpy as np
 import matplotlib.pyplot as plt

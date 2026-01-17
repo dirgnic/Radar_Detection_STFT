@@ -22,8 +22,8 @@ import csv
 import urllib.request
 from pathlib import Path
 
-# Directorul pentru date
-BASE_DIR = Path(__file__).parent.parent
+# Directorul pentru date (project root from extra/scripts)
+BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = BASE_DIR / "data" / "aerosonicdb"
 
 # Zenodo record pentru AeroSonicDB v1.1.1

@@ -14,8 +14,8 @@ import zipfile
 import json
 from pathlib import Path
 
-# Configurare
-BASE_DIR = Path(__file__).parent.parent
+# Configurare (project root from extra/scripts)
+BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = BASE_DIR / "data" / "real_aircraft_sounds"
 
 # Datasets disponibile cu fișiere WAV directe (fără autentificare)

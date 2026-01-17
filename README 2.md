@@ -1,80 +1,108 @@
-# Sistem Radar pentru Detecția Aeronavelor
+# CFAR-STFT Radar Detection and IPIX Experiments
 ## Proiect de Prelucrarea Semnalelor
 
 ### Descriere
-Acest proiect implementează un sistem radar pentru detecția și analiza aeronavelor bazat pe analiza în frecvență. 
-Sistemul simulează emisia și recepția semnalelor radar, procesarea Doppler, și detectarea țintelor.
+Acest proiect implementează și evaluează algoritmul CFAR-STFT propus în:
 
-### Caracteristici
-- Generare semnale radar (FMCW - Frequency Modulated Continuous Wave)
-- Simulare ecou radar de la aeronave
-- Analiza FFT pentru detectarea țintelor
-- Estimarea vitezei prin efectul Doppler
-- Estimarea distanței prin time-of-flight
-- Vizualizări interactive
+Abratkiewicz, K. (2022). "Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform". Sensors, 22(16), 5954.
 
-### Structura Proiectului
+Sunt abordate două scenarii principale:
+- semnal sintetic nelinear (chirp) pentru reproducerea experimentelor din articol;
+- date reale radar IPIX (sea-clutter, complex I/Q) pentru validarea algoritmului în condiții reale.
+
+Algoritmul central este implementat în clasa `CFARSTFTDetector`, care:
+- calculează STFT cu fereastră gaussiană;
+- aplică detecție adaptivă GOCA-CFAR 2D;
+- grupează punctele detectate cu DBSCAN în planul timp–frecvență;
+- extinde măștile cu geodesic dilation;
+- reconstruiește componentele semnalului prin iSTFT.
+
+### Structura proiectului
+
+Structura relevantă pentru implementarea actuală este:
+
 ```
 PS_proj/
 ├── src/
-│   ├── radar_system.py       # Clasa principală sistem radar
-│   ├── signal_processing.py  # Procesare semnal și FFT
-│   ├── target_detection.py   # Algoritmi de detecție
-│   └── visualization.py      # Vizualizări și grafice
+│   └── cfar_stft_detector.py      # Implementarea CFAR-STFT (radar și audio)
 ├── simulations/
-│   ├── single_target.py      # Simulare o țintă
-│   ├── multiple_targets.py   # Simulare ținte multiple
-│   └── moving_targets.py     # Simulare ținte în mișcare
-├── tests/
-│   └── test_radar.py
-├── results/                   # Directorul pentru rezultate
-├── requirements.txt
-└── main.py                    # Aplicație principală
+│   └── paper_replication.py       # Reproducerea experimentelor din articol + IPIX
+├── scripts/
+│   ├── visualize_ipix_data.py     # Analiză și vizualizare date IPIX (hi/lo)
+│   └── visualize_detections.py    # Vizualizare locații de detecție în STFT
+├── data/
+│   └── ipix_radar/
+│       ├── hi.npy                 # Sea-clutter high sea state (complex I/Q)
+│       ├── lo.npy                 # Sea-clutter low sea state (complex I/Q)
+│       └── metadata.json          # Metadate IPIX (PRF, frecvență RF etc.)
+├── results/
+│   ├── paper_replication/         # RQF vs SNR și rezultate IPIX
+│   └── evaluation/                # Rezultate suplimentare (CDF, JSON etc.)
+├── extra/                         # Scripturi/demo-uri suplimentare (audio, download)
+└── legacy/                        # Cod vechi, prezentări, raw CDF, proiect inițial
 ```
 
+Fișierele din `extra/` și `legacy/` nu sunt necesare pentru rularea experimentelor principale, dar sunt păstrate ca material suplimentar.
+
 ### Instalare
+
+Se recomandă utilizarea unui mediu virtual Python:
+
 ```bash
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Utilizare
+### Rulare experimente principale
+
+1. Reproducerea experimentului din articol (semnal sintetic nelinear) și evaluarea pe IPIX:
+
 ```bash
-python main.py
+source venv/bin/activate
+python simulations/paper_replication.py
 ```
 
-### Parametri Radar
-- Frecvență purtătoare: 10 GHz (banda X)
-- Bandwidth: 100 MHz
-- Putere transmisie: 1 kW
-- Rată de repetiție: 1000 Hz
-- Durata pulsului: 1 μs
+Scriptul generează:
+- curbe RQF vs SNR pentru semnalul din articol;
+- detecții pe datele IPIX (hi.npy, lo.npy) cu statisticile Doppler și viteza radială;
+- fișiere JSON și PNG în `results/paper_replication/`.
 
-### Tehnologii
+2. Vizualizare detaliată a datelor IPIX (structură, spectrogramă, statistici):
+
+```bash
+source venv/bin/activate
+python scripts/visualize_ipix_data.py
+```
+
+3. Vizualizare locații de detecție în planul timp–frecvență (unde sunt găsite obiectele în STFT):
+
+```bash
+source venv/bin/activate
+python scripts/visualize_detections.py
+```
+
+Aceste scripturi folosesc direct datele complex I/Q și modul `radar` al `CFARSTFTDetector`, care lucrează cu spectru două-fețe (frecvențe Doppler pozitive și negative).
+
+### Tehnologii folosite
+
 - Python 3.8+
-- NumPy - Calcul numeric
-- SciPy - Procesare semnal
-- Matplotlib - Vizualizări
-- Seaborn - Grafice avansate
+- NumPy – calcul numeric
+- SciPy – STFT, semnale, FFT
+- Matplotlib – vizualizări (spectrogramă, grafice RQF, Doppler)
+- scikit-learn – clustering DBSCAN (în interiorul detectorului)
 
-### Rezultate Experimentale
-Sistemul a fost testat extensiv cu următoarele scenarii:
-- ✅ **Experiment 1**: Detecție o țintă la 5 km
-- ✅ **Experiment 2**: Detecție 5 ținte simultane (3-25 km)
-- ✅ **Experiment 3**: Tracking 3 ținte în mișcare
+### Rezumat contribuții
 
-📊 Detalii complete în [docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md)
-
-### Documente Available
-- 📖 [README.md](README.md) - Acest fișier
-- 📘 [DOCUMENTATION.md](DOCUMENTATION.md) - Documentație tehnică completă
-- 🚀 [QUICKSTART.md](QUICKSTART.md) - Ghid rapid de pornire
-- 🔬 [docs/EXPERIMENTAL_RESULTS.md](docs/EXPERIMENTAL_RESULTS.md) - Rezultate experimentale
-- 🎓 [presentation/radar_presentation.pdf](presentation/radar_presentation.pdf) - Prezentare Beamer
-- 📄 [paper/radar_paper.pdf](paper/radar_paper.pdf) - Lucrare științifică
+- Implementare completă CFAR-STFT inspirată de articol (detecție 2D, DBSCAN, geodesic dilation, reconstrucție);
+- Adaptare pentru procesarea semnalelor radar complexe I/Q (IPIX), cu analiză Doppler două-fețe;
+- Reproducerea experimentelor de tip RQF vs SNR pe semnal sintetic;
+- Vizualizări detaliate ale datelor IPIX și ale locațiilor de detecție în planul timp–frecvență.
 
 ### Autor
-Ingrid Corobana - An III
+
+Ingrid Corobana – An III
 
 ### Data
-Decembrie 2025
-# Radar_Detection_STFT
+
+Ianuarie 2026

@@ -19,7 +19,8 @@ import zipfile
 from pathlib import Path
 import numpy as np
 
-BASE_DIR = Path(__file__).parent.parent
+# Project root (two levels up from extra/scripts)
+BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = BASE_DIR / "data" / "ipix_radar"
 
 # Direct download URLs (ASCII format - no netCDF needed)
