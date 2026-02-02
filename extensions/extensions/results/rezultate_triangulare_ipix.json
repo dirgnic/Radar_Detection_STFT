@@ -1,0 +1,22 @@
+{
+    "hi_sea_state": {
+        "n_segments": 30,
+        "mean_components": 4.2,
+        "detection_segments": 30,
+        "doppler_stats": {
+            "n_detections": 30,
+            "mean_doppler_hz": 81.39562564614893,
+            "mean_velocity_mps": 1.3002496109608457
+        }
+    },
+    "lo_sea_state": {
+        "n_segments": 30,
+        "mean_components": 13.566666666666666,
+        "detection_segments": 30,
+        "doppler_stats": {
+            "n_detections": 30,
+            "mean_doppler_hz": -18.804253472222225,
+            "mean_velocity_mps": -0.30038743565850196
+        }
+    }
+}

@@ -67,7 +67,7 @@ class CFARDetectorOfChoice:
         self.zero_map = magnitude < threshold
         return Zxx, freqs, times
 
-    def _expand_mask_geodesic(self, mask: np.ndarray, max_iterations: int = 10) -> np.ndarray:
+    def expand_mask_geodesic(self, mask: np.ndarray, max_iterations: int = 10) -> np.ndarray:
         if self.zero_map is None:
             return ndimage.binary_dilation(mask, iterations=2)
         allowed = ~self.zero_map
@@ -148,6 +148,29 @@ class CFARDetectorOfChoice:
         Sxx_db = 20 * np.log10(self.stft_result['magnitude'] + 1e-10)
         return self.stft_result['freqs'], self.stft_result['times'], Sxx_db
 
+    def get_doppler_info(self, component):
+        if self.stft_result is None:
+            return {}
+        freqs = self.stft_result['freqs']
+        doppler_freq = component.centroid_freq
+        freq_indices = component.freq_indices
+        if len(freq_indices) > 0:
+            valid_indices = np.clip(freq_indices, 0, len(freqs) - 1)
+            freq_values = freqs[valid_indices]
+            doppler_bandwidth = np.max(freq_values) - np.min(freq_values)
+            doppler_std = np.std(freq_values)
+        else:
+            doppler_bandwidth = 0
+            doppler_std = 0
+        return {'doppler_freq_hz': doppler_freq, 'doppler_bandwidth_hz': doppler_bandwidth, 'doppler_std_hz': doppler_std,
+            'centroid_time_s': component.centroid_time, 'energy': component.energy, 'velocity_estimate_mps': self._doppler_to_velocity(doppler_freq, rf_ghz=9.39)}
+
+    def doppler_to_velocity(self, fd, rf_ghz = 9.39):
+        c = 3e8
+        f_rf = rf_ghz * 1e9
+        velocity = fd * c / (2 * f_rf)
+        return velocity
+
 def demo_comparison():
     fs = 44100
     duration = 5.0
@@ -195,8 +218,7 @@ def demo_comparison():
                      fontsize=12, color='darkgreen', fontweight='bold')
         for c in comp_mod:
             ax.contour(t_m, f_m, c.mask, levels=[0.5], colors='white', linewidths=1.2)
-            ax.text(c.centroid_time, c.centroid_freq, f"ID {c.cluster_id}",
-                    color='lime', fontsize=9, fontweight='bold',
+            ax.text(c.centroid_time, c.centroid_freq, f"ID {c.cluster_id}", color='lime', fontsize=9, fontweight='bold',
                     bbox=dict(facecolor='black', alpha=0.5, edgecolor='none', pad=1))
         if ax_idx >= 2: ax.set_xlabel("Timp [s]")
         if ax_idx % 2 == 0: ax.set_ylabel("Frecventa [Hz]")
