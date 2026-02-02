@@ -857,31 +857,30 @@ Am rulat algoritmul \textbf{de zeci de ori}, ajustând parametri după fiecare r
 
 Implementarea este organizată în module Python:
 
-\subsubsection{src/cfar\_stft\_detector.py (1110 linii)}
+\subsubsection{src/cfar\_stft\_detector.py (392 linii)}
 
 Fișier principal: \href{https://github.com/dirgnic/Radar_Detection_STFT/blob/main/src/cfar_stft_detector.py}{\texttt{src/cfar\_stft\_detector.py}}
 
 Clase principale:
 
 \begin{itemize}
-    \item \textbf{CFAR2D} (liniile 100-320): Implementare GOCA-CFAR 2D
+    \item \textbf{CFAR2D}: Implementare GOCA-CFAR 2D și CA-CFAR vectorizat
         \begin{itemize}
-            \item \texttt{detect()}: versiune nested-loop clasică
-            \item \texttt{detect\_vectorized()}: versiune cu convoluție SciPy (rapid)
+            \item \texttt{detect()}: GOCA-CFAR cu 4 sub-regiuni (robust, algorithmic paper)
+            \item \texttt{detect\_vectorized()}: CA-CFAR rapid cu convoluție SciPy
         \end{itemize}
-    \item \textbf{DBSCAN} (liniile 350-500): Clustering custom în coordonate fizice (Hz, s)
+    \item \textbf{DBSCAN}: Clustering în coordonate fizice (Hz, s)
         \begin{itemize}
-            \item \texttt{fit()}: segmentare principală
-            \item \texttt{\_region\_query()}: interogare rază optimizată
+            \item \texttt{fit()}: segmentare puncte detectate
+            \item \texttt{\_region\_query()}: căutare vecini în rază eps
         \end{itemize}
-    \item \textbf{CFARSTFTDetector} (liniile 550-950): Pipeline complet CFAR-STFT
+    \item \textbf{CFARSTFTDetector}: Pipeline complet de detecție și reconstrucție
         \begin{itemize}
-            \item \texttt{compute\_stft()}: calcul STFT cu fereastră Gaussiană
-            \item \texttt{detect\_components()}: pipeline complet detecție
-            \item \texttt{reconstruct\_component()}: iSTFT cu mască
+            \item \texttt{compute\_stft()}: STFT cu fereastră Gaussiană
+            \item \texttt{detect\_components()}: pipeline STFT $\rightarrow$ CFAR $\rightarrow$ DBSCAN
+            \item \texttt{reconstruct\_component()}: reconstrucție prin iSTFT
             \item \texttt{get\_doppler\_info()}: analiză Doppler
         \end{itemize}
-    \item \textbf{AcousticCFARDetector}: Variantă pentru detecția acustică
 \end{itemize}
 
 \subsubsection{simulations/paper\_replication.py (1087 linii)}
