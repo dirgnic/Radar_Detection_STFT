@@ -125,6 +125,18 @@ results/*.json
 !docs/*.pdf
 !latex/*.pdf
 
+# Project-specific (keep repo slim)
+Ghid.pdf
+template/
+docs/00_START_HERE.txt
+docs/CHECKLIST_DELIVERABLES.txt
+docs/DELIVERY_SUMMARY.txt
+docs/GUIDE.txt
+docs/QUICKSTART.txt
+docs/README_COMPILATION_GUIDE.txt
+docs/documentation_template_blank.tex
+docs/presentation.tex
+
 # Haskell
 *.hi
 *.o
@@ -156,3 +168,7 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+
+# Project-specific ignores
+template/
+Ghid.pdf

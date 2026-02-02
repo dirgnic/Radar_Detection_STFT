@@ -1,58 +1,44 @@
 {
-  "-5": {
-    "rqf_mean": -5.198048553765982,
-    "rqf_std": 0.0856882591866453,
-    "detection_rate_mean": 0.4033333333333334,
-    "detection_rate_std": 0.15125401739384572,
-    "n_simulations": 100
-  },
-  "0": {
-    "rqf_mean": -2.3052662087198486,
-    "rqf_std": 0.1285817792396136,
-    "detection_rate_mean": 0.4533333333333334,
-    "detection_rate_std": 0.1916014381759989,
-    "n_simulations": 100
-  },
   "5": {
-    "rqf_mean": -0.5496840391103507,
-    "rqf_std": 0.17380992465663458,
-    "detection_rate_mean": 0.6499999999999999,
-    "detection_rate_std": 0.19075871903765995,
+    "rqf_mean": 6.4982508159691035,
+    "rqf_std": 0.35694854133609233,
+    "detection_rate_mean": 1.0,
+    "detection_rate_std": 0.0,
     "n_simulations": 100
   },
   "10": {
-    "rqf_mean": 0.21653548420276056,
-    "rqf_std": 0.020092565749654758,
-    "detection_rate_mean": 0.7200000000000003,
-    "detection_rate_std": 0.12220201853215575,
+    "rqf_mean": 7.796551704812727,
+    "rqf_std": 0.08965979680925695,
+    "detection_rate_mean": 1.0,
+    "detection_rate_std": 0.0,
     "n_simulations": 100
   },
   "15": {
-    "rqf_mean": 0.460498461419423,
-    "rqf_std": 0.004816635946046817,
-    "detection_rate_mean": 0.7233333333333334,
-    "detection_rate_std": 0.125210933139953,
+    "rqf_mean": 8.263358598477792,
+    "rqf_std": 0.045469237177501134,
+    "detection_rate_mean": 1.0,
+    "detection_rate_std": 0.0,
     "n_simulations": 100
   },
   "20": {
-    "rqf_mean": 0.54157526692086,
-    "rqf_std": 0.011763019068823904,
-    "detection_rate_mean": 0.7133333333333336,
-    "detection_rate_std": 0.1156623438193165,
+    "rqf_mean": 8.427792906914348,
+    "rqf_std": 0.028524833035229697,
+    "detection_rate_mean": 1.0,
+    "detection_rate_std": 0.0,
     "n_simulations": 100
   },
   "25": {
-    "rqf_mean": 0.5706844820586215,
-    "rqf_std": 0.015891074318869342,
-    "detection_rate_mean": 0.7333333333333336,
-    "detection_rate_std": 0.13333333333333333,
+    "rqf_mean": 8.486572598315798,
+    "rqf_std": 0.017999677854152168,
+    "detection_rate_mean": 1.0,
+    "detection_rate_std": 0.0,
     "n_simulations": 100
   },
   "30": {
-    "rqf_mean": 0.5839462960947182,
-    "rqf_std": 0.018642129402867132,
-    "detection_rate_mean": 0.7200000000000002,
-    "detection_rate_std": 0.12220201853215576,
+    "rqf_mean": 8.50625922383462,
+    "rqf_std": 0.00677612823309734,
+    "detection_rate_mean": 1.0,
+    "detection_rate_std": 0.0,
     "n_simulations": 100
   }
 }

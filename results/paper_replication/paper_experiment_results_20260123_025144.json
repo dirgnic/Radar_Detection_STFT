@@ -1,0 +1,38 @@
+{
+  "5": {
+    "rqf_mean": 6.551814049859308,
+    "rqf_std": 0.16437124273462264,
+    "detection_rate": 1.0,
+    "n_simulations": 100
+  },
+  "10": {
+    "rqf_mean": 7.697255439293758,
+    "rqf_std": 0.09115653275964342,
+    "detection_rate": 1.0,
+    "n_simulations": 100
+  },
+  "15": {
+    "rqf_mean": 8.140976869254619,
+    "rqf_std": 0.04575768883163653,
+    "detection_rate": 1.0,
+    "n_simulations": 100
+  },
+  "20": {
+    "rqf_mean": 8.30344227176942,
+    "rqf_std": 0.02185139036186567,
+    "detection_rate": 1.0,
+    "n_simulations": 100
+  },
+  "25": {
+    "rqf_mean": 8.355249488447253,
+    "rqf_std": 0.00525676850090828,
+    "detection_rate": 1.0,
+    "n_simulations": 100
+  },
+  "30": {
+    "rqf_mean": 8.371610710862136,
+    "rqf_std": 0.0029647294631698633,
+    "detection_rate": 1.0,
+    "n_simulations": 100
+  }
+}

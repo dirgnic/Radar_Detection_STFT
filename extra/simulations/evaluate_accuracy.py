@@ -95,8 +95,8 @@ def compute_snr(signal_data: np.ndarray, noise_data: np.ndarray) -> float:
     
     SNR = 10 * log10(P_signal / P_noise)
     """
-    signal_power = np.mean(signal_data ** 2)
-    noise_power = np.mean(noise_data ** 2)
+    signal_power = np.mean(np.abs(signal_data) ** 2)
+    noise_power = np.mean(np.abs(noise_data) ** 2)
     
     if noise_power < 1e-15:
         return 100.0
@@ -115,14 +115,19 @@ def add_awgn(signal_data: np.ndarray, snr_db: float) -> Tuple[np.ndarray, np.nda
     Returns:
         Tuple (semnal_cu_zgomot, zgomot)
     """
-    signal_power = np.mean(signal_data ** 2)
+    signal_power = np.mean(np.abs(signal_data) ** 2)
     
     # Calculam puterea zgomotului necesara
     snr_linear = 10 ** (snr_db / 10)
     noise_power = signal_power / snr_linear
     
-    # Generam zgomot
-    noise = np.sqrt(noise_power) * np.random.randn(len(signal_data))
+    # Generam zgomot (complex pentru semnale complexe)
+    if np.iscomplexobj(signal_data):
+        noise = np.sqrt(noise_power / 2) * (
+            np.random.randn(len(signal_data)) + 1j * np.random.randn(len(signal_data))
+        )
+    else:
+        noise = np.sqrt(noise_power) * np.random.randn(len(signal_data))
     
     noisy_signal = signal_data + noise
     return noisy_signal, noise
@@ -131,7 +136,8 @@ def add_awgn(signal_data: np.ndarray, snr_db: float) -> Tuple[np.ndarray, np.nda
 def generate_test_signal_paper(fs: int = 12500000, 
                                 duration_us: float = 30,
                                 alpha: float = 1.5e11,
-                                gamma: float = 2e50) -> np.ndarray:
+                                gamma: float = 2e50,
+                                return_complex: bool = True) -> np.ndarray:
     """
     Genereaza semnalul chirp neliniar din paper - ecuatia (14)
     
@@ -142,15 +148,16 @@ def generate_test_signal_paper(fs: int = 12500000,
         duration_us: Durata in microsecunde (30 us in paper)
         alpha: Chirp rate (1.5e11 Hz/s)
         gamma: Nonlinear FM term (2e50 Hz/s^9)
+        return_complex: Daca True, returneaza semnal complex
         
     Returns:
-        Semnal chirp neliniar complex
+        Semnal chirp neliniar (complex sau real)
     """
     N = int(fs * duration_us * 1e-6)
     n = np.arange(N)
     
-    # Centram in jurul N/2
-    n_centered = n - N/2
+    # Centram in jurul N/2 si scalam in secunde pentru unitati corecte
+    n_centered = (n - N / 2) / fs
     
     # Faza conform ecuatiei (14)
     phase = 2 * np.pi * (
@@ -165,7 +172,14 @@ def generate_test_signal_paper(fs: int = 12500000,
     window = signal.windows.tukey(N, alpha=0.1)
     signal_data = signal_data * window
     
+    if return_complex:
+        return signal_data.astype(np.complex64)
     return np.real(signal_data).astype(np.float32)
+
+
+def generate_paper_test(fs: int = 12500000) -> Tuple[np.ndarray, int]:
+    """Genereaza semnalul din paper (1 componenta)."""
+    return generate_test_signal_paper(fs=fs, return_complex=True), 1
 
 
 def generate_multicomponent_test(fs: int = 44100, 
@@ -202,12 +216,12 @@ def _batch_monte_carlo_run(args: Tuple) -> List[Tuple[float, float, float]]:
     Ruleaza un BATCH de simulari Monte Carlo (mai eficient decat per-simulare)
     
     Args:
-        args: Tuple (detector_params, snr_db, fs, batch_size, batch_id)
+        args: Tuple (detector_params, snr_db, fs, batch_size, batch_id, signal_generator)
         
     Returns:
         Lista de tuple (snr_db, rqf, detection_rate)
     """
-    detector_params, snr_db, fs, batch_size, batch_id = args
+    detector_params, snr_db, fs, batch_size, batch_id, signal_generator = args
     
     # Setam seed pentru reproducibilitate
     np.random.seed((abs(int(snr_db * 100)) + batch_id * 1000) % (2**32 - 1))
@@ -219,7 +233,10 @@ def _batch_monte_carlo_run(args: Tuple) -> List[Tuple[float, float, float]]:
     
     for i in range(batch_size):
         # Generam semnal de test
-        clean_signal, n_true_components = generate_multicomponent_test(fs, duration=0.3)
+        if signal_generator is None:
+            clean_signal, n_true_components = generate_multicomponent_test(fs, duration=0.3)
+        else:
+            clean_signal, n_true_components = signal_generator(fs)
         
         # Adaugam zgomot
         noisy_signal, noise = add_awgn(clean_signal, snr_db)
@@ -253,7 +270,8 @@ def monte_carlo_evaluation_batched(detector_params: Dict,
                                    snr_values: List[float] = None,
                                    fs: int = 44100,
                                    n_workers: int = None,
-                                   batch_size: int = 5) -> Dict:
+                                   batch_size: int = 5,
+                                   signal_generator=None) -> Dict:
     """
     Evaluare Monte Carlo cu BATCH PROCESSING optimizat
     
@@ -269,6 +287,7 @@ def monte_carlo_evaluation_batched(detector_params: Dict,
         fs: Sample rate
         n_workers: Numar de workers paraleli
         batch_size: Simulari per batch
+        signal_generator: Functie care returneaza (signal, n_true_components)
         
     Returns:
         Dictionar cu rezultatele medii pentru fiecare SNR
@@ -295,7 +314,7 @@ def monte_carlo_evaluation_batched(detector_params: Dict,
     
     for snr_db in snr_values:
         for batch_id in range(n_batches_per_snr):
-            all_batches.append((detector_params, snr_db, fs, batch_size, batch_id))
+            all_batches.append((detector_params, snr_db, fs, batch_size, batch_id, signal_generator))
     
     total_batches = len(all_batches)
     print(f"Total batch-uri: {total_batches}")
@@ -341,6 +360,40 @@ def monte_carlo_evaluation_batched(detector_params: Dict,
         print(f"   SNR {snr_db:+3.0f} dB: RQF={r['rqf_mean']:5.2f}dB, Det={r['detection_rate_mean']:.0%}")
     
     return results
+
+
+def _single_monte_carlo_run(args: Tuple) -> Tuple[float, float]:
+    """
+    Ruleaza o singura simulare Monte Carlo (compatibil cu ThreadPool).
+    args = (detector_params, snr_db, fs, seed)
+    """
+    detector_params, snr_db, fs, seed = args
+    np.random.seed(seed % (2**32 - 1))
+
+    detector = CFARSTFTDetector(**detector_params)
+
+    # Semnal de test (ramane audio multicomponent aici; paper signal se face in batched path)
+    clean_signal, n_true_components = generate_multicomponent_test(fs, duration=0.5)
+    noisy_signal, _ = add_awgn(clean_signal, snr_db)
+
+    try:
+        components = detector.detect_components(noisy_signal, n_components=n_true_components)
+        n_detected = len(components)
+
+        if n_detected > 0:
+            reconstructed = np.zeros_like(noisy_signal)
+            for comp in components:
+                rec = detector.reconstruct_component(comp)
+                min_len = min(len(reconstructed), len(rec))
+                reconstructed[:min_len] += rec[:min_len]
+            rqf = compute_rqf(clean_signal, reconstructed)
+        else:
+            rqf = -10.0
+
+        det_rate = min(n_detected / n_true_components, 1.0)
+        return rqf, det_rate
+    except Exception:
+        return -10.0, 0.0
 
 
 def monte_carlo_evaluation_parallel(detector_params: Dict,
@@ -432,7 +485,8 @@ def monte_carlo_evaluation_parallel(detector_params: Dict,
 def monte_carlo_evaluation(detector: CFARSTFTDetector,
                            n_simulations: int = 100,
                            snr_values: List[float] = None,
-                           fs: int = 44100) -> Dict:
+                           fs: int = 44100,
+                           signal_generator=None) -> Dict:
     """
     Evaluare Monte Carlo conform paper-ului Abratkiewicz (2022)
     
@@ -450,6 +504,7 @@ def monte_carlo_evaluation(detector: CFARSTFTDetector,
         n_simulations: Numar de simulari (100 in paper)
         snr_values: Lista de SNR-uri de testat
         fs: Sample rate
+        signal_generator: Functie care returneaza (signal, n_true_components)
         
     Returns:
         Dictionar cu rezultatele medii pentru fiecare SNR
@@ -475,7 +530,10 @@ def monte_carlo_evaluation(detector: CFARSTFTDetector,
         
         for sim in range(n_simulations):
             # Generam semnal de test
-            clean_signal, n_true_components = generate_multicomponent_test(fs, duration=0.5)
+            if signal_generator is None:
+                clean_signal, n_true_components = generate_multicomponent_test(fs, duration=0.5)
+            else:
+                clean_signal, n_true_components = signal_generator(fs)
             
             # Adaugam zgomot
             noisy_signal, noise = add_awgn(clean_signal, snr_db)
@@ -698,6 +756,71 @@ def evaluate_on_synthetic_dataset_parallel(audio_dir: str,
     return {'files': results, 'total_time_s': total_time, 'files_processed': len(results)}
 
 
+def evaluate_ipix_dataset(segment_duration_s: float = 1.0,
+                          n_segments: int = 50,
+                          detector_params: Dict = None) -> Dict:
+    """
+    Evalueaza CFAR-STFT pe dataset-ul radar IPIX (complex I/Q).
+    """
+    data_dir = PROJECT_ROOT / "data" / "ipix_radar"
+    results = {}
+
+    if detector_params is None:
+        detector_params = {
+            'sample_rate': 1000,
+            'window_size': 128,
+            'hop_size': 16,
+            'cfar_guard_cells': 4,
+            'cfar_training_cells': 8,
+            'cfar_pfa': 0.1,
+            'dbscan_eps': 3.0,
+            'dbscan_min_samples': 5,
+            'use_vectorized_cfar': True,
+            'mode': 'radar'
+        }
+
+    for dataset_name, filename in [("hi_sea_state", "hi.npy"), ("lo_sea_state", "lo.npy")]:
+        data_path = data_dir / filename
+        if not data_path.exists():
+            continue
+
+        data = np.load(data_path)
+        prf = detector_params.get('sample_rate', 1000)
+        segment_samples = int(segment_duration_s * prf)
+        max_segments = min(n_segments, len(data) // segment_samples)
+
+        detector = CFARSTFTDetector(**detector_params)
+        components_per_segment = []
+        energies = []
+
+        for i in range(max_segments):
+            start = i * segment_samples
+            end = start + segment_samples
+            segment = data[start:end]
+
+            try:
+                components = detector.detect_components(segment, n_components=5)
+                components_per_segment.append(len(components))
+                energies.append(sum(c.energy for c in components) if components else 0.0)
+            except Exception:
+                components_per_segment.append(0)
+                energies.append(0.0)
+
+        detection_segments = int(np.sum(np.array(components_per_segment) > 0))
+        results[dataset_name] = {
+            'file': filename,
+            'n_segments': max_segments,
+            'segment_duration_s': segment_duration_s,
+            'mean_components': float(np.mean(components_per_segment)) if components_per_segment else 0.0,
+            'std_components': float(np.std(components_per_segment)) if components_per_segment else 0.0,
+            'detection_segments': detection_segments,
+            'detection_rate': float(detection_segments / max_segments) if max_segments else 0.0,
+            'total_energy': float(np.sum(energies))
+        }
+
+    return results
+
+
 def evaluate_on_synthetic_dataset(audio_dir: str, 
                                    detector: CFARSTFTDetector) -> Dict:
     """
@@ -886,30 +1009,57 @@ Short-Time Fourier Transform. Sensors, 22(16), 5954.
 
 """
     
-    if dataset_results and 'files' in dataset_results:
+    files_list = None
+    if dataset_results:
+        files_list = dataset_results.get('all_files') or dataset_results.get('files')
+
+    if files_list:
         report += "| Fisier | Durata (s) | SNR Est. (dB) | Componente |\n"
         report += "|--------|------------|---------------|------------|\n"
         
-        for f in dataset_results['files']:
+        for f in files_list:
             report += f"| {f['file'][:25]} | {f['duration_s']:.2f} | {f['estimated_snr_db']:.1f} | {f['n_components_detected']} |\n"
+
+    if dataset_results and dataset_results.get('ipix'):
+        report += """
+
+## Rezultate IPIX (Radar)
+
+| Dataset | Segmente | Durata (s) | Comp. medii | Detectii (%) |
+|---------|----------|------------|-------------|--------------|
+"""
+        for name, r in dataset_results['ipix'].items():
+            report += (
+                f"| {name} | {r['n_segments']} | {r['segment_duration_s']:.1f} | "
+                f"{r['mean_components']:.2f} | {100 * r['detection_rate']:.1f}% |\n"
+            )
     
     report += """
 
 ## Concluzii
 
-Algoritmul CFAR-STFT demonstreaza:
-- Reconstructie de calitate superioara la SNR > 10 dB
-- Rata de detectie > 80% pentru SNR > 5 dB
-- Robustete la zgomot si modulatie de amplitudine
-- Independenta fata de tipul componentei (chirp, ton, puls)
+"""
+
+    if mc_results:
+        snr_max = max(mc_results.keys())
+        r_max = mc_results[snr_max]
+        report += (
+            f"- La SNR={snr_max:+.0f} dB: RQF mediu {r_max['rqf_mean']:.2f} dB, "
+            f"detection rate {r_max['detection_rate_mean']:.1%}.\n"
+        )
+        report += "- Rezultatele sunt sensibile la parametrii CFAR si la tipul semnalului de test.\n"
+    else:
+        report += "- Nu exista rezultate Monte Carlo disponibile pentru rezumat.\n"
+
+    report += """
 
 ## Comparatie cu Paper-ul Original
 
 | Metrica | Paper (Fig. 6) | Implementare |
 |---------|----------------|--------------|
 | RQF la SNR=30dB | ~35 dB | Dependent de parametri |
-| Avantaj vs VSS | +10 dB | Similar |
-| Avantaj vs Triangulare | +15 dB | Similar |
+| Avantaj vs VSS | +10 dB | Dependent de parametri |
+| Avantaj vs Triangulare | +15 dB | Dependent de parametri |
 
 """
     
@@ -949,36 +1099,68 @@ def main(parallel: bool = True, skip_audio: bool = False):
     output_dir = "results/evaluation"
     os.makedirs(output_dir, exist_ok=True)
     
-    # Parametrii detectorului conform paper-ului
-    detector_params = {
-        'sample_rate': 44100,
+    # Parametrii detectorului pentru experimentul paper (semnal complex, fs mare)
+    mc_detector_params = {
+        'sample_rate': 12500000,
         'window_size': 512,           # N_FFT = 512 din paper
-        'hop_size': 128,              
-        'cfar_guard_cells': 4,        
-        'cfar_training_cells': 8,     
-        'cfar_pfa': 0.1,              
+        'hop_size': 8,                # Pas mic pentru semnal scurt (N=375)
+        'cfar_guard_cells': 4,        # Redus pentru dimensiunea mica a TF
+        'cfar_training_cells': 8,     # Redus pentru dimensiunea mica a TF
+        'cfar_pfa': 0.4,              # Paper: P_f = 0.4
+        'dbscan_eps': 3.0,
+        'dbscan_min_samples': 3,
+        'use_vectorized_cfar': True,
+        'mode': 'complex'
+    }
+
+    # Parametrii detectorului pentru audio (44.1 kHz)
+    audio_detector_params = {
+        'sample_rate': 44100,
+        'window_size': 512,
+        'hop_size': 128,
+        'cfar_guard_cells': 4,
+        'cfar_training_cells': 8,
+        'cfar_pfa': 0.1,
         'dbscan_eps': 5.0,
         'dbscan_min_samples': 3
+    }
+
+    # Parametrii detectorului pentru IPIX radar (PRF=1000 Hz)
+    ipix_detector_params = {
+        'sample_rate': 1000,
+        'window_size': 128,
+        'hop_size': 16,
+        'cfar_guard_cells': 4,
+        'cfar_training_cells': 8,
+        'cfar_pfa': 0.1,
+        'dbscan_eps': 3.0,
+        'dbscan_min_samples': 5,
+        'use_vectorized_cfar': True,
+        'mode': 'radar'
     }
     
     total_start = time.time()
     
     # 1. Evaluare Monte Carlo - TOATE simularile conform paper-ului
-    print("\n[1/3] Evaluare Monte Carlo (batch processing)...")
+    print("\n[1/3] Evaluare Monte Carlo (paper signal, batch processing)...")
     if parallel:
         mc_results = monte_carlo_evaluation_batched(
-            detector_params,
+            mc_detector_params,
             n_simulations=100,         # 100 simulari conform paper-ului
-            snr_values=[-5, 0, 5, 10, 15, 20, 25, 30],  # Toate SNR-urile din paper
+            snr_values=[5, 10, 15, 20, 25, 30],  # SNR-uri din paper
             n_workers=N_WORKERS,
-            batch_size=10              # 10 simulari per batch pentru eficienta
+            batch_size=10,             # 10 simulari per batch pentru eficienta
+            fs=12500000,
+            signal_generator=generate_paper_test
         )
     else:
-        detector = CFARSTFTDetector(**detector_params)
+        detector = CFARSTFTDetector(**mc_detector_params)
         mc_results = monte_carlo_evaluation(
             detector,
             n_simulations=100,
-            snr_values=[-5, 0, 5, 10, 15, 20, 25, 30]
+            snr_values=[5, 10, 15, 20, 25, 30],
+            fs=12500000,
+            signal_generator=generate_paper_test
         )
     
     # Salvam rezultatele
@@ -1017,21 +1199,26 @@ def main(parallel: bool = True, skip_audio: bool = False):
             
             if parallel:
                 dir_results = evaluate_on_synthetic_dataset_parallel(
-                    audio_dir, detector_params, n_workers=N_WORKERS, max_files=max_files
+                    audio_dir, audio_detector_params, n_workers=N_WORKERS, max_files=max_files
                 )
             else:
-                detector = CFARSTFTDetector(**detector_params)
+                detector = CFARSTFTDetector(**audio_detector_params)
                 dir_results = evaluate_on_synthetic_dataset(audio_dir, detector)
             
             if dir_results and 'files' in dir_results:
                 dataset_results['by_source'][source_name] = dir_results
                 dataset_results['all_files'].extend(dir_results['files'])
     
+    # IPIX radar (complex I/Q)
+    ipix_results = evaluate_ipix_dataset(detector_params=ipix_detector_params)
+    if ipix_results:
+        dataset_results['ipix'] = ipix_results
+
     # Statistici totale
     total_files = len(dataset_results['all_files'])
     print(f"\n   TOTAL: {total_files} fișiere audio procesate")
 
-    if dataset_results['all_files']:
+    if dataset_results['all_files'] or dataset_results.get('ipix'):
         with open(os.path.join(output_dir, 'dataset_results.json'), 'w') as f:
             json.dump(dataset_results, f, indent=2, default=str)
     

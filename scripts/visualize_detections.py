@@ -20,6 +20,41 @@ from src.cfar_stft_detector import CFARSTFTDetector
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), '..', 'results', 'paper_replication')
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data', 'ipix_radar')
 
+# ============================================================================
+# PHYSICS CONSTANTS (IPIX X-Band Radar)
+# ============================================================================
+# Centralizing these constants prevents errors when adapting to different radars
+RADAR_FREQ_HZ = 9.39e9   # 9.39 GHz (IPIX X-band)
+SPEED_OF_LIGHT = 299792458  # m/s (exact)
+
+
+def doppler_to_velocity(freq_hz: float) -> float:
+    """
+    Convert Doppler frequency to radial velocity.
+    
+    v = f_d * c / (2 * f_RF)
+    
+    Positive velocity = approaching (positive Doppler)
+    Negative velocity = receding (negative Doppler)
+    
+    Args:
+        freq_hz: Doppler frequency in Hz
+        
+    Returns:
+        Radial velocity in m/s
+    """
+    return freq_hz * SPEED_OF_LIGHT / (2 * RADAR_FREQ_HZ)
+
+
+# ============================================================================
+# CFAR MODE CONFIGURATION
+# ============================================================================
+# Set to True for fast CA-CFAR (vectorized), False for GOCA (paper-faithful)
+USE_VECTORIZED_CFAR = False  # <-- CHANGE THIS TO SWITCH MODES
+
+# Filename suffix based on CFAR mode
+CFAR_SUFFIX = '_vectorized' if USE_VECTORIZED_CFAR else '_goca'
+
 
 def load_ipix_data():
     """Load IPIX radar data."""
@@ -55,7 +90,7 @@ def create_detection_visualization(data, name, prf=1000, segment_start=0, segmen
     print(f"Samples: {len(segment)}")
     print(f"{'='*60}")
     
-    # Create detector
+    # Create detector - using global CFAR mode setting
     detector = CFARSTFTDetector(
         sample_rate=prf,
         window_size=128,
@@ -65,7 +100,7 @@ def create_detection_visualization(data, name, prf=1000, segment_start=0, segmen
         cfar_pfa=0.1,
         dbscan_eps=3.0,
         dbscan_min_samples=5,
-        use_vectorized_cfar=True,
+        use_vectorized_cfar=USE_VECTORIZED_CFAR,
         mode='radar'
     )
     
@@ -108,8 +143,8 @@ def create_detection_visualization(data, name, prf=1000, segment_start=0, segmen
         # Energy from component
         energy = comp.energy
         
-        # Doppler to velocity
-        velocity = mean_freq * 3e8 / (2 * 9.39e9)  # c / (2 * f_RF)
+        # Doppler to velocity (using centralized physics constants)
+        velocity = doppler_to_velocity(mean_freq)
         
         cluster_info.append({
             'id': i,
@@ -357,7 +392,7 @@ def create_multi_segment_overview(data, name, prf=1000, n_segments=10):
     
     all_detections = []
     
-    # Create detector
+    # Create detector - using global CFAR mode setting
     detector = CFARSTFTDetector(
         sample_rate=prf,
         window_size=128,
@@ -367,7 +402,7 @@ def create_multi_segment_overview(data, name, prf=1000, n_segments=10):
         cfar_pfa=0.1,
         dbscan_eps=3.0,
         dbscan_min_samples=5,
-        use_vectorized_cfar=True,
+        use_vectorized_cfar=USE_VECTORIZED_CFAR,
         mode='radar'
     )
     
@@ -384,7 +419,7 @@ def create_multi_segment_overview(data, name, prf=1000, n_segments=10):
         for comp in components:
             mean_freq = comp.centroid_freq
             mean_time = comp.centroid_time + start
-            velocity = mean_freq * 3e8 / (2 * 9.39e9)
+            velocity = doppler_to_velocity(mean_freq)
             energy = comp.energy
             
             all_detections.append({
@@ -478,7 +513,7 @@ def main():
         segment_duration=2.0  # 2 second segment
     )
     
-    output_path1 = os.path.join(OUTPUT_DIR, 'detection_detail_high_sea.png')
+    output_path1 = os.path.join(OUTPUT_DIR, f'detection_detail_high_sea{CFAR_SUFFIX}.png')
     fig1.savefig(output_path1, dpi=150, bbox_inches='tight')
     print(f"\nSaved: {output_path1}")
     plt.close(fig1)
@@ -494,7 +529,7 @@ def main():
         segment_duration=2.0
     )
     
-    output_path2 = os.path.join(OUTPUT_DIR, 'detection_detail_low_sea.png')
+    output_path2 = os.path.join(OUTPUT_DIR, f'detection_detail_low_sea{CFAR_SUFFIX}.png')
     fig2.savefig(output_path2, dpi=150, bbox_inches='tight')
     print(f"\nSaved: {output_path2}")
     plt.close(fig2)
@@ -504,7 +539,7 @@ def main():
     # =========================================================================
     fig3, hi_all = create_multi_segment_overview(hi_data, "HIGH Sea State", n_segments=20)
     
-    output_path3 = os.path.join(OUTPUT_DIR, 'detection_overview_high_sea.png')
+    output_path3 = os.path.join(OUTPUT_DIR, f'detection_overview_high_sea{CFAR_SUFFIX}.png')
     fig3.savefig(output_path3, dpi=150, bbox_inches='tight')
     print(f"\nSaved: {output_path3}")
     plt.close(fig3)
@@ -514,7 +549,7 @@ def main():
     # =========================================================================
     fig4, lo_all = create_multi_segment_overview(lo_data, "LOW Sea State", n_segments=20)
     
-    output_path4 = os.path.join(OUTPUT_DIR, 'detection_overview_low_sea.png')
+    output_path4 = os.path.join(OUTPUT_DIR, f'detection_overview_low_sea{CFAR_SUFFIX}.png')
     fig4.savefig(output_path4, dpi=150, bbox_inches='tight')
     print(f"\nSaved: {output_path4}")
     plt.close(fig4)
@@ -535,11 +570,12 @@ def main():
     segment_start = 15.0
     segment_duration = 2.0
     
+    # Using global CFAR mode setting
     detector = CFARSTFTDetector(
         sample_rate=prf, window_size=128, hop_size=16,
         cfar_guard_cells=4, cfar_training_cells=8, cfar_pfa=0.1,
         dbscan_eps=3.0, dbscan_min_samples=5,
-        use_vectorized_cfar=True, mode='radar'
+        use_vectorized_cfar=USE_VECTORIZED_CFAR, mode='radar'
     )
     
     for idx, (data, name, row) in enumerate([
@@ -590,7 +626,7 @@ def main():
         ax3 = axes[row, 2]
         velocities = []
         for comp in components:
-            velocity = comp.centroid_freq * 3e8 / (2 * 9.39e9)
+            velocity = doppler_to_velocity(comp.centroid_freq)
             velocities.append(velocity)
         
         if velocities:
@@ -612,7 +648,7 @@ def main():
     
     plt.tight_layout()
     
-    output_path5 = os.path.join(OUTPUT_DIR, 'detection_comparison.png')
+    output_path5 = os.path.join(OUTPUT_DIR, f'detection_comparison{CFAR_SUFFIX}.png')
     fig5.savefig(output_path5, dpi=150, bbox_inches='tight')
     print(f"\nSaved: {output_path5}")
     plt.close(fig5)
@@ -621,14 +657,14 @@ def main():
     # Summary
     # =========================================================================
     print("\n" + "="*60)
-    print("VISUALIZATION COMPLETE")
+    print(f"VISUALIZATION COMPLETE (Mode: {'CA-CFAR' if USE_VECTORIZED_CFAR else 'GOCA'})")
     print("="*60)
-    print(f"\nOutput files:")
-    print(f"  1. detection_detail_high_sea.png - Detailed view of HIGH sea state")
-    print(f"  2. detection_detail_low_sea.png  - Detailed view of LOW sea state")
-    print(f"  3. detection_overview_high_sea.png - Multi-segment HIGH overview")
-    print(f"  4. detection_overview_low_sea.png  - Multi-segment LOW overview")
-    print(f"  5. detection_comparison.png - Side-by-side comparison")
+    print(f"\nOutput files (suffix: {CFAR_SUFFIX}):")
+    print(f"  1. detection_detail_high_sea{CFAR_SUFFIX}.png - Detailed view of HIGH sea state")
+    print(f"  2. detection_detail_low_sea{CFAR_SUFFIX}.png  - Detailed view of LOW sea state")
+    print(f"  3. detection_overview_high_sea{CFAR_SUFFIX}.png - Multi-segment HIGH overview")
+    print(f"  4. detection_overview_low_sea{CFAR_SUFFIX}.png  - Multi-segment LOW overview")
+    print(f"  5. detection_comparison{CFAR_SUFFIX}.png - Side-by-side comparison")
     print(f"\nAll files saved to: {OUTPUT_DIR}")
 
 

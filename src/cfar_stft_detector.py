@@ -160,8 +160,18 @@ class CFAR2D:
     
     def detect_vectorized(self, stft_magnitude: np.ndarray) -> np.ndarray:
         """
-        Versiune vectorizata (mai rapida) a detectiei CFAR
-        Foloseste convolutii 2D pentru calculul mediilor locale
+                Versiune vectorizata (mai rapida) a detectiei CFAR.
+
+                IMPORTANT:
+                - Aceasta varianta implementeaza practic un CA-CFAR 2D clasic,
+                    folosind o singura medie pe toate celulele de antrenament
+                    (obtinuta prin convolutie 2D cu un kernel rectangular).
+                - Nu implementeaza explicit schema GOCA (Greatest Of Cell Averaging)
+                    cu impartirea in 4 sub-regiuni si alegerea maximului dintre ele.
+
+                Pentru o implementare mai apropiata de GOCA, foloseste metoda
+                `detect` (non-vectorizata), care calculeaza explicit cele 4
+                sub-regiuni. Aceasta este mai lenta dar mai fidela paper-ului.
         """
         n_freq, n_time = stft_magnitude.shape
         
@@ -244,14 +254,19 @@ class DBSCAN:
         if len(points) == 0:
             return np.array([])
         
-        # Convertim la coordonate reale daca avem freqs/times
+        # Convertim la coordonate normalizate in UNITATI DE BIN
+        # Asta face eps interpretabil indiferent de fs (eps=3 = 3 bins)
         if freqs is not None and times is not None:
-            # Convertim indici la valori reale
+            # Calculam df si dt (rezolutia in frecventa si timp)
+            df = abs(freqs[1] - freqs[0]) if len(freqs) > 1 else 1.0
+            dt = abs(times[1] - times[0]) if len(times) > 1 else 1.0
+            
+            # Normalizam in unitati de bin (nu Hz/sec absolute)
             real_points = np.zeros_like(points, dtype=float)
             freq_indices = np.clip(points[:, 0].astype(int), 0, len(freqs)-1)
             time_indices = np.clip(points[:, 1].astype(int), 0, len(times)-1)
-            real_points[:, 0] = freqs[freq_indices] / self.freq_scale
-            real_points[:, 1] = times[time_indices] / self.time_scale
+            real_points[:, 0] = freqs[freq_indices] / df  # ~index bins frecventa
+            real_points[:, 1] = times[time_indices] / dt  # ~index bins timp
             points_to_use = real_points
         else:
             points_to_use = points.astype(float)
@@ -412,6 +427,12 @@ class CFARSTFTDetector:
         # Detectam tipul semnalului
         self._is_complex_input = np.iscomplexobj(signal_data)
         
+        # Padding pentru semnale scurte (ex: chirp N=375 < window_size=512)
+        # Necesar pentru a avea STFT stabil cu parametrii din paper
+        original_length = len(signal_data)
+        if len(signal_data) < self.window_size:
+            signal_data = np.pad(signal_data, (0, self.window_size - len(signal_data)))
+        
         # Determinam modul de procesare
         if self.mode == 'auto':
             use_twosided = self._is_complex_input
@@ -420,8 +441,9 @@ class CFARSTFTDetector:
         else:  # 'real'
             use_twosided = False
         
-        # Fereastra Gaussiana (conform paper, sigma = N/6)
-        sigma = self.window_size / 6  # Standard deviation
+        # Fereastra Gaussiana - paper specifica sigma = 8 (bins)
+        # IMPORTANT: Aceasta fereastra trebuie salvata si reutilizata identic la ISTFT!
+        sigma = 8  # Paper: sigma = 8 bins
         window = signal.windows.gaussian(self.window_size, sigma)
         
         if use_twosided:
@@ -433,6 +455,7 @@ class CFARSTFTDetector:
                 window=window,
                 nperseg=self.window_size,
                 noverlap=self.window_size - self.hop_size,
+                nfft=self.window_size,  # Paper: FFT size = 512
                 return_onesided=False  # Two-sided pentru complex
             )
             
@@ -449,27 +472,108 @@ class CFARSTFTDetector:
                 window=window,
                 nperseg=self.window_size,
                 noverlap=self.window_size - self.hop_size,
+                nfft=self.window_size,  # Paper: FFT size = 512
                 return_onesided=True
             )
         
         magnitude = np.abs(Zxx)
+        # Paper defineste spectrograma ca PUTERE: S_x^h[m,k] = |F_x^h[m,k]|^2
+        # CFAR trebuie sa ruleze pe power, nu pe magnitude
+        power = magnitude ** 2
         
         self.stft_result = {
             'complex': Zxx,
             'magnitude': magnitude,
+            'power': power,  # Adaugat pentru CFAR conform paper
             'phase': np.angle(Zxx),
             'freqs': freqs,
             'times': times,
             'is_twosided': use_twosided,
-            'is_complex_input': self._is_complex_input
+            'is_complex_input': self._is_complex_input,
+            # SALVAM parametrii STFT pentru a-i reutiliza IDENTIC la ISTFT
+            'window': window,
+            'nperseg': self.window_size,
+            'noverlap': self.window_size - self.hop_size,
+            'nfft': self.window_size,
+            'original_length': original_length  # lungimea originala inainte de padding
         }
         
-        # Calculam harta de zerouri (pentru mask expansion)
-        # Zerouri = puncte cu magnitudine sub percentila zero_threshold_percentile
-        threshold = np.percentile(magnitude, self.zero_threshold_percentile)
-        self.zero_map = magnitude < threshold
+        # Calculam harta de zerouri pe POWER (nu magnitude)
+        # Paper: extindere masti catre zerourile spectrogramei
+        # Folosim percentila pe power + detectie minime locale
+        power_db = 10 * np.log10(power + 1e-12)
+        threshold_db = np.percentile(power_db, self.zero_threshold_percentile)
+        self.zero_map = power_db < threshold_db
         
         return Zxx, freqs, times
+
+    def _ensure_cfar_fits(self, n_freq: int, n_time: int) -> bool:
+        """
+        Ajusteaza automat dimensiunile CFAR pentru a incapea in grila TF.
+        Returneaza False daca nu se poate face detectie CFAR valida.
+        """
+        max_total_v = (n_freq - 1) // 2
+        max_total_h = (n_time - 1) // 2
+
+        if max_total_v < 1 or max_total_h < 1:
+            warnings.warn(
+                "STFT grid too small for CFAR window; skipping detection.",
+                RuntimeWarning
+            )
+            return False
+
+        current_guard_v = self.cfar.N_G_v
+        current_guard_h = self.cfar.N_G_h
+        current_train_v = self.cfar.N_T_v
+        current_train_h = self.cfar.N_T_h
+
+        total_v = current_guard_v + current_train_v
+        total_h = current_guard_h + current_train_h
+
+        if total_v <= max_total_v and total_h <= max_total_h:
+            return True
+
+        # Reduce training cells first, then guard if needed
+        new_total_v = min(total_v, max_total_v)
+        new_total_h = min(total_h, max_total_h)
+
+        new_train_v = max(0, new_total_v - current_guard_v)
+        new_train_h = max(0, new_total_h - current_guard_h)
+
+        if new_train_v == 0 and current_guard_v > new_total_v:
+            new_guard_v = new_total_v
+        else:
+            new_guard_v = current_guard_v
+
+        if new_train_h == 0 and current_guard_h > new_total_h:
+            new_guard_h = new_total_h
+        else:
+            new_guard_h = current_guard_h
+
+        # If still invalid, clamp guard to fit
+        new_guard_v = min(new_guard_v, max_total_v)
+        new_guard_h = min(new_guard_h, max_total_h)
+        new_train_v = max(0, min(new_train_v, max_total_v - new_guard_v))
+        new_train_h = max(0, min(new_train_h, max_total_h - new_guard_h))
+
+        if (new_guard_v, new_train_v, new_guard_h, new_train_h) != (
+            current_guard_v, current_train_v, current_guard_h, current_train_h
+        ):
+            warnings.warn(
+                "CFAR window resized to fit STFT grid: "
+                f"guard_v={new_guard_v}, train_v={new_train_v}, "
+                f"guard_h={new_guard_h}, train_h={new_train_h}.",
+                RuntimeWarning
+            )
+            self.cfar = CFAR2D(
+                guard_cells_v=new_guard_v,
+                guard_cells_h=new_guard_h,
+                training_cells_v=new_train_v,
+                training_cells_h=new_train_h,
+                pfa=self.cfar.pfa
+            )
+
+        return True
     
     def _expand_mask_geodesic(self, mask: np.ndarray, max_iterations: int = 10) -> np.ndarray:
         """
@@ -531,14 +635,20 @@ class CFARSTFTDetector:
         """
         # Pasul 1: Calculam STFT
         Zxx, freqs, times = self.compute_stft(signal_data)
-        magnitude = np.abs(Zxx)
+        # Paper: CFAR se aplica pe PUTERE |STFT|^2, nu pe magnitudine
+        power = self.stft_result['power']
+        magnitude = self.stft_result['magnitude']
         
-        # Pasul 2: Detectie GOCA-CFAR 2D
-        print("   [CFAR] Aplicare detectie adaptiva 2D...")
+        # Pasul 2: Validam dimensiunile CFAR pentru grila TF
+        if not self._ensure_cfar_fits(power.shape[0], power.shape[1]):
+            return []
+
+        # Pasul 3: Detectie GOCA-CFAR 2D pe POWER (conform paper)
+        print("   [CFAR] Aplicare detectie adaptiva 2D pe power...")
         if self.use_vectorized_cfar:
-            self.detection_map = self.cfar.detect_vectorized(magnitude)
+            self.detection_map = self.cfar.detect_vectorized(power)
         else:
-            self.detection_map = self.cfar.detect(magnitude)
+            self.detection_map = self.cfar.detect(power)
         
         n_detected = np.sum(self.detection_map)
         print(f"   [CFAR] Puncte detectate: {n_detected}")
@@ -546,7 +656,7 @@ class CFARSTFTDetector:
         if n_detected == 0:
             return []
         
-        # Pasul 3: Clustering DBSCAN cu coordonate reale (Hz, sec)
+        # Pasul 4: Clustering DBSCAN cu coordonate reale (Hz, sec)
         print("   [DBSCAN] Grupare puncte detectate...")
         detected_points = np.array(np.where(self.detection_map)).T  # (N, 2)
         
@@ -556,7 +666,7 @@ class CFARSTFTDetector:
         
         print(f"   [DBSCAN] Clustere gasite: {len(unique_labels)}")
         
-        # Pasul 4: Cream componente cu masti extinse geodesic
+        # Pasul 5: Cream componente cu masti extinse geodesic
         components = []
         
         for cluster_id in unique_labels:
@@ -605,24 +715,58 @@ class CFARSTFTDetector:
         
         return components
     
-    def reconstruct_component(self, component: DetectedComponent) -> np.ndarray:
+    def reconstruct_component(self, component: DetectedComponent, 
+                              use_power_threshold: bool = True,
+                              threshold_db: float = -20.0) -> np.ndarray:
         """
         Reconstruieste un semnal din componenta folosind STFT inversa
         
         Pasul 7 din algoritm (Eq. 12-13): Aplicam masca si ISTFT
         
-        Pentru semnale complexe: pastreaza informatia de faza (Doppler)
-        Pentru semnale reale: returneaza parte reala
+        IMPORTANT: Folosim o masca extinsa bazata pe pragul de putere
+        pentru a captura mai multa energie din semnal. Masca binara
+        din CFAR/DBSCAN este prea restrictiva si pierde energie.
         
-        Optional: netezeste masca inainte pentru a reduce artefactele
+        Args:
+            component: Componenta detectata
+            use_power_threshold: Daca True, extinde masca folosind prag de putere
+                                 Daca False, foloseste masca CFAR/DBSCAN directa
+            threshold_db: Pragul in dB sub peak pentru extinderea mastii
+                         (implicit -20 dB = include tot ce e > 1% din peak)
+        
+        Returns:
+            Semnalul reconstruit
         """
         if self.stft_result is None:
             raise ValueError("Trebuie sa rulezi detect_components mai intai")
         
-        # Optional: smoothing pe masca pentru a reduce "musical noise"
-        # Aplicam morphological closing pentru a umple gaurile mici
-        smoothed_mask = ndimage.binary_closing(component.mask, iterations=1)
-        smoothed_mask = ndimage.binary_opening(smoothed_mask, iterations=1)
+        # Obtinem masca de baza
+        base_mask = component.mask.copy()
+        
+        if use_power_threshold:
+            # METODA IMBUNATATITA: Extindem masca bazat pe pragul de putere
+            # Aceasta captureaza mai multa energie din semnal
+            power = self.stft_result['power']
+            power_db = 10 * np.log10(power / (power.max() + 1e-10) + 1e-10)
+            
+            # Masca extinsa: include toate punctele peste prag
+            power_mask = power_db > threshold_db
+            
+            # Combinam cu masca CFAR pentru a pastra doar regiunea detectata
+            # (nu includem zgomot din alte regiuni ale spectrului)
+            # Expandam masca CFAR pentru a o face mai conectata
+            expanded_cfar = ndimage.binary_dilation(base_mask, iterations=5)
+            
+            # Intersectam cu masca de putere
+            final_mask = power_mask & expanded_cfar
+            
+            # Daca masca extinsa e prea mica, fallback la power_mask simplu
+            if np.sum(final_mask) < np.sum(base_mask):
+                final_mask = power_mask
+        else:
+            # Metoda veche: morphological smoothing pe masca CFAR
+            final_mask = ndimage.binary_closing(base_mask, iterations=1)
+            final_mask = ndimage.binary_opening(final_mask, iterations=1)
         
         # Aplicam masca pe STFT complex
         masked_stft = self.stft_result['complex'].copy()
@@ -630,23 +774,32 @@ class CFARSTFTDetector:
         # Daca e two-sided, trebuie sa inversam fftshift inainte de ISTFT
         if self.stft_result.get('is_twosided', False):
             # Inverse fftshift pe masca si STFT
-            smoothed_mask = np.fft.ifftshift(smoothed_mask, axes=0)
+            final_mask = np.fft.ifftshift(final_mask, axes=0)
             masked_stft = np.fft.ifftshift(masked_stft, axes=0)
         
-        masked_stft = masked_stft * smoothed_mask
+        masked_stft = masked_stft * final_mask
         
-        # ISTFT pentru reconstructie
-        sigma = self.window_size / 6
-        window = signal.windows.gaussian(self.window_size, sigma)
+        # ISTFT pentru reconstructie - OBLIGATORIU sa folosim ACEEASI fereastra ca la STFT!
+        # Altfel reconstrucția e distorsionata si RQF scade masiv
+        window = self.stft_result['window']
+        nperseg = self.stft_result['nperseg']
+        noverlap = self.stft_result['noverlap']
+        nfft = self.stft_result['nfft']
+        original_length = self.stft_result.get('original_length', None)
         
         _, reconstructed = signal.istft(
             masked_stft,
             fs=self.fs,
             window=window,
-            nperseg=self.window_size,
-            noverlap=self.window_size - self.hop_size,
+            nperseg=nperseg,
+            noverlap=noverlap,
+            nfft=nfft,
             input_onesided=not self.stft_result.get('is_twosided', False)
         )
+        
+        # Trunchiem la lungimea originala (daca am facut padding)
+        if original_length is not None and len(reconstructed) > original_length:
+            reconstructed = reconstructed[:original_length]
         
         # Pentru semnale care au fost reale, returnam partea reala
         if not self.stft_result.get('is_complex_input', False):

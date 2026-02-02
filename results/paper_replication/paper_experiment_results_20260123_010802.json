@@ -1,0 +1,38 @@
+{
+  "5": {
+    "rqf_mean": -10.0,
+    "rqf_std": 0.0,
+    "detection_rate": 0.0,
+    "n_simulations": 100
+  },
+  "10": {
+    "rqf_mean": -10.0,
+    "rqf_std": 0.0,
+    "detection_rate": 0.0,
+    "n_simulations": 100
+  },
+  "15": {
+    "rqf_mean": -10.0,
+    "rqf_std": 0.0,
+    "detection_rate": 0.0,
+    "n_simulations": 100
+  },
+  "20": {
+    "rqf_mean": -10.0,
+    "rqf_std": 0.0,
+    "detection_rate": 0.0,
+    "n_simulations": 100
+  },
+  "25": {
+    "rqf_mean": -10.0,
+    "rqf_std": 0.0,
+    "detection_rate": 0.0,
+    "n_simulations": 100
+  },
+  "30": {
+    "rqf_mean": -10.0,
+    "rqf_std": 0.0,
+    "detection_rate": 0.0,
+    "n_simulations": 100
+  }
+}
