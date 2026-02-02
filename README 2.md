@@ -1,4 +1,4 @@
-# CFAR-STFT Radar Detection and IPIX Experiments
+# Analiza semnalelor radar în prezența ecourilor marine (sea clutter)
 ## Proiect de Prelucrarea Semnalelor
 
 ### Descriere
@@ -99,9 +99,10 @@ Aceste scripturi folosesc direct datele complex I/Q și modul `radar` al `CFARST
 - Reproducerea experimentelor de tip RQF vs SNR pe semnal sintetic;
 - Vizualizări detaliate ale datelor IPIX și ale locațiilor de detecție în planul timp–frecvență.
 
-### Autor
+### Autori
 
-Ingrid Corobana – An III
+Ingrid Corobana – An III  
+Teodora-Ioana Nae – An III
 
 ### Data
 

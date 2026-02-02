@@ -27,11 +27,12 @@
 
 \title{\textbf{Diagrame Pipeline CFAR-STFT}\\[0.5em]
 \large Detecția semnalelor radar în sea clutter}
-\author{Ingrid Corobana \and Teodora-Ioana Nae}
-\date{Ianuarie 2026}
+\author{}
+\date{}
 
 \begin{document}
 \maketitle
+\thispagestyle{empty}
 
 %% =============================================================================
 %% DIAGRAMA 1: Pipeline-ul principal
@@ -191,7 +192,7 @@
 \node[box, fill=green!20, right=of ipix] (detector2) {CFAR-STFT\\mode='radar'};
 \node[param, below=0.5cm of detector2] (det2_params) {Two-sided STFT\\Doppler $\pm 500$ Hz};
 
-\node[box, fill=cyan!20, right=of detector2] (doppler) {Analiză Doppler\\Viteză radială};
+\node[box, fill=cyan!20, right=of detector2] (doppler) {Analiză Doppler\\$v_r = \frac{f_d \cdot c}{2 f_{RF}}$};
 
 \draw[arrow] (ipix) -- (detector2);
 \draw[arrow] (detector2) -- (doppler);
@@ -265,12 +266,13 @@
     \draw[dbscangreen, thick, dashed] plot[smooth cycle] coordinates {(0.1,0.3) (0.3,0.2) (2.9,2.4) (2.9,2.8) (2.5,2.8) (0.1,0.8)};
 \end{scope}
 
+% Arrow down from Cluster C1 to extended mask
+\draw[-{Stealth[length=4mm]}, thick] (11.5,0) -- (11.5,-1);
+\node[right] at (11.5,-0.4) {\scriptsize Geodesic};
+\node[right] at (11.5,-0.65) {\scriptsize Dilation};
+
 % Second row
 \begin{scope}[yshift=-4.5cm]
-
-% Arrow down from box 3
-\draw[-{Stealth[length=4mm]}, thick] (11.5,-0.5) -- (11.5,-1);
-\node[right] at (11.5,-0.75) {\scriptsize Mask Exp.};
 
 % Spectrogram box 4 - Expanded mask
 \begin{scope}[xshift=10cm]
@@ -319,7 +321,7 @@
 \end{scope}
 
 \end{tikzpicture}
-\caption{Fluxul de procesare în planul timp-frecvență: spectrograma de putere $\rightarrow$ detecții CFAR $\rightarrow$ clustering DBSCAN $\rightarrow$ extindere mască $\rightarrow$ mascare STFT $\rightarrow$ reconstrucție iSTFT.}
+\caption{Fluxul de procesare în planul timp-frecvență: spectrograma $\rightarrow$ detecții CFAR $\rightarrow$ clustering DBSCAN $\rightarrow$ extindere mască $\rightarrow$ mascare STFT $\rightarrow$ reconstrucție iSTFT.}
 \label{fig:tf_processing}
 \end{figure}
 
@@ -390,25 +392,26 @@
 \centering
 \begin{tikzpicture}
 \node[draw, rounded corners, fill=gray!5] {
-\begin{tabular}{l|c|c|c}
-\textbf{Parametru} & \textbf{Paper} & \textbf{Implementare} & \textbf{Status} \\
+\begin{tabular}{l|c|c|p{4cm}}
+\textbf{Parametru} & \textbf{Paper} & \textbf{Nostru} & \textbf{Note} \\
 \hline
-Rata de eșantionare $f_s$ & 12.5 MSa/s & 12.5 MSa/s & \textcolor{green!60!black}{\checkmark} \\
-Durata semnalului $T$ & 30 µs & 30 µs & \textcolor{green!60!black}{\checkmark} \\
-Dimensiune FFT & 512 & 512 & \textcolor{green!60!black}{\checkmark} \\
-Fereastră & Gaussiană & Gaussiană & \textcolor{green!60!black}{\checkmark} \\
-$\sigma$ fereastră & 8 bins & 8 bins & \textcolor{green!60!black}{\checkmark} \\
-$N_G$ (guard cells) & 16 & 16 & \textcolor{green!60!black}{\checkmark} \\
-$N_T$ (training cells) & 16 & 16 & \textcolor{green!60!black}{\checkmark} \\
-$P_f$ (prob. alarmă falsă) & 0.4 & 0.4 & \textcolor{green!60!black}{\checkmark} \\
-Tip CFAR & GOCA & GOCA & \textcolor{green!60!black}{\checkmark} \\
-STFT input & $|F|^2$ (power) & $|F|^2$ (power) & \textcolor{green!60!black}{\checkmark} \\
-Semnal & Complex & Complex & \textcolor{green!60!black}{\checkmark} \\
-Simulări MC & 100 & 100 & \textcolor{green!60!black}{\checkmark} \\
+Rata de eșantionare $f_s$ & 12.5 MSa/s & 12.5 MSa/s & Identic pentru chirp sintetic \\
+Durata semnalului $T$ & 30 µs & 30 µs & Identic pentru chirp sintetic \\
+Dimensiune FFT $N_{fft}$ & 512 & 512 & Identic \\
+Fereastră & Gaussiană & Gaussiană & $\sigma = 8$ bins (identic) \\
+Hop $H$ & N/A & 256 & 50\% overlap (standard) \\
+$N_G$ (guard cells) & 16 & 16 & Identic \\
+$N_T$ (training cells) & 16 & 16 & Identic \\
+$P_f$ (prob. alarmă falsă) & 0.4 & 0.4 & Identic \\
+Tip CFAR & GOCA & GOCA/CA & GOCA (exact) sau CA (vectorizat) \\
+DBSCAN $\varepsilon$ & N/A & 3-5 Hz/s & Calibrat pentru semnale \\
+DBSCAN min\_samples & N/A & 3-5 & Calibrat pentru zgomot \\
+Simulări Monte Carlo & 100 & 100 & Identic \\
+\textbf{Extra features} & -- & Vectorizare & Opțiune pentru viteză \\
 \end{tabular}
 };
 \end{tikzpicture}
-\caption{Comparație între parametrii din paper (Abratkiewicz 2022) și implementarea curentă.}
+\caption{Comparație între parametrii din paper (Abratkiewicz 2022) și implementarea curentă. Parametrii principali sunt identici; adăugări: vectorizare CFAR opțională, calibrare DBSCAN pentru diverse semnale.}
 \label{fig:params}
 \end{figure}
 

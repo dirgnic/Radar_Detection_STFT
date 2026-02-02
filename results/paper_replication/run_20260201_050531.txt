@@ -1,0 +1,30 @@
+Run started: 2026-02-01 05:05:31
+Log file: /Users/ingridcorobana/Desktop/An_III/final_projs/PS_proj/results/paper_replication/run_20260201_050531.txt
+
+======================================================================
+CFAR-STFT PAPER REPLICATION
+Abratkiewicz, K. (2022). Sensors, 22(16), 5954.
+======================================================================
+
+[0/4] Running STFT/iSTFT roundtrip diagnostic...
+
+======================================================================
+DIAGNOSTIC: STFT → iSTFT Roundtrip Test (All-Ones Mask)
+======================================================================
+If RQF < 50 dB, the STFT/iSTFT pair is broken.
+Expected: RQF > 100 dB (near-perfect reconstruction)
+
+[TEST 1] Complex signal (paper chirp)...
+   Complex signal: RQF = 140.87 dB ✓ PASS
+
+[TEST 2] Real signal...
+   Real signal: RQF = 139.13 dB ✓ PASS
+
+[TEST 3] COLA (Constant Overlap-Add) compliance...
+   Window COLA compliant: False ✗ WARNING: Window may cause reconstruction artifacts
+   → Consider using a Hann window or adjusting hop_size
+
+----------------------------------------------------------------------
+DIAGNOSTIC PASSED: STFT/iSTFT roundtrip is working correctly.
+If RQF is still low in experiments, the issue is in masking/geodesic dilation.
+----------------------------------------------------------------------

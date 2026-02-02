@@ -1,32 +1,26 @@
 {
-  "all_files": [
-    {
-      "file": "drone_quadcopter.wav",
-      "duration_s": 5.0,
-      "analyzed_duration_s": 5.0,
-      "sample_rate": 44100,
-      "estimated_snr_db": "18.213066",
-      "n_components_detected": 0,
-      "detection_time_s": 1.3577349185943604,
-      "components": []
-    }
-  ],
-  "by_source": {
-    "synthetic": {
-      "files": [
-        {
-          "file": "drone_quadcopter.wav",
-          "duration_s": 5.0,
-          "analyzed_duration_s": 5.0,
-          "sample_rate": 44100,
-          "estimated_snr_db": "18.213066",
-          "n_components_detected": 0,
-          "detection_time_s": 1.3577349185943604,
-          "components": []
-        }
-      ],
-      "total_time_s": 5942.082801103592,
-      "files_processed": 1
+  "all_files": [],
+  "by_source": {},
+  "ipix": {
+    "hi_sea_state": {
+      "file": "hi.npy",
+      "n_segments": 50,
+      "segment_duration_s": 1.0,
+      "mean_components": 5.0,
+      "std_components": 0.0,
+      "detection_segments": 50,
+      "detection_rate": 1.0,
+      "total_energy": 8886.930382584065
+    },
+    "lo_sea_state": {
+      "file": "lo.npy",
+      "n_segments": 50,
+      "segment_duration_s": 1.0,
+      "mean_components": 5.0,
+      "std_components": 0.0,
+      "detection_segments": 50,
+      "detection_rate": 1.0,
+      "total_energy": 13929.324794678294
     }
   }
 }

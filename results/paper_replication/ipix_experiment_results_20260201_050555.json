@@ -1,0 +1,30 @@
+{
+  "hi_sea_state": {
+    "n_segments": 50,
+    "segment_duration_s": 1.0,
+    "mean_components": 14.14,
+    "std_components": 2.068912757948,
+    "total_energy": 8969.499333281197,
+    "detection_segments": 50,
+    "processing_mode": "complex_iq",
+    "doppler_stats": {
+      "n_detections_with_doppler": 50,
+      "mean_doppler_freq_hz": 74.24622234402912,
+      "mean_velocity_mps": 1.1860418904796983
+    }
+  },
+  "lo_sea_state": {
+    "n_segments": 50,
+    "segment_duration_s": 1.0,
+    "mean_components": 11.78,
+    "std_components": 2.5635132143213153,
+    "total_energy": 13929.58455213735,
+    "detection_segments": 50,
+    "processing_mode": "complex_iq",
+    "doppler_stats": {
+      "n_detections_with_doppler": 50,
+      "mean_doppler_freq_hz": -21.152981696848297,
+      "mean_velocity_mps": -0.3379070558601965
+    }
+  }
+}
