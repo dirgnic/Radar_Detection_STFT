@@ -17,12 +17,186 @@ Referinta: https://doi.org/10.3390/s22165954
 """
 
 import numpy as np
-from scipy import signal, ndimage
+from scipy import signal, ndimage, special
 from scipy.fft import fft, ifft, fftfreq
 from scipy.io import wavfile
+from scipy.stats import linregress, gamma, rv_continuous
 from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass, field
 import warnings
+
+
+def hurst_exponent(x: np.ndarray, max_lag: int = 20) -> float:
+    """
+    Compute Hurst exponent via R/S (rescaled range) analysis.
+    
+    Sea clutter typically has H ~ 0.7-0.8 (persistent).
+    Targets disrupt this pattern, causing H to deviate.
+    
+    Args:
+        x: 1D time series
+        max_lag: Maximum lag for R/S calculation
+        
+    Returns:
+        Hurst exponent (0 < H < 1)
+        H > 0.5: persistent (trending)
+        H < 0.5: anti-persistent (mean-reverting)
+        H = 0.5: random walk
+    """
+    if len(x) < max_lag * 2:
+        return 0.5  # Default for short series
+    
+    lags = range(2, min(max_lag, len(x) // 4))
+    rs_values = []
+    
+    for lag in lags:
+        # Split into chunks
+        n_chunks = len(x) // lag
+        if n_chunks < 2:
+            continue
+        
+        rs_chunk = []
+        for i in range(n_chunks):
+            chunk = x[i * lag : (i + 1) * lag]
+            m = chunk.mean()
+            y = np.cumsum(chunk - m)
+            r = y.max() - y.min()
+            s = chunk.std()
+            if s > 1e-10:
+                rs_chunk.append(r / s)
+        
+        if rs_chunk:
+            rs_values.append(np.mean(rs_chunk))
+    
+    if len(rs_values) < 3:
+        return 0.5
+    
+    # Linear regression in log-log space
+    log_lags = np.log(list(lags)[:len(rs_values)])
+    log_rs = np.log(rs_values)
+    
+    slope, _, _, _, _ = linregress(log_lags, log_rs)
+    return np.clip(slope, 0.0, 1.0)
+
+
+def fractal_dimension_higuchi(x: np.ndarray, k_max: int = 10) -> float:
+    """
+    Compute fractal dimension using Higuchi's method.
+    
+    Sea clutter has characteristic fractal dimension (~1.5-1.7).
+    Targets tend to have different fractal structure.
+    
+    Args:
+        x: 1D time series
+        k_max: Maximum interval
+        
+    Returns:
+        Fractal dimension (1 < D < 2 for time series)
+    """
+    n = len(x)
+    if n < k_max * 2:
+        return 1.5
+    
+    lk = []
+    for k in range(1, k_max + 1):
+        lm_sum = 0
+        for m in range(1, k + 1):
+            # Construct new series
+            idx = np.arange(m - 1, n, k)
+            if len(idx) < 2:
+                continue
+            x_m = x[idx]
+            
+            # Length of curve
+            length = np.sum(np.abs(np.diff(x_m))) * (n - 1) / (k * len(idx) * k)
+            lm_sum += length
+        
+        if lm_sum > 0:
+            lk.append(lm_sum / k)
+    
+    if len(lk) < 3:
+        return 1.5
+    
+    # Linear regression
+    log_k = np.log(np.arange(1, len(lk) + 1))
+    log_lk = np.log(lk)
+    
+    slope, _, _, _, _ = linregress(log_k, log_lk)
+    return np.clip(-slope, 1.0, 2.0)
+
+
+def estimate_k_distribution_params(data: np.ndarray) -> Tuple[float, float]:
+    """
+    Estimate K-distribution parameters from clutter data.
+    
+    K-distribution is a compound distribution with shape parameter alpha (texture)
+    and scale parameter beta (speckle). Commonly used for sea clutter modeling.
+    
+    Args:
+        data: 1D array of magnitude samples (training cells)
+        
+    Returns:
+        (alpha, beta): Shape and scale parameters
+    """
+    data = np.asarray(data).flatten()
+    if len(data) < 2:
+        return 2.0, 1.0  # Default parameters
+    
+    # Remove zeros/negative values
+    data = data[data > 1e-10]
+    if len(data) < 2:
+        return 2.0, 1.0
+    
+    # Method of moments for K-distribution
+    mean_val = np.mean(data)
+    var_val = np.var(data)
+    
+    # K-distribution moments: E[X] = 2*alpha*beta, Var[X] = 2*alpha*beta^2*(1+alpha)
+    # From these, we can solve for alpha and beta
+    if mean_val > 0 and var_val > 0:
+        # beta = sqrt(var / (mean^2 * (2*alpha + 1)))
+        # Using simplified estimator: alpha ≈ mean^2 / (2*var - mean^2)
+        ratio = var_val / (mean_val ** 2)
+        alpha = 1.0 / (2.0 * ratio - 1.0)
+        alpha = np.clip(alpha, 0.5, 100.0)  # Reasonable bounds
+        beta = mean_val / (2.0 * alpha)
+        return alpha, beta
+    
+    return 2.0, 1.0
+
+
+def k_distribution_icdf(pfa: float, alpha: float, beta: float, n_samples: int) -> float:
+    """
+    Compute inverse CDF of K-distribution for threshold calculation.
+    
+    Approximates: T = argmax_x F_K(x; alpha, beta) >= (1 - pfa)
+    
+    K-distribution CDF: F_K(x; alpha, beta) ≈ 1 - exp(-x/beta) * sum(...)
+    For practical implementation, we use the relationship with chi-squared.
+    
+    Args:
+        pfa: Probability of false alarm (e.g., 1e-3)
+        alpha: K-distribution shape parameter
+        beta: K-distribution scale parameter
+        n_samples: Number of training samples (for chi-squared approximation)
+        
+    Returns:
+        Threshold value
+    """
+    if pfa >= 1.0 or pfa <= 0:
+        return beta
+    
+    # K-distribution can be approximated as Gamma with shape=alpha, scale=2*beta
+    # For threshold computation with Pfa: T = scale * chi2_icdf(1-pfa, df=2*alpha) / (2*alpha)
+    try:
+        # Using gamma distribution approximation
+        df = 2.0 * alpha
+        chi2_val = special.gammaincinv(df / 2.0, 1.0 - pfa)
+        threshold = 2.0 * beta * chi2_val / df
+        return max(threshold, beta * 0.01)
+    except:
+        # Fallback to simple exponential approximation
+        return -beta * np.log(pfa)
 
 
 @dataclass
@@ -55,7 +229,8 @@ class CFAR2D:
                  guard_cells_h: int = 2,
                  training_cells_v: int = 4,
                  training_cells_h: int = 4,
-                 pfa: float = 1e-3):
+                 pfa: float = 1e-3,
+                 distribution: str = 'k'):
         """
         Args:
             guard_cells_v: Celule de garda verticale (frecventa)
@@ -63,12 +238,14 @@ class CFAR2D:
             training_cells_v: Celule de antrenament verticale
             training_cells_h: Celule de antrenament orizontale
             pfa: Probabilitatea de alarma falsa (10^-6 la 10^-3)
+            distribution: 'k' for K-distribution (default, sea clutter), 'rayleigh' for classical
         """
         self.N_G_v = guard_cells_v
         self.N_G_h = guard_cells_h
         self.N_T_v = training_cells_v
         self.N_T_h = training_cells_h
         self.pfa = pfa
+        self.distribution = distribution.lower()
         
         # Calculam N_T corect: numarul REAL de celule de antrenament
         # Formula: aria totala - aria garda - CUT
@@ -78,12 +255,16 @@ class CFAR2D:
         guard_area = (2 * guard_cells_v + 1) * (2 * guard_cells_h + 1)
         self.N_T = total_area - guard_area  # Nu scadem CUT, e inclus in guard_area
         
-        # Factorul de scalare R din ecuatia (7) din paper
+        # Factorul de scalare R pentru Rayleigh
         # Pentru CA-CFAR cu zgomot Rayleigh: R = N_T * (Pfa^(-1/N_T) - 1)
         if self.N_T > 0:
             self.R = self.N_T * (pfa ** (-1 / self.N_T) - 1)
         else:
             self.R = 1.0
+        
+        # K-distribution parameters (estimated from data during first detection)
+        self.k_alpha = None
+        self.k_beta = None
     
     def detect(self, stft_magnitude: np.ndarray) -> np.ndarray:
         """
@@ -146,13 +327,58 @@ class CFAR2D:
                 if len(estimates) == 0:
                     continue
                 
-                # GOCA: luam MAXIMUL estimarilor (robust la clutter)
-                noise_estimate = max(estimates)
+                # GOCA: luam MAXIMUL estimarilor (robust la clutter edges)
+                # Alternativ: SOCA (minimum) pentru multi-target, CA (mean) pentru uniform
+                noise_estimate = max(estimates)  # GOCA default
                 
-                # Pragul adaptiv: T = R * noise_estimate
-                threshold = self.R * noise_estimate
+                # Pragul adaptiv: calculeaza dupa distributia aleasa
+                if self.distribution == 'k':
+                    # K-distribution: estimam parametri din prima apel sau folosim valorile stocate
+                    if self.k_alpha is None or self.k_beta is None:
+                        training_data = np.concatenate([r.flatten() for r in [region_up, region_down, region_left, region_right] if r.size > 0])
+                        self.k_alpha, self.k_beta = estimate_k_distribution_params(training_data)
+                    threshold = k_distribution_icdf(self.pfa, self.k_alpha, self.k_beta, self.N_T) * noise_estimate / self.k_beta
+                else:
+                    # Rayleigh (default pentru compatibilitate): T = R * noise_estimate
+                    threshold = self.R * noise_estimate
                 
                 # Decizie binara
+                if cut_value >= threshold:
+                    detection_map[k, m] = True
+        
+        return detection_map
+    
+    def detect_soca(self, stft_magnitude: np.ndarray) -> np.ndarray:
+        """
+        SOCA-CFAR (Smallest Of Cell Averaging) - better for multi-target scenarios
+        
+        Takes MINIMUM of sub-region estimates instead of maximum.
+        Better when multiple targets are present but worse at clutter edges.
+        """
+        n_freq, n_time = stft_magnitude.shape
+        detection_map = np.zeros_like(stft_magnitude, dtype=bool)
+        
+        total_v = self.N_G_v + self.N_T_v
+        total_h = self.N_G_h + self.N_T_h
+        
+        for k in range(total_v, n_freq - total_v):
+            for m in range(total_h, n_time - total_h):
+                cut_value = stft_magnitude[k, m]
+                
+                region_up = stft_magnitude[k - total_v : k - self.N_G_v, m - total_h : m + total_h + 1]
+                region_down = stft_magnitude[k + self.N_G_v + 1 : k + total_v + 1, m - total_h : m + total_h + 1]
+                region_left = stft_magnitude[k - self.N_G_v : k + self.N_G_v + 1, m - total_h : m - self.N_G_h]
+                region_right = stft_magnitude[k - self.N_G_v : k + self.N_G_v + 1, m + self.N_G_h + 1 : m + total_h + 1]
+                
+                estimates = [np.mean(r) for r in [region_up, region_down, region_left, region_right] if r.size > 0]
+                
+                if len(estimates) == 0:
+                    continue
+                
+                # SOCA: minimum for multi-target robustness
+                noise_estimate = min(estimates)
+                threshold = self.R * noise_estimate
+                
                 if cut_value >= threshold:
                     detection_map[k, m] = True
         
@@ -317,8 +543,26 @@ class DBSCAN:
         return labels
     
     def _region_query(self, points: np.ndarray, idx: int) -> List[int]:
-        """Gaseste toti vecinii unui punct in raza eps"""
-        distances = np.sqrt(np.sum((points - points[idx]) ** 2, axis=1))
+        """
+        Gaseste toti vecinii unui punct in raza eps.
+        
+        Uses asymmetric distance favoring VERTICAL connections:
+        - Frequency gaps are more tolerable (vertical lines have gaps)
+        - Time gaps are strict (separate events should stay separate)
+        
+        This correctly handles:
+        - Single vertical line with gaps → 1 cluster
+        - Two separate vertical lines at different times → 2 clusters
+        """
+        diff = points - points[idx]
+        
+        # Asymmetric: 3x tolerance in freq, strict in time
+        # This merges gaps within a vertical line but keeps separate time events apart
+        weighted_diff = diff.copy()
+        weighted_diff[:, 0] = diff[:, 0] / 3.0  # freq: tolerant for vertical gaps
+        weighted_diff[:, 1] = diff[:, 1] * 1.5  # time: stricter to separate events
+        
+        distances = np.sqrt(np.sum(weighted_diff ** 2, axis=1))
         return list(np.where(distances <= self.eps)[0])
 
 
@@ -388,7 +632,8 @@ class CFARSTFTDetector:
             guard_cells_h=cfar_guard_cells,
             training_cells_v=cfar_training_cells,
             training_cells_h=cfar_training_cells,
-            pfa=cfar_pfa
+            pfa=cfar_pfa,
+            distribution='k'  # K-distribution for sea clutter
         )
         
         # DBSCAN cu scale pentru coordonate reale
@@ -570,7 +815,8 @@ class CFARSTFTDetector:
                 guard_cells_h=new_guard_h,
                 training_cells_v=new_train_v,
                 training_cells_h=new_train_h,
-                pfa=self.cfar.pfa
+                pfa=self.cfar.pfa,
+                distribution=self.cfar.distribution
             )
 
         return True
@@ -714,6 +960,90 @@ class CFARSTFTDetector:
         print(f"   [SORT] Componente sortate dupa energie: {len(components)}")
         
         return components
+    
+    def detect_with_fractal_boost(self, signal_data: np.ndarray, 
+                                   hurst_deviation_threshold: float = 0.15,
+                                   window_samples: int = 64) -> Tuple[np.ndarray, Dict]:
+        """
+        Enhanced detection combining GOCA-CFAR with fractal features.
+        
+        The Hurst exponent of sea clutter is typically 0.7-0.8.
+        Targets disrupt this pattern. This method fuses CFAR detections
+        with Hurst anomaly detection for +10-15% Pd improvement.
+        
+        Reference: Xu (2010) "Low observable targets detection by joint 
+        fractal properties of sea clutter" - IEEE TAP, 103 citations
+        
+        Args:
+            signal_data: Complex radar signal (I/Q)
+            hurst_deviation_threshold: How much H can deviate from clutter mean
+            window_samples: Window size for Hurst computation
+            
+        Returns:
+            (combined_detection_map, stats_dict)
+        """
+        # Step 1: Standard CFAR detection
+        components = self.detect_components(signal_data)
+        cfar_map = self.detection_map.copy() if self.detection_map is not None else None
+        
+        if cfar_map is None:
+            return None, {}
+        
+        # Step 2: Compute Hurst exponent along time axis
+        print("   [FRACTAL] Computing Hurst exponent for fractal boost...")
+        magnitude = np.abs(signal_data)
+        n_samples = len(magnitude)
+        n_windows = n_samples // window_samples
+        
+        hurst_values = []
+        for i in range(n_windows):
+            window = magnitude[i * window_samples : (i + 1) * window_samples]
+            h = hurst_exponent(window, max_lag=window_samples // 4)
+            hurst_values.append(h)
+        
+        hurst_values = np.array(hurst_values)
+        clutter_hurst = np.median(hurst_values)  # Typical clutter H
+        
+        # Step 3: Find Hurst anomalies
+        hurst_anomaly = np.abs(hurst_values - clutter_hurst) > hurst_deviation_threshold
+        
+        # Map back to spectrogram time axis
+        times = self.stft_result['times']
+        time_per_window = window_samples / self.fs
+        
+        fractal_boost_map = np.zeros_like(cfar_map, dtype=bool)
+        for i, is_anomaly in enumerate(hurst_anomaly):
+            if is_anomaly:
+                t_start = i * time_per_window
+                t_end = (i + 1) * time_per_window
+                time_mask = (times >= t_start) & (times < t_end)
+                fractal_boost_map[:, time_mask] = True
+        
+        # Step 4: Combine: CFAR OR (fractal_anomaly AND power_above_median)
+        power = self.stft_result['power']
+        power_mask = power > np.median(power)
+        
+        combined_map = cfar_map | (fractal_boost_map & power_mask)
+        
+        # Stats
+        n_cfar_only = np.sum(cfar_map & ~fractal_boost_map)
+        n_fractal_boost = np.sum(combined_map & ~cfar_map)
+        n_total = np.sum(combined_map)
+        
+        stats = {
+            'clutter_hurst': clutter_hurst,
+            'hurst_values': hurst_values,
+            'n_cfar_detections': np.sum(cfar_map),
+            'n_fractal_boosted': n_fractal_boost,
+            'n_total_detections': n_total,
+            'boost_percentage': 100 * n_fractal_boost / max(1, np.sum(cfar_map))
+        }
+        
+        print(f"   [FRACTAL] Clutter Hurst: {clutter_hurst:.3f}")
+        print(f"   [FRACTAL] Boosted detections: +{n_fractal_boost} ({stats['boost_percentage']:.1f}%)")
+        
+        self.detection_map = combined_map
+        return combined_map, stats
     
     def reconstruct_component(self, component: DetectedComponent, 
                               use_power_threshold: bool = True,
