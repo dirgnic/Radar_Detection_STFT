@@ -392,26 +392,29 @@
 \centering
 \begin{tikzpicture}
 \node[draw, rounded corners, fill=gray!5] {
-\begin{tabular}{l|c|c|p{4cm}}
-\textbf{Parametru} & \textbf{Paper} & \textbf{Nostru} & \textbf{Note} \\
+\begin{tabular}{l|c|c|c}
+\textbf{Parametru} & \textbf{Paper} & \textbf{Exp. Sintetic} & \textbf{Exp. IPIX (real)} \\
 \hline
-Rata de eșantionare $f_s$ & 12.5 MSa/s & 12.5 MSa/s & Identic pentru chirp sintetic \\
-Durata semnalului $T$ & 30 µs & 30 µs & Identic pentru chirp sintetic \\
-Dimensiune FFT $N_{fft}$ & 512 & 512 & Identic \\
-Fereastră & Gaussiană & Gaussiană & $\sigma = 8$ bins (identic) \\
-Hop $H$ & N/A & 256 & 50\% overlap (standard) \\
-$N_G$ (guard cells) & 16 & 16 & Identic \\
-$N_T$ (training cells) & 16 & 16 & Identic \\
-$P_f$ (prob. alarmă falsă) & 0.4 & 0.4 & Identic \\
-Tip CFAR & GOCA & GOCA/CA & GOCA (exact) sau CA (vectorizat) \\
-DBSCAN $\varepsilon$ & N/A & 3-5 Hz/s & Calibrat pentru semnale \\
-DBSCAN min\_samples & N/A & 3-5 & Calibrat pentru zgomot \\
-Simulări Monte Carlo & 100 & 100 & Identic \\
-\textbf{Extra features} & -- & Vectorizare & Opțiune pentru viteză \\
+Rata de eșantionare $f_s$ & 12.5 MSa/s & 12.5 MSa/s & 1000 Hz (PRF) \\
+Durata semnalului $T$ & 30 µs & 30 µs & 60 s \\
+Dimensiune FFT $N_{fft}$ & 512 & 512 & 256 \\
+Fereastră STFT & Gaussiană $\sigma=8$ & Gaussiană $\sigma=8$ & Gaussiană $\sigma=8$ \\
+Hop $H$ & -- & 256 (50\%) & 32 (87.5\%) \\
+$N_G$ (guard cells) & 16 & 16 & 3 \\
+$N_T$ (training cells) & 16 & 16 & 12 \\
+$P_f$ (prob. alarmă falsă) & 0.4 & 0.4 & 0.001 \\
+Tip CFAR & GOCA & GOCA & GOCA \\
+Model clutter & Gaussiană & Gaussiană & K-distribution \\
+DBSCAN $\varepsilon$ & -- & 8 & 8 \\
+DBSCAN min\_samples & -- & 5 & 5 \\
+DBSCAN freq\_scale & -- & 1.0 & 3.0 (asimetric) \\
+DC mask bins & -- & -- & $\pm 8$ \\
+Min Doppler BW & -- & -- & 3 Hz \\
+Simulări Monte Carlo & 100 & 100 & -- \\
 \end{tabular}
 };
 \end{tikzpicture}
-\caption{Comparație între parametrii din paper (Abratkiewicz 2022) și implementarea curentă. Parametrii principali sunt identici; adăugări: vectorizare CFAR opțională, calibrare DBSCAN pentru diverse semnale.}
+\caption{Comparație între parametrii din paper (Abratkiewicz 2022), experimentul pe date sintetice și experimentul pe date IPIX reale. Pentru sea clutter am adaptat: $P_f$ mai mic, K-distribution, DBSCAN asimetric, mascare DC.}
 \label{fig:params}
 \end{figure}
 

@@ -1,505 +1,371 @@
-% ============================================================================
-%  CFAR-STFT RADAR TARGET DETECTION IN SEA CLUTTER
-%  English Documentation - Implementation Story
-%  Based on: Abratkiewicz (2022) Signal Processing
-% ============================================================================
+% Documentation following FMI template (report, Times, 1.5 line spacing)
+% Authors: Ingrid Corobana, Teodora Nae
+% Recommended compilation: xelatex documentation_en.tex
 
-\documentclass[11pt,a4paper]{report}
-\usepackage[utf8]{inputenc}
-\usepackage[english]{babel}
+\documentclass[12pt,a4paper]{report}
+
+% Font and language support (FMI template)
+\usepackage{fontspec}
 \usepackage{times}
-\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{polyglossia}
+\setdefaultlanguage{english}
+\setotherlanguages{romanian}
+
+\usepackage{geometry}
+\usepackage{setspace}
+\doublespacing
+\geometry{margin=2.5cm}
+\usepackage{fancyhdr}
 \usepackage{graphicx}
-\usepackage{float}
-\usepackage{booktabs}
-\usepackage{hyperref}
-\usepackage{xcolor}
-\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
-\usepackage{geometry}
-\usepackage{fancyhdr}
-\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
 \usepackage{tikz}
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{pdfpages} % to include pipeline_diagrams.pdf
 
-\geometry{margin=2.5cm}
+\geometry{
+    a4paper,
+    left=2.5cm,
+    right=2.5cm,
+    top=2.5cm,
+    bottom=2.5cm,
+    headheight=14pt
+}
 
-% Header/Footer
 \pagestyle{fancy}
+\setlength{\headheight}{14.49998pt}
 \fancyhf{}
-\fancyhead[L]{\leftmark}
-\fancyhead[R]{CFAR-STFT Sea Radar Detection}
-\fancyfoot[C]{\thepage}
+\fancyhead[L]{\textit{CFAR-STFT Detection}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
 
-% Code listing style
+\definecolor{stftblue}{RGB}{66, 133, 244}
+\definecolor{cfarorange}{RGB}{255, 152, 0}
+\definecolor{dbscangreen}{RGB}{76, 175, 80}
+\definecolor{darkblue}{RGB}{25, 50, 100}
+\definecolor{codegray}{RGB}{240, 240, 240}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=darkblue,
+    urlcolor=stftblue,
+    bookmarksnumbered=true,
+    pdftitle={CFAR-STFT Documentation}
+}
+
 \lstset{
     language=Python,
-    basicstyle=\ttfamily\footnotesize,
-    keywordstyle=\color{blue}\bfseries,
-    commentstyle=\color{green!60!black},
-    stringstyle=\color{orange},
-    numbers=left,
-    numberstyle=\tiny\color{gray},
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{codegray},
     breaklines=true,
-    frame=single,
-    backgroundcolor=\color{gray!10}
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    identifierstyle=\color{darkblue},
+    numbers=left,
+    numberstyle=\tiny\color{gray}
 }
 
-% Custom colors
-\definecolor{cfar_orange}{RGB}{255, 152, 0}
-\definecolor{stft_blue}{RGB}{66, 133, 244}
-\definecolor{target_green}{RGB}{76, 175, 80}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
 
 \title{
-    \vspace{-1cm}
-    \textbf{\LARGE CFAR-STFT Target Detection in Maritime Radar}\\[1em]
-    \Large Implementing Adaptive Detection for Sea Clutter Environments\\[0.5em]
-    \large Based on Abratkiewicz et al. (2022)\\[2em]
-    \normalsize \textit{Signal Processing Course Project}
+    \textbf{\Large Analysis of Radar Signals in the Presence of Sea Clutter}\\[0.5em]
+    \normalsize CFAR-STFT Approach with Experiments on Synthetic and Real Data
 }
-\author{Implementation Documentation}
-\date{February 2026}
+
+\author{
+    Ingrid Corobana \quad Teodora Nae\\
+    \small \textit{Signal Processing Course}\\[0.3em]
+    \href{https://github.com/dirgnic/Radar_Detection_STFT}{\texttt{github.com/dirgnic/Radar\_Detection\_STFT}}\footnote{Repository: \url{https://github.com/dirgnic/Radar\_Detection\_STFT}}
+}
+
+\date{\today}
 
 \begin{document}
+
 \maketitle
+
+\begin{abstract}
+This document presents a complete implementation of the CFAR-STFT algorithm proposed by Abratkiewicz (2022) for detection and recovery of radar signals in the presence of noise and clutter. The algorithm combines Short-Time Fourier Transform (STFT), adaptive 2D CFAR detection, DBSCAN clustering, and geodesic dilation to reconstruct radar signals with high fidelity.
+
+The implementation is validated on synthetic data (nonlinear chirp) and real data (IPIX radar sea-clutter). On the controlled synthetic signal, the algorithm detects the component of interest in all 100 Monte Carlo runs (100\% detection rate). The Reconstruction Quality Factor (RQF) varies from 7.28 dB at SNR=5dB to 29.17 dB at SNR=30dB.
+
+\textbf{Key contribution}: We adapted the algorithm for real sea clutter by implementing \textbf{K-distribution thresholds} (instead of Gaussian), \textbf{fractal/Hurst exponent boost} for weak target detection, and \textbf{asymmetric DBSCAN} for vertical line clustering.
+
+Source code available at: \url{https://github.com/dirgnic/Radar_Detection_STFT}
+\end{abstract}
+
+\newpage
 \tableofcontents
 \newpage
 
-% ============================================================================
-\chapter{Introduction}
-% ============================================================================
+% Pipeline diagrams section
+\section*{Pipeline Diagrams CFAR-STFT}
+\addcontentsline{toc}{section}{Pipeline Diagrams CFAR-STFT}
 
-\section{Problem Statement}
+\includepdf[pages=1,scale=0.95,offset=0 -20]{pipeline_diagrams.pdf}
+\newpage
+\includepdf[pages=2-,scale=0.95,offset=0 -20]{pipeline_diagrams.pdf}
 
-Maritime radar detection presents a unique challenge: distinguishing small floating targets from the complex, ever-changing background of sea surface reflections (sea clutter). Unlike land-based radar where clutter is relatively static, sea clutter exhibits:
+\newpage
 
-\begin{itemize}
-    \item \textbf{Non-Gaussian statistics:} Heavy-tailed amplitude distributions
-    \item \textbf{Temporal correlation:} Wave motion creates structured patterns
-    \item \textbf{Doppler spread:} Moving waves produce spectral broadening
-    \item \textbf{Spiky behavior:} Occasional large returns from wave crests
-\end{itemize}
+\section{Introduction}
 
-This project implements the CFAR-STFT algorithm proposed by Abratkiewicz et al. (2022) for extracting target signals from sea clutter using time-frequency analysis.
+Reliable detection of radar signals in the presence of noise and clutter remains a central problem in modern radar systems. Traditional adaptive detection methods (CFAR, constant false-alarm rate) are limited to the frequency domain, losing important temporal information.
 
-\section{Reference Paper}
+Abratkiewicz (2022)\footnote{Abratkiewicz, K. (2022). Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform. Sensors, 22(16), 5954.} proposes an innovative approach that exploits the time-frequency structure of radar signals to improve both detection and recovery of signal components.
 
-\textbf{K. Abratkiewicz, P. Samczyński}: ``Signal Processing 195 (2022) 108491''
+\subsection{Project Objectives}
 
-The paper proposes a 5-stage pipeline:
+This project pursues the following objectives:
+
 \begin{enumerate}
-    \item Short-Time Fourier Transform (STFT) with Gaussian window
-    \item 2D CFAR detection in the time-frequency plane
-    \item DBSCAN clustering of detected bins
-    \item Geodesic mask expansion
-    \item Inverse STFT for signal reconstruction
+    \item Complete implementation of the CFAR-STFT algorithm in Python
+    \item Validation on synthetic data (nonlinear chirp according to Eq. 14 from the paper)
+    \item Testing on real data (IPIX radar with complex sea-clutter)
+    \item Doppler analysis for object velocity estimation
+    \item Detailed documentation and complete reproducibility
+    \item Results validation: detection and reconstruction
+    \item \textbf{Adaptation for sea clutter}: K-distribution, fractal boost, asymmetric DBSCAN
 \end{enumerate}
 
-\section{Our Implementation Focus}
+\subsection{Document Structure}
 
-We focus specifically on \textbf{detection} (stages 1-3) rather than reconstruction, with emphasis on:
+The document is organized as follows:
+
 \begin{itemize}
-    \item Real IPIX radar data from maritime environments
-    \item Adapting CFAR for heavy-tailed sea clutter statistics
-    \item Visual validation through animated spectrograms
-    \item Parameter tuning for optimal detection probability
+    \item \textbf{Section 2}: Theoretical foundations and essential mathematical formulas
+    \item \textbf{Section 3}: Detailed description of all algorithm steps with pseudocode
+    \item \textbf{Section 4}: Complete experimental results and analysis
+    \item \textbf{Section 5}: Sea clutter adaptations (K-distribution, Hurst, asymmetric DBSCAN)
+    \item \textbf{Section 6}: Implementation details with code references
+    \item \textbf{Section 7}: Conclusions and future perspectives
 \end{itemize}
 
-% ============================================================================
-\chapter{Theoretical Foundations}
-% ============================================================================
+\section{Theoretical Foundations}
 
-\section{Short-Time Fourier Transform (STFT)}
+\subsection{Short-Time Fourier Transform (STFT)}
 
-The STFT provides a time-frequency representation of the signal:
+STFT is the foundation of the algorithm, providing a time-frequency representation of the signal:
 
 \begin{equation}
-    F_x^h[m, k] = \sum_{n=-\infty}^{\infty} x[n] \cdot h[n - mH] \cdot e^{-j\frac{2\pi kn}{N}}
-    \label{eq:stft}
+X(k,n) = \sum_{m=0}^{N-1} x(m) \cdot w(m - nH) \cdot e^{-j2\pi km/N}
 \end{equation}
 
 where:
 \begin{itemize}
-    \item $x[n]$ = input signal (complex I/Q samples)
-    \item $h[n]$ = analysis window (Gaussian with $\sigma = 8$ samples)
-    \item $m$ = time frame index
-    \item $k$ = frequency bin index
-    \item $H$ = hop size (frame advance)
-    \item $N$ = FFT length (window size)
+    \item $x(m)$ --- input signal
+    \item $w(m)$ --- window (Gaussian, $\sigma=8$ bins)
+    \item $n$ --- time index (hop between windows)
+    \item $k$ --- frequency index
+    \item $N$ --- FFT length (512 samples)
+    \item $H$ --- hop between windows (256 samples, 50\% overlap)
 \end{itemize}
 
-The spectrogram (power spectral density) is:
+\textbf{Gaussian Window}: 
 \begin{equation}
-    S[m, k] = |F_x^h[m, k]|^2
+w(m) = e^{-m^2/(2\sigma^2)} \quad \text{with} \quad \sigma=8 \text{ bins}
 \end{equation}
 
-\subsection{Window Selection}
+The Gaussian window is chosen for its spectral leakage minimization properties.
 
-The Gaussian window provides optimal time-frequency localization (minimum Heisenberg uncertainty):
+\subsection{Adaptive CFAR 2D Detection}
+
+CFAR (Constant False-Alarm Rate) is a classic method that adapts the detection threshold locally based on the local noise level:
+
 \begin{equation}
-    h[n] = \exp\left(-\frac{n^2}{2\sigma^2}\right)
+H(k,n) = \begin{cases}
+1 & \text{if } |X(k,n)|^2 > \lambda \cdot \mathcal{N}(k,n) \\
+0 & \text{otherwise}
+\end{cases}
 \end{equation}
 
-In our implementation: \texttt{window\_size = 256}, \texttt{hop\_size = 32} (75\% overlap).
+where $\mathcal{N}(k,n)$ is an estimate of the local noise level. We use \textbf{GOCA-CFAR} (Greatest-Of Cell Averaging), which divides training cells into 4 quadrants and takes the maximum for robustness to non-homogeneous clutter.
 
-\section{Constant False Alarm Rate (CFAR) Detection}
+\subsection{DBSCAN Clustering}
 
-CFAR maintains a constant probability of false alarm $P_{fa}$ by adapting the detection threshold to local background statistics.
+After CFAR, detected points are grouped using DBSCAN density-based clustering. We use an \textbf{asymmetric distance metric} with 3x tolerance in the frequency direction to properly cluster vertical target signatures (see Section~\ref{sec:adaptations}).
 
-\subsection{Basic CFAR Principle}
+\section{Complete Algorithm Description}
 
-For each ``cell under test'' (CUT), the algorithm:
-\begin{enumerate}
-    \item Estimates background power from surrounding ``training cells''
-    \item Excludes nearby ``guard cells'' to prevent target self-masking
-    \item Computes threshold: $T = \alpha \cdot \hat{Z}$ where $\hat{Z}$ is the estimated background
-    \item Declares detection if $S[m,k] > T$
-\end{enumerate}
+\subsection{General Pipeline}
 
-\subsection{2D CFAR Cell Structure}
-
-In the time-frequency plane, CFAR uses a 2D sliding window:
-
-\begin{figure}[H]
-\centering
-\begin{tikzpicture}[scale=0.5]
-    % Training cells
-    \fill[cfar_orange!40] (-4,-4) rectangle (4,4);
-    % Guard cells
-    \fill[yellow!50] (-2,-2) rectangle (2,2);
-    % CUT
-    \fill[red!70] (-0.5,-0.5) rectangle (0.5,0.5);
-    
-    % Labels
-    \node at (0,0) {\scriptsize\textbf{CUT}};
-    \node at (0,1.2) {\scriptsize Guard};
-    \node at (0,3) {\scriptsize Training};
-    
-    % Axes
-    \draw[->] (5,-4) -- (5,4) node[right] {Freq};
-    \draw[->] (-4,-5) -- (4,-5) node[right] {Time};
-\end{tikzpicture}
-\caption{2D CFAR cell structure: CUT (red), guard cells (yellow), training cells (orange).}
-\label{fig:cfar_cells}
-\end{figure}
-
-Our parameters: \texttt{cfar\_guard = 3}, \texttt{cfar\_training = 12}.
-
-\subsection{Threshold Multiplier}
-
-For a desired $P_{fa}$, the threshold multiplier under Rayleigh (Gaussian envelope) assumption is:
-\begin{equation}
-    \alpha = N_T \cdot \left(P_{fa}^{-1/N_T} - 1\right)
-\end{equation}
-where $N_T$ is the number of training cells.
-
-% ============================================================================
-\chapter{The Sea Clutter Challenge}
-% ============================================================================
-
-\section{Why Standard CFAR Fails}
-
-The paper's algorithm was validated on synthetic chirp signals with additive white Gaussian noise (AWGN). Real sea clutter is fundamentally different:
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lcc}
-\toprule
-\textbf{Property} & \textbf{AWGN} & \textbf{Sea Clutter} \\
-\midrule
-Amplitude distribution & Rayleigh & K-distribution \\
-Temporal correlation & None (white) & Strong (colored) \\
-Spectral shape & Flat & Peaked near DC \\
-Tail behavior & Light & Heavy (spiky) \\
-\bottomrule
-\end{tabular}
-\caption{AWGN vs. sea clutter characteristics}
-\label{tab:awgn_vs_sea}
-\end{table}
-
-\section{K-Distribution for Sea Clutter}
-
-Sea clutter amplitude follows the K-distribution:
-\begin{equation}
-    p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)
-\end{equation}
-
-where:
-\begin{itemize}
-    \item $\nu$ = shape parameter (lower = spikier clutter)
-    \item $\mu$ = scale parameter (mean power)
-    \item $K_{\nu-1}$ = modified Bessel function of the second kind
-\end{itemize}
-
-\textbf{Key insight:} The K-distribution has heavier tails than Rayleigh, meaning occasional large clutter returns are more common. Using Gaussian-based CFAR on K-distributed clutter causes excessive false alarms.
-
-\section{GOCA-CFAR: Greatest-Of Cell Averaging}
-
-To handle clutter edges and non-homogeneity, we implement GOCA-CFAR:
+The complete algorithm consists of five main steps:
 
 \begin{enumerate}
-    \item Divide training region into 4 quadrants
-    \item Compute mean power in each quadrant: $\mu_1, \mu_2, \mu_3, \mu_4$
-    \item Take the \textbf{maximum}: $\hat{Z} = \max(\mu_1, \mu_2, \mu_3, \mu_4)$
+    \item Computing STFT with Gaussian window
+    \item Adaptive 2D CFAR detection in the time-frequency plane
+    \item DBSCAN clustering of detected points
+    \item Geodesic dilation of the detection mask
+    \item Inverse reconstruction (iSTFT) with mask
 \end{enumerate}
 
-\begin{equation}
-    \text{GOCA: } \hat{Z} = \max_{i \in \{1,2,3,4\}} \left( \frac{1}{|R_i|} \sum_{(m,k) \in R_i} S[m,k] \right)
-\end{equation}
+\subsubsection{Step 1: STFT Computation}
 
-The ``greatest of'' selection ensures:
+\begin{algorithm}[H]
+\caption{STFT Computation with Gaussian Window}
+\begin{algorithmic}[1]
+\Require Input signal $x[n]$, FFT length $N_{fft}=512$, hop $H=256$, $\sigma=8$
+\Ensure STFT matrix $X_{stft} \in \mathbb{C}^{N_f \times N_t}$
+\State $N_t \gets \lceil (len(x) - N_{fft}) / H \rceil + 1$
+\State $X_{stft} \gets \text{zeros}(N_{fft}/2 + 1, N_t)$ \Comment{One-sided}
+\State Precompute Gaussian window: $w[m] \gets e^{-m^2/(2\sigma^2)}$
+\For{$n \gets 0$ to $N_t - 1$}
+    \State Extract window: $x_n \gets x[nH : nH + N_{fft}]$
+    \State Apply window: $x_w \gets x_n \odot w$
+    \State Compute FFT: $X_n \gets \text{fft}(x_w, N_{fft})$
+    \State Store one-sided: $X_{stft}[:, n] \gets X_n[0 : N_{fft}/2 + 1]$
+\EndFor
+\State Normalize: $X_{stft} \gets X_{stft} / \sum_m w[m]^2$
+\State \Return $X_{stft}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Step 2: CFAR 2D Detection}
+
+\begin{algorithm}[H]
+\caption{CFAR 2D Detection (GOCA)}
+\begin{algorithmic}[1]
+\Require STFT matrix $X_{stft}$, $P_f=0.001$, $N_G=3$, $N_T=12$
+\Ensure Binary detection mask $H \in \{0,1\}^{N_f \times N_t}$
+\State $H \gets \text{zeros}(N_f, N_t)$
+\State $N_f \gets $ rows($X_{stft}$), $N_t \gets $ cols($X_{stft}$)
+\For{$k \gets N_G + N_T$ to $N_f - N_G - N_T - 1$}
+    \For{$n \gets N_G + N_T$ to $N_t - N_G - N_T - 1$}
+        \State Extract Training Cells in 4 quadrants around $(k,n)$
+        \State $\mu_i \gets \text{mean}(\text{quadrant}_i)$ for $i \in \{1,2,3,4\}$
+        \State $\mathcal{N}_{local} \gets \max(\mu_1, \mu_2, \mu_3, \mu_4)$ \Comment{GOCA}
+        \State $\lambda \gets R(P_f) \cdot \mathcal{N}_{local}$
+        \If{$|X_{stft}(k,n)|^2 > \lambda$}
+            \State $H(k,n) \gets 1$
+        \EndIf
+    \EndFor
+\EndFor
+\State \Return $H$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Step 3: DBSCAN Clustering}
+
+\begin{algorithm}[H]
+\caption{DBSCAN Clustering in Time-Frequency Plane}
+\begin{algorithmic}[1]
+\Require Detected points $\{(f_i, t_i)\}_{i=1}^{N_p}$, $\varepsilon=8$, minSamples$=5$
+\Ensure Cluster labels $\text{labels} \in \mathbb{Z}$
+\State $\text{labels} \gets -1 \cdot \text{ones}(N_p)$ \Comment{-1 = noise}
+\State $C \gets 0$ \Comment{Current cluster index}
+\For{$i \gets 1$ to $N_p$}
+    \If{labels$[i] \neq$ unvisited}
+        \State Continue
+    \EndIf
+    \State $N \gets \text{RangeQuery}(i, \varepsilon)$ \Comment{Neighbors in radius}
+    \If{$|N| < $ minSamples}
+        \State labels$[i] \gets -1$ \Comment{Noise}
+    \Else
+        \State $C \gets C + 1$
+        \State \textbf{ExpandCluster}$(i, C, N, \varepsilon, \text{minSamples})$
+    \EndIf
+\EndFor
+\State \Return labels
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Step 4: Geodesic Dilation}
+
+\begin{algorithm}[H]
+\caption{Geodesic Dilation on Mask}
+\begin{algorithmic}[1]
+\Require Binary mask $H$ (from CFAR), iterations $n_{iter}=3$
+\Ensure Dilated mask $H_{dil}$
+\State $H_{dil} \gets H$
+\State Kernel $\gets$ binary $3 \times 3$ cross
+\For{$i \gets 1$ to $n_{iter}$}
+    \State $H_{new} \gets \text{zeros}(H_{dil}.shape)$
+    \For{$k \gets 1$ to rows($H_{dil}$) $-2$}
+        \For{$n \gets 1$ to cols($H_{dil}$) $-2$}
+            \State $H_{new}(k,n) = \max(H_{dil}(k-1,n), H_{dil}(k,n),$ 
+            \State \hspace{3cm} $H_{dil}(k+1,n), H_{dil}(k,n-1), H_{dil}(k,n+1))$
+        \EndFor
+    \EndFor
+    \State $H_{dil} \gets H_{new}$
+\EndFor
+\State \Return $H_{dil}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Step 5: iSTFT with Power Threshold}
+
+\begin{algorithm}[H]
+\caption{Inverse Reconstruction (iSTFT)}
+\begin{algorithmic}[1]
+\Require Original STFT $X_{stft}$, dilated mask $H_{dil}$, window $w$, hop $H=256$
+\Ensure Reconstructed signal $\hat{x}(n)$
+\State $X_{masked} \gets X_{stft} \odot H_{dil}$ \Comment{Apply mask element-wise}
+\State $N_t \gets $ cols($X_{masked}$)
+\State $M \gets N_{fft}$ \Comment{Reconstructed signal length}
+\State $\hat{x} \gets \text{zeros}(M)$
+\For{$n \gets 0$ to $N_t - 1$}
+    \State Compute iFFT: $x_n \gets \text{ifft}(X_{masked}[:, n], N_{fft})$
+    \State Apply window: $x_w \gets \text{real}(x_n) \odot w$
+    \State Add with overlap-add: $\hat{x}[nH : nH + N_{fft}] \mathrel{+}= x_w$
+\EndFor
+\State Normalize by window: $\hat{x} \gets \hat{x} / (\sum_m w[m]^2)$
+\State \Return $\hat{x}$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Data and Validation Sources}
+
+\subsection{IPIX Database - Maritime Radar}
+
+An essential component of this project is the use of real data from the IPIX database (Intelligent PIxel processing for X-band radar), provided by McMaster University, Canada. This data comes from a coherent polarimetric X-band radar, installed for monitoring maritime activity.
+
+\subsubsection{IPIX Technical Characteristics}
+
+The IPIX radar is a high-performance system specialized in detecting objects on the sea surface in the presence of clutter noise (sea-clutter):
+
 \begin{itemize}
-    \item At clutter edges, the higher-power side dominates
-    \item Prevents threshold collapse in low-clutter regions
-    \item Better handling of non-homogeneous backgrounds
+    \item \textbf{RF Frequency}: 9.39 GHz (X-band) - optimal for detecting small objects
+    \item \textbf{PRF (Pulse Repetition Frequency)}: 1000 Hz - allows Doppler velocity detection
+    \item \textbf{Pulse length}: 200 ns - high spatial resolution
+    \item \textbf{Beam width}: 0.9 degrees - excellent angular precision
+    \item \textbf{Data format}: Complex I/Q (In-phase + Quadrature)
 \end{itemize}
 
-\section{How Targets Appear on Spectrograms}
+\subsubsection{What Are Complex I/Q Data?}
 
-\subsection{Sea Clutter Characteristics}
+Unlike simple audio or synthetic signals (real), radar data are \textbf{complex}: each sample is of the form $x(t) = I(t) + j \cdot Q(t)$.
+
 \begin{itemize}
-    \item \textbf{Strong DC component:} Stationary wave returns at 0 Hz
-    \item \textbf{Doppler spread:} $\pm$20-50 Hz from wave orbital motion
-    \item \textbf{Texture:} Slowly varying speckle pattern
-    \item \textbf{Temporal structure:} Wave periodicity visible
+    \item \textbf{I Component (In-phase)}: Signal projection on the cosine axis
+    \item \textbf{Q Component (Quadrature)}: Projection on the sine axis (shifted by 90°)
+    \item \textbf{Magnitude}: $|x(t)| = \sqrt{I^2 + Q^2}$ - echo intensity
+    \item \textbf{Phase}: $\phi(t) = \arctan(Q/I)$ - Doppler information
 \end{itemize}
 
-\subsection{Target Signatures}
+The I/Q representation allows \textbf{detection of positive and negative Doppler frequencies}, essential for distinguishing between:
 \begin{itemize}
-    \item \textbf{Vertical lines:} Persistent target at constant Doppler
-    \item \textbf{Doppler shift:} Non-zero frequency indicates radial motion
-    \item \textbf{Intermittent:} May fade in/out due to wave shadowing
-    \item \textbf{Higher SNR:} Stands above clutter background
+    \item Targets approaching (positive Doppler frequency)
+    \item Targets receding (negative Doppler frequency)
+    \item Static clutter (Doppler frequency $\approx$ 0 Hz)
 \end{itemize}
 
-\subsection{Visual Example}
-A floating target approaching the radar at constant velocity appears as a \textbf{vertical bright line} in the spectrogram at a positive Doppler frequency. If drifting toward the radar: positive Doppler (+freq). If drifting away: negative Doppler (-freq).
+\subsubsection{Real Target Data}
 
-% ============================================================================
-\chapter{Implementation Adaptations}
-% ============================================================================
-
-This chapter documents the key modifications we made to adapt the paper's algorithm for real sea clutter data. These represent the ``implementation story'' of iteratively improving detection performance.
-
-\section{Modification 1: K-Distribution Threshold}
-
-\subsection{Problem}
-Using the Rayleigh-based threshold multiplier on K-distributed sea clutter produced excessive false alarms. The heavy tails meant many clutter spikes exceeded the Gaussian-derived threshold.
-
-\subsection{Solution}
-We implemented K-distribution-aware threshold computation:
-
-\begin{lstlisting}[caption={K-distribution threshold in cfar\_stft\_detector.py}]
-def _k_distribution_threshold(self, training_power, pfa):
-    """Compute CFAR threshold assuming K-distributed clutter."""
-    mean_power = np.mean(training_power)
-    variance = np.var(training_power)
-    
-    # Estimate K-distribution shape parameter
-    # nu = mean^2 / (variance - mean^2) for K-distribution
-    if variance > mean_power**2:
-        nu = mean_power**2 / (variance - mean_power**2)
-        nu = np.clip(nu, 0.5, 50)  # Bound to reasonable range
-    else:
-        nu = 10.0  # Default for Rayleigh-like data
-    
-    # K-distribution threshold multiplier
-    # Higher nu -> lighter tails -> lower multiplier needed
-    alpha = self._compute_k_threshold_factor(nu, pfa)
-    return alpha * mean_power
-\end{lstlisting}
-
-\subsection{Impact}
-False alarm rate reduced from 15\% to 2\% on IPIX data while maintaining detection probability.
-
-\section{Modification 2: DC Component Masking}
-
-\subsection{Problem}
-The strong DC component (0 Hz) from stationary wave returns caused persistent false detections across all time frames.
-
-\subsection{Solution}
-Mask out frequency bins near DC before CFAR processing:
-
-\begin{lstlisting}[caption={DC masking implementation}]
-# Mask DC bins (stationary clutter component)
-dc_mask_bins = 8  # Mask +/- 8 bins around DC
-center_bin = spectrogram.shape[0] // 2
-spectrogram_masked = spectrogram.copy()
-spectrogram_masked[center_bin-dc_mask_bins:center_bin+dc_mask_bins, :] = 0
-\end{lstlisting}
-
-\subsection{Physical Justification}
-The DC component represents returns from stationary objects (calm water surface, distant land). Real moving targets have non-zero Doppler shift, so masking DC does not affect target detection.
-
-\section{Modification 3: Asymmetric DBSCAN Clustering}
-
-\subsection{Problem}
-Target signatures appear as \textbf{vertical lines} spanning many frequency bins but few time bins. Standard DBSCAN with symmetric distance metric fragmented these into multiple clusters.
-
-\subsection{Solution}
-Implement asymmetric distance metric for DBSCAN:
-
-\begin{lstlisting}[caption={Asymmetric distance for vertical line clustering}]
-def asymmetric_distance(p1, p2, freq_scale=3.0):
-    """
-    Distance metric with 3x tolerance in frequency direction.
-    This merges vertical structures (constant Doppler targets).
-    """
-    time_dist = abs(p1[1] - p2[1])
-    freq_dist = abs(p1[0] - p2[0]) / freq_scale
-    return np.sqrt(time_dist**2 + freq_dist**2)
-\end{lstlisting}
-
-With \texttt{freq\_scale=3.0}, points can be 3x farther apart in frequency than in time while still being considered neighbors.
-
-\subsection{Impact}
-A single target appearing across 50 frequency bins is now correctly clustered as one detection instead of 5-10 fragments.
-
-\section{Modification 4: Fractal Boost (Hurst Exponent)}
-
-\subsection{Problem}
-CFAR occasionally missed weak targets that were visible to the eye but fell below the adaptive threshold. We needed an independent detection criterion.
-
-\subsection{Theory: Fractal Dimension of Sea Clutter}
-Sea clutter exhibits \textbf{self-similarity} across time scales—a fractal property. The \textbf{Hurst exponent} $H$ quantifies this:
-
-\begin{equation}
-    E[|X(t+\tau) - X(t)|^2] \propto \tau^{2H}
-\end{equation}
-
-For sea clutter: $H \approx 0.75-0.85$ (persistent, correlated)
-
-When a target appears, it disrupts this correlation structure, causing a \textbf{local drop in H}.
-
-\subsection{Implementation}
-
-\begin{lstlisting}[caption={Hurst exponent estimation}]
-def estimate_hurst(time_series, max_lag=20):
-    """Estimate Hurst exponent using R/S analysis."""
-    lags = range(2, min(max_lag, len(time_series)//2))
-    rs_values = []
-    
-    for lag in lags:
-        # Divide series into chunks
-        chunks = np.array_split(time_series, len(time_series)//lag)
-        rs_chunk = []
-        for chunk in chunks:
-            if len(chunk) < 2:
-                continue
-            mean = np.mean(chunk)
-            cumdev = np.cumsum(chunk - mean)
-            R = np.max(cumdev) - np.min(cumdev)
-            S = np.std(chunk)
-            if S > 0:
-                rs_chunk.append(R/S)
-        if rs_chunk:
-            rs_values.append(np.mean(rs_chunk))
-    
-    # H is slope of log(R/S) vs log(lag)
-    if len(rs_values) > 2:
-        log_lags = np.log(list(lags)[:len(rs_values)])
-        log_rs = np.log(rs_values)
-        H = np.polyfit(log_lags, log_rs, 1)[0]
-        return np.clip(H, 0, 1)
-    return 0.5  # Random walk
-\end{lstlisting}
-
-\subsection{Fractal Boost Logic}
-
-\begin{lstlisting}[caption={Combining CFAR with fractal detection}]
-def detect_with_fractal_boost(spectrogram, cfar_mask, boost_factor=1.5):
-    """
-    Boost detection by combining CFAR with Hurst anomaly detection.
-    """
-    n_freq, n_time = spectrogram.shape
-    hurst_anomaly = np.zeros((n_freq, n_time), dtype=bool)
-    
-    for freq_bin in range(n_freq):
-        row = spectrogram[freq_bin, :]
-        H = estimate_hurst(row)
-        
-        # Sea clutter: H ~ 0.75-0.85
-        # Target present: H drops significantly
-        if H < 0.6:  # Anomaly threshold
-            # Mark high-power bins in this row as potential targets
-            threshold = np.percentile(row, 90)
-            hurst_anomaly[freq_bin, row > threshold] = True
-    
-    # Combine: CFAR OR (fractal anomaly AND above median)
-    combined_mask = cfar_mask | hurst_anomaly
-    return combined_mask
-\end{lstlisting}
-
-\subsection{Impact}
-Fractal boost improved detection probability by 10-15\% on weak targets without increasing false alarms, because it requires both:
-\begin{itemize}
-    \item Statistical anomaly (disrupted correlation structure)
-    \item High local power (above 90th percentile)
-\end{itemize}
-
-\section{Modification 5: Doppler Bandwidth Filter}
-
-\subsection{Problem}
-Some false alarms appeared as single-frequency narrowband detections that were physically implausible (a real target has some Doppler spread).
-
-\subsection{Solution}
-Filter out detections with Doppler bandwidth below a minimum threshold:
-
-\begin{lstlisting}[caption={Doppler bandwidth filtering}]
-def filter_by_doppler_bandwidth(clusters, min_bandwidth_hz=3.0, freq_resolution):
-    """Remove clusters with insufficient Doppler spread."""
-    filtered_clusters = []
-    min_bins = int(min_bandwidth_hz / freq_resolution)
-    
-    for cluster in clusters:
-        freq_bins = [p[0] for p in cluster]
-        bandwidth = max(freq_bins) - min(freq_bins)
-        if bandwidth >= min_bins:
-            filtered_clusters.append(cluster)
-    
-    return filtered_clusters
-\end{lstlisting}
-
-\subsection{Physical Justification}
-A real floating target (boat, buoy, debris) experiences wave-induced motion that broadens its Doppler signature. A single-bin detection is likely interference or processing artifact.
-
-% ============================================================================
-\chapter{The IPIX Radar Dataset}
-% ============================================================================
-
-\section{Dataset Overview}
-
-We use the \textbf{IPIX radar database} from McMaster University / Defence Research Establishment Ottawa, recorded in November 1993 off the coast of Dartmouth, Nova Scotia.
+For this project, we downloaded \textbf{real target files} from the McMaster IPIX database. The target is a \textbf{1-meter diameter styrofoam sphere} wrapped in wire mesh, anchored at \textbf{2660 meters} range.
 
 \begin{table}[H]
 \centering
-\begin{tabular}{ll}
-\toprule
-\textbf{Parameter} & \textbf{Value} \\
-\midrule
-Radar type & Coherent X-band \\
-Carrier frequency & 9.39 GHz \\
-Pulse repetition frequency (PRF) & 1000 Hz \\
-Range resolution & 30 m (nominal) \\
-Polarization & HH, VV, HV, VH \\
-Data format & Complex I/Q (int16) \\
-\bottomrule
-\end{tabular}
-\caption{IPIX radar parameters}
-\label{tab:ipix_params}
-\end{table}
-
-\section{Target Configuration}
-
-The target is a \textbf{1-meter diameter styrofoam sphere} wrapped in wire mesh, anchored at \textbf{2660 meters} range from the radar. This small, low-RCS target represents a challenging detection scenario.
-
-\section{Data Files Used}
-
-We extracted target-containing range cells from four IPIX recordings:
-
-\begin{table}[H]
-\centering
+\caption{IPIX Files with Real Targets}
 \begin{tabular}{lccc}
 \toprule
 \textbf{File} & \textbf{Range Cell} & \textbf{Polarization} & \textbf{Sea State} \\
@@ -510,257 +376,226 @@ We extracted target-containing range cells from four IPIX recordings:
 \#40 (19931106\_195609) & 7 & HH & Moderate \\
 \bottomrule
 \end{tabular}
-\caption{IPIX files with target returns}
-\label{tab:ipix_files}
 \end{table}
 
-\section{Doppler Interpretation}
+\subsubsection{What Is Sea-Clutter? Interpreting IPIX Spectrograms}
 
-From the PRF and carrier frequency:
+Before presenting the results, it is essential to understand \textbf{what we actually see} in IPIX spectrograms. Unlike clear synthetic signals, maritime radar data contain complex physical phenomena.
+
+\textbf{Why does the IPIX spectrogram look "strange"?}
+
+IPIX data are \textbf{complex I/Q}, so the spectrogram is \textbf{two-sided} (negative and positive frequencies):
+
 \begin{itemize}
-    \item Maximum unambiguous Doppler: $\pm 500$ Hz
-    \item Doppler resolution: $\approx 3.9$ Hz (with 256-point FFT)
-    \item Velocity per Hz: $v = \frac{f_d \cdot c}{2 f_{RF}} \approx 0.016$ m/s per Hz
+    \item \textbf{Thick red line in the middle}: 0 Hz frequency (DC) - static echoes from sea surface
+    \item \textbf{Yellow/Green around DC}: Active sea-clutter (waves, foam, motion)
+    \item \textbf{Blue lateral areas}: Uniform weak thermal noise
+    \item \textbf{"Dotted" aspect}: Energy is concentrated in time-frequency ridges, not uniform
 \end{itemize}
 
-A target with +100 Hz Doppler is approaching at $\approx 1.6$ m/s.
+\textbf{What is sea-clutter?}
 
-% ============================================================================
-\chapter{Algorithm Pipeline}
-% ============================================================================
+Sea-clutter (maritime noise) represents \textbf{radar echoes from the sea surface}:
 
-\section{Complete Pipeline}
+\begin{itemize}
+    \item Reflections from waves, foam, water droplets
+    \item Concentrated around 0 Hz frequency (small Doppler - slow motion)
+    \item Energy approximately 90-95\% of cases in the $[-50, +50]$ Hz interval
+    \item Has non-uniform structure - some zones are more intense (ridges)
+    \item Real targets (ships, objects) appear far from DC ($\pm 100-400$ Hz)
+\end{itemize}
 
-\begin{algorithm}[H]
-\caption{CFAR-STFT Detection Pipeline}
-\begin{algorithmic}[1]
-\Require Complex signal $x[n]$, parameters $(N_{FFT}, H, N_G, N_T, P_{fa})$
-\Ensure Detection mask $D[m,k]$, cluster list $C$
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{../results/ipix_figures/ipix_seaclutter_explanation.png}
+\caption{Visual explanation: what are sea-clutters in IPIX data? The figure shows the complete spectrogram (two-sided), zoom on the clutter region around DC (0 Hz frequency), and energy distribution across frequencies. Note that most energy (>90\%) is concentrated within $\pm 50$ Hz around DC.}
+\label{fig:seaclutter_explain}
+\end{figure}
 
-\State \textbf{Step 1: STFT}
-\State $F[m,k] \gets \text{STFT}(x, \text{window}=N_{FFT}, \text{hop}=H)$
-\State $S[m,k] \gets |F[m,k]|^2$ \Comment{Power spectrogram}
+\subsubsection{Why Does CFAR Not Detect "The Whole White Zone"?}
 
-\State \textbf{Step 2: Preprocessing}
-\State Apply DC masking: $S[k_0-8:k_0+8, :] \gets 0$
-\State Shift to center DC (fftshift)
+A legitimate question when looking at the results: \textit{"Why does it detect only scattered points, not the whole high-energy region?"}. The answer lies in the \textbf{locally adaptive} nature of CFAR:
 
-\State \textbf{Step 3: GOCA-CFAR Detection}
-\For{each cell $(m, k)$}
-    \State Extract training cells in 4 quadrants
-    \State $\mu_i \gets \text{mean}(\text{quadrant}_i)$ for $i \in \{1,2,3,4\}$
-    \State $\hat{Z} \gets \max(\mu_1, \mu_2, \mu_3, \mu_4)$
-    \State $T \gets \alpha(P_{fa}, \nu) \cdot \hat{Z}$ \Comment{K-dist threshold}
-    \State $D[m,k] \gets (S[m,k] > T)$
-\EndFor
+\begin{itemize}
+    \item \textbf{Global Threshold}: A simplistic algorithm would set a fixed threshold (e.g., "detect everything above -20 dB"). This would detect \textit{the whole white zone} --- but would also detect strong noise, generating thousands of false alarms!
+    
+    \item \textbf{Local Adaptive CFAR}: Compares each pixel with \textit{its neighbors} (training cells). If the pixel is "much stronger than the local neighbor average" $\rightarrow$ detected. Otherwise $\rightarrow$ ignored.
+\end{itemize}
 
-\State \textbf{Step 4: Fractal Boost (optional)}
-\For{each frequency row $k$}
-    \State $H_k \gets \text{estimate\_hurst}(S[k,:])$
-    \If{$H_k < 0.6$}
-        \State Boost detections in row $k$
-    \EndIf
-\EndFor
+\textbf{Consequence}: Inside a uniform high-energy zone (sea-clutter), all pixels have \textit{equally strong neighbors} $\rightarrow$ CFAR doesn't detect them, because they are not "outliers" relative to the local context! CFAR detects only:
+\begin{itemize}
+    \item \textbf{Edges} where energy increases abruptly
+    \item \textbf{Ridges} (energy crests) that exceed surrounding clutter
+    \item \textbf{Real targets} that emerge from noise/clutter
+\end{itemize}
 
-\State \textbf{Step 5: DBSCAN Clustering}
-\State $P \gets \{(m,k) : D[m,k] = \text{True}\}$
-\State $C \gets \text{DBSCAN}(P, \text{eps}, \text{distance}=\text{asymmetric})$
+That's why it seems to take "random points" --- in reality, it takes exactly the points that represent \textit{power transitions}!
 
-\State \textbf{Step 6: Post-filtering}
-\State Remove clusters with Doppler bandwidth $< 3$ Hz
-\State Remove clusters touching DC band
+This is the \textit{power} of CFAR: it dramatically reduces false alarm rate by adapting to noise. The price paid: we no longer detect "whole zones", only points that actually contain new information (abrupt changes in the spectrogram).
 
-\Return $D, C$
-\end{algorithmic}
-\end{algorithm}
+\section{Experimental Results}
 
-\section{Parameter Summary}
+\subsection{Experiments on Synthetic Signals}
+
+100 Monte Carlo runs were performed for each SNR level (5, 10, 15, 20, 25, 30 dB). The synthetic signal is a nonlinear chirp according to Eq. 14 from the paper.
 
 \begin{table}[H]
 \centering
-\begin{tabular}{llc}
+\caption{CFAR-STFT Results on Synthetic Nonlinear Chirp - 100 MC runs}
+\label{tab:results_synthetic}
+\begin{tabular}{ccccc}
 \toprule
-\textbf{Parameter} & \textbf{Description} & \textbf{Value} \\
+\textbf{SNR [dB]} & \textbf{RQF\_mean [dB]} & \textbf{RQF\_std [dB]} & \textbf{P\_detection [\%]} & \textbf{N\_runs} \\
 \midrule
-\multicolumn{3}{l}{\textit{STFT Parameters}} \\
-\texttt{window\_size} & FFT length / window size & 256 \\
-\texttt{hop\_size} & Frame advance & 32 \\
-\texttt{window\_type} & Window function & Hann \\
-\midrule
-\multicolumn{3}{l}{\textit{CFAR Parameters}} \\
-\texttt{cfar\_guard} & Guard cells (each side) & 3 \\
-\texttt{cfar\_training} & Training cells (each side) & 12 \\
-\texttt{cfar\_pfa} & Probability of false alarm & 0.001 \\
-\midrule
-\multicolumn{3}{l}{\textit{Clustering Parameters}} \\
-\texttt{eps} & DBSCAN neighborhood radius & 8.0 \\
-\texttt{min\_samples} & Minimum cluster size & 5 \\
-\texttt{freq\_scale} & Asymmetric distance scaling & 3.0 \\
-\midrule
-\multicolumn{3}{l}{\textit{Filtering Parameters}} \\
-\texttt{dc\_mask\_bins} & Bins masked around DC & 8 \\
-\texttt{min\_doppler\_bw} & Minimum Doppler bandwidth & 3.0 Hz \\
-\texttt{fractal\_boost} & Enable Hurst detection & True \\
+5 & 7.28 & 0.47 & 100.0 & 100 \\
+10 & 16.81 & 0.60 & 100.0 & 100 \\
+15 & 22.95 & 0.56 & 100.0 & 100 \\
+20 & 26.40 & 0.51 & 100.0 & 100 \\
+25 & 28.43 & 0.39 & 100.0 & 100 \\
+30 & 29.17 & 0.25 & 100.0 & 100 \\
 \bottomrule
 \end{tabular}
-\caption{Algorithm parameters for IPIX data}
-\label{tab:params}
 \end{table}
 
-% ============================================================================
-\chapter{Experimental Results}
-% ============================================================================
+\subsection{Experiments on Real IPIX Data with Targets}
 
-\section{Animation Parameters}
+We ran animated detection on the real target files. The figures below show the \textbf{last frames} from our detection animations:
 
-We generate animated spectrograms showing detection evolution:
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{../results/ipix_figures/ipix_target_17_goca_frame83.png}
+\caption{GOCA-CFAR Detection on IPIX Target \#17 - Frame from animation showing active detections. The three panels show: (left) spectrogram with accumulated detections (red overlay), (center) detection heatmap, (right) current frame detections. The vertical bright line represents the floating target at a positive Doppler shift (approaching radar).}
+\label{fig:goca_detection}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{../results/ipix_figures/ipix_target_17_fractal_frame83.png}
+\caption{GOCA-CFAR with Fractal Boost on IPIX Target \#17 - Frame showing active detections. Fractal boost uses Hurst exponent analysis to detect targets that disrupt the self-similar structure of sea clutter, improving detection of weak targets.}
+\label{fig:fractal_boost_detection}
+\end{figure}
+
+\section{Sea Clutter Adaptations}
+\label{sec:adaptations}
+
+Key modifications to adapt the paper's algorithm for real sea clutter:
+
+\subsection{Adaptation 1: K-Distribution Instead of Gaussian}
+
+The paper assumes \textbf{Gaussian/Rayleigh} noise statistics. Real sea clutter follows a \textbf{K-distribution} with heavy tails:
+\begin{equation}
+    p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)
+\end{equation}
+where $\nu$ is the shape parameter (lower = spikier) and $K_{\nu-1}$ is the modified Bessel function.
+
+\textbf{Solution}: Estimate $\nu$ from training cell statistics ($\nu = \mu^2/(\sigma^2 - \mu^2)$) and adjust threshold multiplier accordingly. This significantly reduces false alarms on heavy-tailed clutter.
+
+\subsection{Adaptation 2: Fractal Boost with Hurst Exponent}
+
+CFAR occasionally missed weak targets below the adaptive threshold. Sea clutter exhibits \textbf{self-similarity} (fractal property) quantified by the \textbf{Hurst exponent}:
+\begin{equation}
+    E[|X(t+\tau) - X(t)|^2] \propto \tau^{2H}
+\end{equation}
+
+For sea clutter: $H \approx 0.75-0.85$ (persistent). When a target appears, it \textbf{disrupts} this structure, causing $H$ to drop below 0.6.
+
+\textbf{Solution}: Compute $H$ via R/S analysis per frequency bin. If $H < 0.6$, flag high-power points as potential targets. Combine with CFAR: $\text{mask} = \text{CFAR} \lor (\text{Hurst anomaly} \land \text{high power})$. This improves detection of weak targets that CFAR alone would miss.
+
+\subsection{Adaptation 3: Asymmetric DBSCAN for Vertical Lines}
+
+Target signatures appear as \textbf{vertical lines} (many frequency bins, few time bins). Standard DBSCAN fragmented these into multiple clusters.
+
+\textbf{Solution}: Asymmetric distance with \texttt{freq\_scale=3.0}: $d = \sqrt{\Delta t^2 + (\Delta f / 3)^2}$.
+
+\textbf{Impact}: Single target across 50 frequency bins now correctly clusters as one detection.
+
+\subsection{Adaptation 4: DC Component Masking}
+
+The strong DC component (0 Hz) from stationary wave returns caused persistent false detections.
+
+\textbf{Solution}: Mask $\pm 8$ frequency bins around DC before CFAR.
+
+\textbf{Justification}: DC represents stationary returns; real moving targets have non-zero Doppler.
+
+\subsection{Adaptation 5: Doppler Bandwidth Filter}
+
+Some false alarms appeared as single-frequency narrowband detections (physically implausible).
+
+\textbf{Solution}: Reject clusters with Doppler bandwidth $< 3$ Hz.
+
+\section{Implementation Details}
+
+\subsection{Parameters and Calibration}
 
 \begin{table}[H]
 \centering
-\begin{tabular}{ll}
+\caption{Algorithm Parameters - Values Used}
+\begin{tabular}{lccc}
 \toprule
-\textbf{Parameter} & \textbf{Value} \\
+\textbf{Parameter} & \textbf{Value} & \textbf{Range} & \textbf{Meaning} \\
 \midrule
-Animation length & 60 seconds \\
-Frame rate & 10 fps \\
-Sliding window & 2 seconds \\
-Colormap (spectrogram) & viridis \\
-Colormap (detections) & hot (red overlay) \\
-Output format & GIF \\
+$N_{fft}$ (window\_size) & 256 & $[128, 512]$ & FFT length \\
+$H$ (hop\_size) & 32 & $[N/8, N/2]$ & Hop = 87.5\% overlap \\
+$\sigma_{window}$ & 8 & [4, 16] & Window std deviation \\
+$P_f$ & 0.001 & [0.0001, 0.01] & False alarm probability \\
+$N_G$ (cfar\_guard) & 3 & [2, 8] & Guard cell size \\
+$N_T$ (cfar\_training) & 12 & [8, 24] & Training cell size \\
+$\varepsilon_{DBSCAN}$ & 8 & [4, 16] & Clustering radius \\
+minSamples & 5 & [3, 10] & Minimum cluster points \\
+freq\_scale & 3.0 & [2, 5] & Asymmetric DBSCAN scaling \\
+dc\_mask\_bins & 8 & [4, 16] & DC bins to mask \\
+min\_doppler\_bw & 3.0 Hz & [1, 10] & Minimum Doppler bandwidth \\
 \bottomrule
 \end{tabular}
-\caption{Animation generation parameters}
-\label{tab:animation_params}
 \end{table}
 
-\section{Detection Comparison: GOCA vs CA-CFAR}
+\subsection{Software Dependencies}
 
-We compared two CFAR variants on IPIX file \#17:
-
-\subsection{CA-CFAR (Vectorized)}
 \begin{itemize}
-    \item Uses convolution-based background estimation
-    \item Assumes Rayleigh (Gaussian envelope) statistics
-    \item Fast computation via FFT convolution
-    \item Higher false alarm rate on sea clutter
+    \item \textbf{NumPy} $\geq$ 1.19 - matrix operations
+    \item \textbf{SciPy} $\geq$ 1.5 - STFT, convolution, iFFT
+    \item \textbf{matplotlib} $\geq$ 3.3 - visualizations
+    \item \textbf{Pillow} - GIF frame extraction
+    \item (optional) \textbf{scikit-learn} - DBSCAN reference
 \end{itemize}
 
-\subsection{GOCA-CFAR with K-distribution}
-\begin{itemize}
-    \item 4-quadrant maximum selection
-    \item K-distribution threshold adaptation
-    \item Better handling of clutter edges
-    \item Lower false alarm rate, similar detection probability
-\end{itemize}
+\section{Conclusions and Future Work}
 
-\section{Qualitative Results}
+\subsection{Main Conclusions}
 
-Visual inspection of animated spectrograms reveals:
+The CFAR-STFT implementation demonstrates excellent performance:
 
 \begin{enumerate}
-    \item \textbf{Target visibility:} Vertical bright line at positive Doppler (target approaching)
-    \item \textbf{Clutter structure:} Textured background concentrated near DC
-    \item \textbf{Detection overlay:} Red highlights correctly track the target line
-    \item \textbf{Accumulated heatmap:} Persistent detections build up at target location
+    \item \textbf{Accuracy}: RQF = 29.17 dB @ SNR=30dB, 100\% detection
+    \item \textbf{Robustness}: Consistent performance on 100 MC runs
+    \item \textbf{Computational efficiency}: $\sim 75$ ms per segment (13 FPS)
+    \item \textbf{Reproducibility}: Open-source code, verifiable results
+    \item \textbf{Real validation}: Works on complex IPIX sea-clutter data
 \end{enumerate}
 
-\section{Lessons Learned}
-
-\begin{enumerate}
-    \item \textbf{Statistics matter:} Gaussian assumptions fail for sea clutter
-    \item \textbf{DC is dominant:} Must mask stationary clutter component
-    \item \textbf{Targets are vertical:} Asymmetric clustering essential
-    \item \textbf{Fractals help:} Hurst exponent provides independent detection cue
-    \item \textbf{Multiple cues:} Combining CFAR + fractal + bandwidth filtering is robust
-\end{enumerate}
-
-% ============================================================================
-\chapter{Code Structure}
-% ============================================================================
-
-\section{Main Modules}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{lp{8cm}}
-\toprule
-\textbf{File} & \textbf{Description} \\
-\midrule
-\texttt{src/cfar\_stft\_detector.py} & Core detector: STFT, CFAR2D, DBSCAN, Hurst \\
-\texttt{scripts/animate\_ipix\_detection.py} & Generate animated detection visualizations \\
-\texttt{simulations/paper\_replication.py} & Monte Carlo validation on synthetic data \\
-\texttt{extra/scripts/download\_ipix\_radar.py} & Download IPIX data from McMaster \\
-\bottomrule
-\end{tabular}
-\caption{Main code files}
-\label{tab:code_files}
-\end{table}
-
-\section{CLI Interface}
-
-\begin{lstlisting}[language=bash,caption={Animation script usage}]
-python scripts/animate_ipix_detection.py \
-    --data data/ipix_radar/real_targets_extracted/ipix_target_17.npy \
-    --vectorized        # Use CA-CFAR (default: GOCA)
-    --pfa 0.001         # False alarm probability
-    --eps 8.0           # DBSCAN radius
-    --suffix "my_run"   # Output filename suffix
-    --no-fractal        # Disable fractal boost
-    --min-doppler-bw 3.0  # Minimum Doppler bandwidth
-\end{lstlisting}
-
-\section{Output Files}
-
-Generated in \texttt{results/animations/}:
-\begin{itemize}
-    \item \texttt{ipix\_target\_17\_goca\_TIMESTAMP.gif} — GOCA-CFAR detection
-    \item \texttt{ipix\_target\_17\_fractal\_boost\_TIMESTAMP.gif} — With fractal enhancement
-    \item \texttt{ipix\_target\_17\_improved\_TIMESTAMP.gif} — Full pipeline
-\end{itemize}
-
-% ============================================================================
-\chapter{Conclusions}
-% ============================================================================
-
-\section{Summary}
-
-We successfully implemented the CFAR-STFT algorithm for maritime radar target detection with several key adaptations for sea clutter:
-
-\begin{enumerate}
-    \item \textbf{K-distribution modeling:} Proper heavy-tail statistics
-    \item \textbf{GOCA-CFAR:} Robust to clutter non-homogeneity
-    \item \textbf{Asymmetric DBSCAN:} Correct clustering of vertical target signatures
-    \item \textbf{Fractal boost:} Hurst exponent anomaly detection
-    \item \textbf{Doppler filtering:} Physics-based false alarm rejection
-\end{enumerate}
-
-\section{Key Findings}
+\subsection{Future Development Perspectives}
 
 \begin{itemize}
-    \item The paper's algorithm works well on synthetic AWGN data
-    \item Real sea clutter requires statistical and structural adaptations
-    \item Combining multiple detection cues improves robustness
-    \item Visual animation is invaluable for parameter tuning
+    \item \textbf{GPU acceleration}: CUDA/OpenCL implementation for real-time
+    \item \textbf{Parameter optimization}: Automatic CFAR adaptation based on signal type
+    \item \textbf{Real system}: Integration with operational radar
+    \item \textbf{Multi-target}: Tracking and trajectory prediction
+    \item \textbf{Machine learning}: Automatic parameter calibration
 \end{itemize}
 
-\section{Future Work}
+\subsection{Code Availability}
 
-\begin{itemize}
-    \item Quantitative $P_d$ vs $P_{fa}$ curves on ground-truth data
-    \item Automatic $\nu$ (shape parameter) estimation from data
-    \item Multi-target tracking over time
-    \item Extension to full polarimetric processing
-\end{itemize}
+\textbf{GitHub Repository}: \url{https://github.com/dirgnic/Radar_Detection_STFT}
 
-% ============================================================================
-% Bibliography
-% ============================================================================
-\begin{thebibliography}{9}
+All code files, data, and results are publicly available for reproducibility and independent replication.
+
+\begin{thebibliography}{99}
 
 \bibitem{abratkiewicz2022}
-K. Abratkiewicz, P. Samczyński,
-``CFAR-STFT signal processing for time-frequency representation of non-stationary radar signals,''
-\textit{Signal Processing}, vol. 195, 108491, 2022.
+Abratkiewicz, K. (2022).
+\textit{Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform}.
+Sensors, 22(16), 5954.
+\newline \url{https://doi.org/10.3390/s22165954}
 
 \bibitem{ipix}
 S. Haykin, et al.,
@@ -768,7 +603,7 @@ S. Haykin, et al.,
 McMaster University / DREO, 1993.
 \url{http://soma.ece.mcmaster.ca/ipix/}
 
-\bibitem{ward1994}
+\bibitem{ward2006}
 K. D. Ward, R. J. A. Tough, S. Watts,
 \textit{Sea Clutter: Scattering, the K Distribution and Radar Performance},
 IET, 2006.
@@ -778,10 +613,25 @@ H. E. Hurst,
 ``Long-term storage capacity of reservoirs,''
 \textit{Trans. Am. Soc. Civil Eng.}, vol. 116, pp. 770-799, 1951.
 
+\bibitem{harris1978}
+Harris, F.J. (1978).
+\textit{On the Use of Windows for Harmonic Analysis with the Discrete Fourier Transform}.
+Proceedings of the IEEE, 66(1), 51-83.
+
+\bibitem{ester1996}
+Ester, M., Kriegel, H.-P., Sander, J., Xu, X. (1996).
+\textit{A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases with Noise}.
+In KDD'96: Proceedings, pp. 226-231.
+
 \bibitem{rohling1983}
 H. Rohling,
 ``Radar CFAR thresholding in clutter and multiple target situations,''
 \textit{IEEE Trans. Aerospace Electron. Syst.}, vol. 19, no. 4, 1983.
+
+\bibitem{richards2005}
+Richards, M. A. (2005).
+\textit{Fundamentals of Radar Signal Processing}.
+McGraw-Hill Professional.
 
 \end{thebibliography}
 
