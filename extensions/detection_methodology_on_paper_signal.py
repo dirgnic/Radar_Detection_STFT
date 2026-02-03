@@ -1,6 +1,5 @@
 from datetime import datetime
 from pathlib import Path
-
 from simulations.paper_replication import generate_paper_signal, compute_rqf, add_awgn
 import numpy as np
 from extensions.detector_variations import CFARDetectorOfChoice
@@ -8,6 +7,8 @@ from triangulation_separation import TriangulationSeparator
 from scipy import signal
 import matplotlib.pyplot as plt
 
+
+# semnalul din paper, dar cu detectoarele implementate ca extensii
 def run_paper_experiment(n_simulations: int = 100, snr_values = None):
     if snr_values is None:
         snr_values = [5, 10, 15, 20, 25, 30]
@@ -35,7 +36,6 @@ def run_paper_experiment(n_simulations: int = 100, snr_values = None):
             except Exception as e:
                 rqf_values.append(-10.0)
                 det_rates.append(0.0)
-
         results[snr_db] = {
             "rqf_mean": float(np.mean(rqf_values)),
             "rqf_std": float(np.std(rqf_values)),
@@ -43,9 +43,7 @@ def run_paper_experiment(n_simulations: int = 100, snr_values = None):
             "detection_rate": float(np.mean(det_rates)),
             "n_simulations": n_simulations
         }
-
     return results
-
 
 def run_triangulation_paper_experiment(n_simulations: int = 50, snr_values=None):
     if snr_values is None:
@@ -65,7 +63,7 @@ def run_triangulation_paper_experiment(n_simulations: int = 50, snr_values=None)
                 freqs, times, Zxx = signal.stft(noisy, fs=fs, window=window, nperseg=window_size, noverlap=window_size - hop_size)
                 magnitude = np.abs(Zxx)
                 separator = TriangulationSeparator(peak_threshold_percentile=93, min_peak_distance=3, connectivity_threshold=0.25)
-                components = separator.separate_manual(magnitude, freqs, times)
+                components = separator.separate(magnitude, freqs, times)
                 if len(components) > 0:
                     main_comp = components[0]
                     mask = np.zeros(Zxx.shape, dtype=bool)
@@ -89,7 +87,6 @@ def run_triangulation_paper_experiment(n_simulations: int = 50, snr_values=None)
             "detection_rate": float(np.mean(det_rates))
         }
     return results
-
 OUTPUT_DIR = Path("extensions/results")
 
 def main():
@@ -126,7 +123,6 @@ def main():
     plt.legend()
     plt.savefig(OUTPUT_DIR / "paper_extension_triangulation.pdf", format='pdf')
     plt.close()
-    print(f"\nToate rezultatele au fost salvate în {OUTPUT_DIR}")
     print(f"- paper_extension_ca_hdbscan_hamming.pdf")
     print(f"- paper_extension_triangulation.pdf")
 

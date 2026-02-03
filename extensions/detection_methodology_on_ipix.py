@@ -1,6 +1,6 @@
 from pathlib import Path
 import json
-from simulations.paper_replication import load_ipix_data, compute_rqf, add_awgn
+from simulations.paper_replication import load_ipix_data
 from extensions.detector_variations import CFARDetectorOfChoice
 import numpy as np
 from scipy import signal
@@ -8,7 +8,7 @@ from triangulation_separation import TriangulationSeparator
 from datetime import datetime
 import time
 
-
+# metodologiile de detectie pe date reale
 def run_ipix_experiment(segment_duration_s= 1.0, n_segments = 50):
     results = {"hi_sea_state": {}, "lo_sea_state": {}}
     for dataset_name, filename in [("hi_sea_state", "hi.npy"), ("lo_sea_state", "lo.npy")]:
@@ -18,9 +18,9 @@ def run_ipix_experiment(segment_duration_s= 1.0, n_segments = 50):
             print(f"  [SKIP] {e}")
             continue
         prf = metadata['prf_hz']
-        detector = CFARDetectorOfChoice(sample_rate=prf, window_size=128, hop_size=16, cfar_guard_cells=4,
+        detector = CFARDetectorOfChoice(sample_rate=prf, window_size=512, hop_size=16, cfar_guard_cells=4,
                                         cfar_training_cells=8, cfar_method='ca', clustering_method='hdbscan',
-                                        window_type='hamming', cfar_pfa=0.1, dbscan_eps=3.0, dbscan_min_samples=3, use_vectorized_cfar=True, mode='radar')
+                                        window_type='hamming', cfar_pfa=0.6, dbscan_eps=5.0, dbscan_min_samples=2, use_vectorized_cfar=True, mode='radar')
         segment_samples = int(segment_duration_s * prf)
         max_segments = min(n_segments, len(data) // segment_samples)
         components_per_segment = []
@@ -32,19 +32,38 @@ def run_ipix_experiment(segment_duration_s= 1.0, n_segments = 50):
             segment = data[start:end]
             try:
                 components = detector.detect_components(segment, n_components=5)
-                components_per_segment.append(len(components))
-                if components:
-                    energies.append(sum(c.energy for c in components))
-                    doppler = detector.get_doppler_info(components[0])
-                    doppler_info.append(doppler)
+                num_found = len(components)
+                components_per_segment.append(num_found)
+                if num_found > 0:
+                    energies.append(float(sum(c.energy for c in components)))
+                    try:
+                        main_comp = components[0]
+                        if len(main_comp.freq_indices) == 0:
+                            raise ValueError("Nu are indici de frecventa")
+                        avg_freq_bin = np.mean(main_comp.freq_indices)
+                        freqs = detector.stft_result['freqs']
+                        bin_idx = int(np.clip(avg_freq_bin, 0, len(freqs) - 1))
+                        doppler_hz = float(freqs[bin_idx])
+                        c = 3e8
+                        lambda_c = c / 9.39e9  # X-band radar
+                        velocity_mps = (doppler_hz * lambda_c) / 2
+                        doppler_info.append({
+                            'doppler_freq_hz': doppler_hz,
+                            'velocity_estimate_mps': velocity_mps,
+                            'avg_freq_bin': float(avg_freq_bin),  # Pentru debugging
+                            'n_points': len(main_comp.freq_indices)
+                        })
+                    except Exception as e:
+                        doppler_info.append({})
                 else:
-                    energies.append(0)
+                    energies.append(0.0)
                     doppler_info.append({})
             except Exception as e:
                 components_per_segment.append(0)
-                energies.append(0)
+                energies.append(0.0)
                 doppler_info.append({})
         valid_doppler = [d for d in doppler_info if d.get('doppler_freq_hz') is not None]
+        det_rate = (int(np.sum(np.array(components_per_segment) > 0)) / max_segments) * 100
         results[dataset_name] = {
             "metadata": metadata,
             "n_segments": max_segments,
@@ -54,6 +73,7 @@ def run_ipix_experiment(segment_duration_s= 1.0, n_segments = 50):
             "std_components": float(np.std(components_per_segment)),
             "total_energy": float(np.sum(energies)),
             "detection_segments": int(np.sum(np.array(components_per_segment) > 0)),
+            "detection_rate_percent": float(det_rate),  # Adaugat explicit
             "processing_mode": "complex_iq",
             "doppler_stats": {
                 "n_detections_with_doppler": len(valid_doppler),
@@ -75,29 +95,20 @@ def run_triangulation_ipix_experiment(segment_duration_s=1.0, n_segments=50):
         try:
             data, metadata = load_ipix_data(filename)
         except FileNotFoundError as e:
-            print(f"  [SKIP] {e}")
             continue
         segment_samples = int(segment_duration_s * fs_ipix)
         max_segments = min(n_segments, len(data) // segment_samples)
         components_per_segment = []
         doppler_info = []
-        separator = TriangulationSeparator(
-            peak_threshold_percentile=95,
-            min_peak_distance=2,
-            connectivity_threshold=0.2
-        )
+        separator = TriangulationSeparator(peak_threshold_percentile=95,min_peak_distance=2,connectivity_threshold=0.2)
         for i in range(max_segments):
             start = i * segment_samples
             end = start + segment_samples
             segment = data[start:end]
-
             try:
-                freqs, times, Zxx = signal.stft(segment, fs=fs_ipix, window=window,
-                                                nperseg=window_size,
-                                                noverlap=window_size - hop_size,
-                                                return_onesided=False)
+                freqs, times, Zxx = signal.stft(segment, fs=fs_ipix, window=window, nperseg=window_size,noverlap=window_size - hop_size,return_onesided=False)
                 magnitude = np.abs(Zxx)
-                components = separator.separate_manual(magnitude, freqs, times)
+                components = separator.separate(magnitude, freqs, times)
                 components_per_segment.append(len(components))
                 if len(components) > 0:
                     main_comp = components[0]
@@ -113,10 +124,12 @@ def run_triangulation_ipix_experiment(segment_duration_s=1.0, n_segments=50):
                 components_per_segment.append(0)
                 doppler_info.append({})
         valid_doppler = [d for d in doppler_info if d.get('doppler_freq_hz') is not None]
+        det_rate = (int(np.sum(np.array(components_per_segment) > 0)) / max_segments) * 100
         results[dataset_name] = {
             "n_segments": max_segments,
             "mean_components": float(np.mean(components_per_segment)),
             "detection_segments": int(np.sum(np.array(components_per_segment) > 0)),
+            "detection_rate_percent": float(det_rate),
             "doppler_stats": {
                 "n_detections": len(valid_doppler),
                 "mean_doppler_hz": float(
@@ -127,25 +140,24 @@ def run_triangulation_ipix_experiment(segment_duration_s=1.0, n_segments=50):
         }
     return results
 
-
 def main():
     OUTPUT_DIR_EXT = Path("extensions/results")
     OUTPUT_DIR_EXT.mkdir(parents=True, exist_ok=True)
     try:
         print(f"Inceput experiment: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("\n" + "=" * 70)
         print("EXTENSIE PROIECT: ANALIZA COMPARATIVA DATE IPIX RADAR")
         print("Metode: CA-CFAR + HDBSCAN vs. TRIANGULARE DELAUNAY")
-        print("=" * 70)
         start_time = time.time()
         print("\nSe ruleaza experimentul: CA-CFAR + HDBSCAN (Fereastra Hamming)")
         cfar_ipix_results = run_ipix_experiment(segment_duration_s=1.0, n_segments=30)
         cfar_json_path = OUTPUT_DIR_EXT / "rezultate_cfar_ipix.json"
+        json_cfar = {}
+        for key, data in cfar_ipix_results.items():
+            if isinstance(data, dict) and len(data) > 0:
+                json_cfar[key] = {k: v for k, v in data.items() if k not in ['components_per_segment', 'metadata']}
+            else:
+                json_cfar[key] = {"status": "error", "message": "No data collected for this state"}
         with open(cfar_json_path, 'w') as f:
-            json_cfar = {}
-            for key, data in cfar_ipix_results.items():
-                if data:
-                    json_cfar[key] = {k: v for k, v in data.items() if k not in ['components_per_segment', 'metadata']}
             json.dump(json_cfar, f, indent=4)
         print("\nSe ruleaza experimentul: SEPARARE PRIN TRIANGULARE")
         tri_ipix_results = run_triangulation_ipix_experiment(segment_duration_s=1.0, n_segments=30)
@@ -156,24 +168,21 @@ def main():
                 if data:
                     json_tri[key] = data
             json.dump(json_tri, f, indent=4)
-        print("\nGenerare rezumat rezultate...")
         durata_totala = time.time() - start_time
         for stare in ["hi_sea_state", "lo_sea_state"]:
             c = cfar_ipix_results.get(stare, {})
             if c:
                 print(f"  [METODA CA-CFAR]:")
-                print(
-                    f"    - Rata detectie: {c['detection_segments']}/{c['n_segments']} ({100 * c['detection_segments'] / c['n_segments']:.1f}%)")
+                print(f"    - Rata detectiei: {c['detection_segments']}/{c['n_segments']} ({100 * c['detection_segments'] / c['n_segments']:.1f}%)")
                 print(f"    - Viteza medie estimata: {c['doppler_stats']['mean_velocity_mps']:.2f} m/s")
             t_res = tri_ipix_results.get(stare, {})
             if t_res:
-                print(f"  [METODA TRIANGULARE]:")
-                print(f"    - Rata detectie: {t_res['detection_segments']}/{t_res['n_segments']} ({100 * t_res['detection_segments'] / t_res['n_segments']:.1f}%)")
+                print(f"  [METODA TRIANGULARII]:")
+                print(f"    - Rata detectiei: {t_res['detection_segments']}/{t_res['n_segments']} ({100 * t_res['detection_segments'] / t_res['n_segments']:.1f}%)")
                 print(f"    - Viteza medie estimata: {t_res['doppler_stats']['mean_velocity_mps']:.2f} m/s")
         print(f"Durata totala procesare: {durata_totala:.1f} secunde")
         print(f"Rezultate salvate in: {OUTPUT_DIR_EXT}")
         print("PROCESARE FINALIZATA CU SUCCES!")
-
     except Exception as e:
         print(f"\n[EROARE]: {str(e)}")
 
