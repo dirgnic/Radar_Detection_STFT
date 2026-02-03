@@ -256,7 +256,7 @@ The implementation is validated on synthetic data (nonlinear chirp) and real dat
 Problema principală pe care o rezolvăm este \textbf{detecția obiectelor mici în date radar maritime}, într-un mediu complex care se schimbă constant din cauza valurilor. Spre deosebire de multe scenarii terestre unde zgomotul/clutter-ul poate fi mai stabil, mediul acvatic are caracteristici particulare:
 
 \begin{itemize}
-    \item statisticile \textbf{nu sunt bine modelate Gaussian} (avem distribuții cu cozi grele și amplitudini mari),
+    \item statisticile \textbf{nu sunt bine modelate Gaussian} (apar valori extreme mai frecvent decât în distribuția normală),
     \item există \textbf{corelație temporală} (valurile creează tipare structurate),
     \item efectele Doppler duc la \textbf{extinderea spectrului} (valuri în mișcare),
     \item apar \textbf{spike-uri} vizibile în spectrograme când valurile sunt mai mari.
@@ -668,7 +668,7 @@ Modificări cheie pentru adaptarea algoritmului din paper la sea clutter real:
 
 \section{Adaptarea 1: K-distribution în loc de Gaussian}
 
-Algoritmul original presupune statistică Gaussian/Rayleigh, însă sea clutter real are cozi grele și urmează \textbf{K-distribution}:
+Algoritmul original presupune statistică Gaussian/Rayleigh, însă sea clutter real prezintă valori extreme frecvente (spike-uri) și urmează \textbf{K-distribution}:
 
 \begin{equation}
 p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)
@@ -676,7 +676,7 @@ p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\n
 
 unde $\nu$ e parametrul de formă (mai mic $\rightarrow$ mai „spiky"), iar $K_{\nu-1}$ e funcția Bessel modificată.
 
-\textbf{Soluție}: Estimare parametru din celulele de training: $\nu = \mu^2 / (\sigma^2 - \mu^2)$. Apoi ajustăm multiplicatorul pragului pentru a reduce alarmele false în clutter cu cozi grele.
+\textbf{Soluție}: Estimare parametru din celulele de training: $\nu = \mu^2 / (\sigma^2 - \mu^2)$. Apoi ajustăm multiplicatorul pragului pentru a reduce alarmele false în clutter cu spike-uri frecvente.
 
 \section{Adaptarea 2: Fractal boost cu exponentul Hurst}
 
