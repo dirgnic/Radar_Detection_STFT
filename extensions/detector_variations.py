@@ -16,16 +16,16 @@ class CFARDetectorOfChoice:
                  window_type: str = 'gaussian', gaussian_sigma: Optional[float] = None, zero_threshold_percentile: float = 5.0,
                  mode: str = 'auto'):
         self.fs = sample_rate
-        self.window_size = window_size
-        self.hop_size = hop_size
+        self.window_size = window_size          # dimensiunea pentru fft
+        self.hop_size = hop_size                # pasul intre ferestre
         self.use_vectorized_cfar = use_vectorized_cfar
-        self.zero_threshold_percentile = zero_threshold_percentile
+        self.zero_threshold_percentile = zero_threshold_percentile      # percentila sub care zgomotul e considerat 0 pt os-cfar
         self.mode = mode
         self.is_complex_input = False
         self.cfar = create_cfar_detector(method=cfar_method, guard_cells_v=cfar_guard_cells, guard_cells_h=cfar_guard_cells,
-        training_cells_v=cfar_training_cells, training_cells_h=cfar_training_cells, pfa=cfar_pfa)
+        training_cells_v=cfar_training_cells, training_cells_h=cfar_training_cells, pfa=cfar_pfa)       # creeaza detectorul dorit
         self.cluster_cfg = ClusteringConfig(eps=dbscan_eps, min_samples=dbscan_min_samples, freq_scale=100.0, time_scale=0.05)
-        if clustering_method == 'hdbscan':
+        if clustering_method == 'hdbscan':                  # cu algoritmul de clustering
             self.clustering = HDBSCAN(self.cluster_cfg)
         elif clustering_method == 'agglomerative':
             self.clustering = AgglomerativeClustering(self.cluster_cfg)
@@ -39,10 +39,10 @@ class CFARDetectorOfChoice:
         self.zero_map = None
         self.components = []
 
-    def get_window(self):
+    def get_window(self):           # si cu fereastra dorita
         return create_window(window_type=self.window_type, N=self.window_size, gaussian_sigma=self.gaussian_sigma)
 
-    def compute_stft(self, signal_data: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def compute_stft(self, signal_data):
         self.is_complex_input = np.iscomplexobj(signal_data)
         if self.mode == 'auto':
             use_twosided = self.is_complex_input
@@ -51,7 +51,7 @@ class CFARDetectorOfChoice:
         else:
             use_twosided = False
         window = self.get_window()
-        if use_twosided:
+        if use_twosided:            # face stft
             freqs, times, Zxx = signal.stft(signal_data, fs=self.fs, window=window, nperseg=self.window_size,
                                             noverlap=self.window_size - self.hop_size, return_onesided=False)
             Zxx = np.fft.fftshift(Zxx, axes=0)
@@ -63,33 +63,33 @@ class CFARDetectorOfChoice:
         magnitude = np.abs(Zxx)
         self.stft_result = {'complex': Zxx, 'magnitude': magnitude, 'phase': np.angle(Zxx),
             'freqs': freqs, 'times': times, 'is_twosided': use_twosided, 'is_complex_input': self.is_complex_input}
-        threshold = np.percentile(magnitude, self.zero_threshold_percentile)
+        threshold = np.percentile(magnitude, self.zero_threshold_percentile)        # prag pentru izolarea zgomotului
         self.zero_map = magnitude < threshold
         return Zxx, freqs, times
 
-    def expand_mask_geodesic(self, mask: np.ndarray, max_iterations: int = 10) -> np.ndarray:
+    def expand_mask_geodesic(self, mask, max_iterations = 10):
         if self.zero_map is None:
             return ndimage.binary_dilation(mask, iterations=2)
-        allowed = ~self.zero_map
+        allowed = ~self.zero_map                        # zonele unde semnalul este peste pragul 0
         expanded = mask.copy()
-        structure = ndimage.generate_binary_structure(2, 1)
-        for _ in range(max_iterations):
+        structure = ndimage.generate_binary_structure(2, 1)     # 4-conectivitate
+        for _ in range(max_iterations):         # creste masca
             dilated = ndimage.binary_dilation(expanded, structure=structure)
-            new_expanded = dilated & allowed
+            new_expanded = dilated & allowed        # expandeaza doar daca exista energie in acea zona
             if np.array_equal(new_expanded, expanded):
                 break
-            expanded = new_expanded
+            expanded = new_expanded             # returneaza masca
         return expanded
 
     def detect_components(self, signal_data, n_components = None):
         clustering_name = self.clustering.__class__.__name__
         window_name = self.window_type.capitalize()
         cfar_name = self.cfar.__class__.__name__
-        Zxx, freqs, times = self.compute_stft(signal_data)
+        Zxx, freqs, times = self.compute_stft(signal_data)          # stft
         magnitude = np.abs(Zxx)
         print(f"\nConfiguratie: Ferestra [{window_name}], CFAR [{cfar_name}], Clustering [{clustering_name}]")
         print(f"Aplicare detectie adaptiva 2D:")
-        if self.use_vectorized_cfar:
+        if self.use_vectorized_cfar:                    # detectie
             self.detection_map = self.cfar.detect_vectorized(magnitude)
         else:
             self.detection_map = self.cfar.detect(magnitude)
@@ -98,8 +98,8 @@ class CFARDetectorOfChoice:
         if n_detected == 0:
             return []
         print(f"Clustering:")
-        detected_points = np.array(np.where(self.detection_map)).T
-        cluster_labels = self.clustering.fit(detected_points, freqs, times)
+        detected_points = np.array(np.where(self.detection_map)).T          # transforma detectiile in coordonate
+        cluster_labels = self.clustering.fit(detected_points, freqs, times)     # clusterizare
         unique_labels = set(cluster_labels) - {-1}
         print(f"Clustere gasite: {len(unique_labels)}")
         components = []
@@ -113,12 +113,12 @@ class CFARDetectorOfChoice:
             centroid_time = np.mean(times[time_indices])
             mask = np.zeros_like(magnitude, dtype=bool)
             mask[freq_indices, time_indices] = True
-            mask = self._expand_mask_geodesic(mask)
+            mask = self.expand_mask_geodesic(mask)
             component = DetectedComponent(cluster_id=int(cluster_id), time_indices=time_indices,
                 freq_indices=freq_indices, energy=energy, centroid_time=centroid_time, centroid_freq=centroid_freq, mask=mask)
-            components.append(component)
+            components.append(component)                # salveaza componenta procesata
         components.sort(key=lambda x: x.energy, reverse=True)
-        if n_components is not None:
+        if n_components is not None:            # sorteaza descrescator dupa energie
             components = components[:n_components]
         self.components = components
         print(f"Componente sortate dupa energie: {len(components)}")
@@ -127,14 +127,14 @@ class CFARDetectorOfChoice:
     def reconstruct_component(self, component):
         if self.stft_result is None:
             raise ValueError("Detecteaza componentele!")
-        smoothed_mask = ndimage.binary_closing(component.mask, iterations=1)
-        smoothed_mask = ndimage.binary_opening(smoothed_mask, iterations=1)
+        smoothed_mask = ndimage.binary_closing(component.mask, iterations=1)        # inchidere morfologica pentru umplerea golurilor
+        smoothed_mask = ndimage.binary_opening(smoothed_mask, iterations=1)             # urmata de deschidere morfologica
         masked_stft = self.stft_result['complex'].copy()
         if self.stft_result.get('is_twosided', False):
             smoothed_mask = np.fft.ifftshift(smoothed_mask, axes=0)
             masked_stft = np.fft.ifftshift(masked_stft, axes=0)
         masked_stft = masked_stft * smoothed_mask
-        window = self.get_window()
+        window = self.get_window()                          # reconstructie cu istft
         _, reconstructed = signal.istft(masked_stft, fs=self.fs, window=window, nperseg=self.window_size,
             noverlap=self.window_size - self.hop_size, input_onesided=not self.stft_result.get('is_twosided', False))
         if not self.stft_result.get('is_complex_input', False):
@@ -143,7 +143,7 @@ class CFARDetectorOfChoice:
         return reconstructed
 
     def get_spectrogram_db(self):
-        if self.stft_result is None:
+        if self.stft_result is None:            # prntru conversia in dB
             return None, None, None
         Sxx_db = 20 * np.log10(self.stft_result['magnitude'] + 1e-10)
         return self.stft_result['freqs'], self.stft_result['times'], Sxx_db
@@ -151,8 +151,8 @@ class CFARDetectorOfChoice:
     def get_doppler_info(self, component):
         if self.stft_result is None:
             return {}
-        freqs = self.stft_result['freqs']
-        doppler_freq = component.centroid_freq
+        freqs = self.stft_result['freqs']           # vectorul de frecvente
+        doppler_freq = component.centroid_freq      # frecventa centrala a clusterului
         freq_indices = component.freq_indices
         if len(freq_indices) > 0:
             valid_indices = np.clip(freq_indices, 0, len(freqs) - 1)
@@ -166,12 +166,12 @@ class CFARDetectorOfChoice:
             'centroid_time_s': component.centroid_time, 'energy': component.energy, 'velocity_estimate_mps': self._doppler_to_velocity(doppler_freq, rf_ghz=9.39)}
 
     def doppler_to_velocity(self, fd, rf_ghz = 9.39):
-        c = 3e8
-        f_rf = rf_ghz * 1e9
-        velocity = fd * c / (2 * f_rf)
+        c = 3e8         # vireza luminii
+        f_rf = rf_ghz * 1e9             # frecventa radarului
+        velocity = fd * c / (2 * f_rf)          # ecuatia doppler
         return velocity
 
-def demo_comparison():
+def demo_comparison():          # semnalul folosit in src/cfar_stft_detector.py
     fs = 44100
     duration = 5.0
     t = np.linspace(0, duration, int(fs * duration))
@@ -185,7 +185,7 @@ def demo_comparison():
     os.makedirs("./spectrograms", exist_ok=True)
     print("Executie: Original")
     det_orig = OriginalDetector(sample_rate=fs, window_size=1024, hop_size=256,
-        cfar_guard_cells=2, cfar_training_cells=4, cfar_pfa=1e-2,bscan_eps=5.0, dbscan_min_samples=5, use_vectorized_cfar=True)
+        cfar_guard_cells=2, cfar_training_cells=4, cfar_pfa=1e-2,dbscan_eps=5.0, dbscan_min_samples=5, use_vectorized_cfar=True)
     comp_orig = det_orig.detect_components(test_signal)
     f_o, t_o, Sxx_o = det_orig.get_spectrogram_db()
     ax0 = axes[0]
@@ -225,7 +225,6 @@ def demo_comparison():
     plt.tight_layout()
     output_path = "./spectrograms/comparisons_paper_method_vs_other_methods.pdf"
     plt.savefig(output_path, format='pdf', bbox_inches='tight', dpi=150)
-    print(f"\nGata PDF!: {output_path}")
     plt.show()
 
 if __name__ == "__main__":
