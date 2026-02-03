@@ -104,7 +104,7 @@
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 
 % Metadate
-\title{Analiza semnalelor radar în prezența ecourilor marine (sea clutter)}
+\title{Analiza semnalelor radar în prezența sea clutter}
 \author{Ingrid Corobana \quad Teodora Nae}
 
 % Generează variabilele cu @
@@ -146,19 +146,19 @@
 
 \vspace{0.3cm}
 \begin{center}
-\textbf{SPECIALIZAREA INFORMATICĂ}
+\textbf{Specializarea: Informatică}
 \end{center}
 
 \vspace{0.8cm}
 
 \begin{center}
-\Large \textbf{Proiect Procesarea Semnalelor}
+\Large \textbf{Proiect la Procesarea Semnalelor}
 \end{center}
 
 \vspace{0.5cm}
 
 \begin{center}
-\LARGE \textbf{ANALIZA SEMNALELOR RADAR ÎN PREZENȚA ECOURILOR MARINE}
+\LARGE \textbf{ANALIZA SEMNALELOR RADAR ÎN PREZENȚA SEA CLUTTER}
 \end{center}
 
 \vspace{0.3cm}
@@ -206,13 +206,11 @@ Conf. Dr. Cristian Rusu
 \begin{abstractpage}
 
 \begin{abstract}{romanian}
-Acest document prezintă o implementare completă a algoritmului \textbf{CFAR--STFT}, propus de \textbf{Abratkiewicz (2022)}, pentru detecția și recuperarea semnalelor radar în prezența zgomotului și a clutter-ului maritim. Algoritmul combină \textbf{Short-Time Fourier Transform (STFT)}, \textbf{detecție adaptivă CFAR 2D}, \textbf{clustering DBSCAN} și \textbf{dilatare geodezică} pentru a reconstrui semnale radar cu fidelitate ridicată.
+Acest document prezintă o implementare completă a algoritmului \textbf{CFAR--STFT}, propus de \textbf{Abratkiewicz (2022)}, pentru detecția și reconstrucția semnalelor radar în prezența zgomotului și a sea clutter. Algoritmul combină \textbf{Short-Time Fourier Transform (STFT)}, \textbf{detecție adaptivă CFAR 2D}, \textbf{clustering DBSCAN} și \textbf{dilatare geodezică} pentru a extrage componenta de interes dintr-un amestec cu sea clutter.
 
-Implementarea este validată pe date sintetice (chirp neliniar) și pe date reale (\textbf{IPIX radar sea clutter}). Pe semnalul sintetic controlat, algoritmul detectează componenta de interes în toate cele 100 de rulări Monte Carlo (rata de detecție 100\%). \textbf{RQF} (Reconstruction Quality Factor) variază de la \textbf{7.28 dB} la \textbf{SNR=5 dB} până la \textbf{29.17 dB} la \textbf{SNR=30 dB}.
+Implementarea este validată pe date sintetice (chirp neliniar) și pe date reale (\textbf{IPIX radar}, sea clutter). Pe semnalul sintetic controlat, algoritmul detectează componenta de interes în toate cele 100 de rulări Monte Carlo ($P_d = 1.00$). \textbf{RQF} (Reconstruction Quality Factor) crește de la \textbf{7.28 dB} (SNR = 5 dB) la \textbf{29.17 dB} (SNR = 30 dB).
 
-\textbf{Contribuția cheie}: adaptăm algoritmul la sea clutter real folosind \textbf{K-distribution} (în loc de Gaussian), \textbf{fractal/Hurst boost} pentru ținte slabe și \textbf{DBSCAN asimetric} pentru clustering de semnături verticale.
-
-Cod sursă disponibil la: \url{https://github.com/dirgnic/Radar_Detection_STFT}
+\textbf{Contribuția principală}: adaptăm algoritmul la sea clutter real folosind \textbf{K-distribution} (în loc de Gaussian), \textbf{îmbunătățire bazată pe proprietăți fractale (exponentul Hurst)} pentru ținte slabe și \textbf{DBSCAN asimetric} pentru clustering de semnături verticale.
 
 \textbf{Cuvinte cheie:} CFAR, STFT, radar, sea clutter, K-distribution, DBSCAN, detecție adaptivă
 \end{abstract}
@@ -220,11 +218,11 @@ Cod sursă disponibil la: \url{https://github.com/dirgnic/Radar_Detection_STFT}
 \newpage
 
 \begin{abstract}{english}
-This document presents a complete implementation of the \textbf{CFAR-STFT} algorithm, proposed by \textbf{Abratkiewicz (2022)}, for detection and recovery of radar signals in the presence of noise and maritime clutter. The algorithm combines \textbf{Short-Time Fourier Transform (STFT)}, \textbf{2D adaptive CFAR detection}, \textbf{DBSCAN clustering}, and \textbf{geodesic dilation} to reconstruct radar signals with high fidelity.
+This document presents a complete implementation of the \textbf{CFAR-STFT} algorithm, proposed by \textbf{Abratkiewicz (2022)}, for detection and reconstruction of radar signals in the presence of noise and sea clutter. The algorithm combines \textbf{Short-Time Fourier Transform (STFT)}, \textbf{2D adaptive CFAR detection}, \textbf{DBSCAN clustering}, and \textbf{geodesic dilation} to extract the component of interest from a mixture with sea clutter.
 
-The implementation is validated on synthetic data (nonlinear chirp) and real data (\textbf{IPIX radar sea clutter}). On controlled synthetic signal, the algorithm detects the component of interest in all 100 Monte Carlo runs (100\% detection rate). \textbf{RQF} (Reconstruction Quality Factor) ranges from \textbf{7.28 dB} at \textbf{SNR=5 dB} to \textbf{29.17 dB} at \textbf{SNR=30 dB}.
+The implementation is validated on synthetic data (nonlinear chirp) and real data (\textbf{IPIX radar sea clutter}). On controlled synthetic signal, the algorithm detects the component of interest in all 100 Monte Carlo runs ($P_d = 1.00$). \textbf{RQF} (Reconstruction Quality Factor) increases from \textbf{7.28 dB} (SNR = 5 dB) to \textbf{29.17 dB} (SNR = 30 dB).
 
-\textbf{Key contribution}: we adapt the algorithm to real sea clutter using \textbf{K-distribution} (instead of Gaussian), \textbf{fractal/Hurst boost} for weak targets, and \textbf{asymmetric DBSCAN} for vertical signature clustering.
+\textbf{Key contribution}: we adapt the algorithm to real sea clutter using \textbf{K-distribution} (instead of Gaussian), \textbf{fractal-based enhancement (Hurst exponent)} for weak targets, and \textbf{asymmetric DBSCAN} for vertical signature clustering.
 
 \textbf{Keywords:} CFAR, STFT, radar, sea clutter, K-distribution, DBSCAN, adaptive detection
 \end{abstract}
@@ -272,10 +270,10 @@ Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm
     \item implementarea completă a algoritmului \textbf{CFAR--STFT} în \textbf{Python};
     \item validarea pe date sintetice: \textbf{chirp neliniar} conform Ecuației (14);
     \item testarea pe date reale: \textbf{IPIX} cu sea clutter complex;
-    \item analiză Doppler pentru estimarea vitezei (și interpretarea țintelor);
+    \item analiză Doppler pentru estimarea vitezei radiale (din frecvența Doppler);
     \item documentație detaliată și reproductibilitate;
-    \item validare rezultate: detecție și reconstrucție;
-    \item \textbf{adaptări sea clutter}: K-distribution, boost fractal (Hurst), DBSCAN asimetric.
+    \item validare rezultate: detecție și reconstrucție a componentelor;
+    \item \textbf{adaptări sea clutter}: K-distribution, îmbunătățire bazată pe exponentul Hurst, DBSCAN asimetric.
 \end{enumerate}
 
 \section{Structura documentului}
@@ -352,7 +350,7 @@ unde $\mathcal{N}(k,n)$ este estimarea zgomotului local.
 \end{equation}
 
 \begin{equation}
-R = N_T \left( P_f^{-1/N_T} - 1 \right)
+R = N_T \left( P_{fa}^{-1/N_T} - 1 \right)
 \end{equation}
 
 Decizie (în plan TF, pe puterea spectrogramelor):
@@ -411,7 +409,7 @@ Algoritmul complet are cinci pași:
 \begin{algorithm}[H]
 \caption{Detecție CFAR 2D (GOCA)}
 \begin{algorithmic}[1]
-\Require Matrice STFT $X_{stft}$, $P_f=0.001$, $N_G=3$, $N_T=12$
+\Require Matrice STFT $X_{stft}$, $P_{fa}=0.001$, $N_G=3$, $N_T=12$
 \Ensure Mască binară de detecție $H \in \{0,1\}^{N_f \times N_t}$
 \State $H \gets \text{zeros}(N_f, N_t)$
 \State $N_f \gets $ rows($X_{stft}$), $N_t \gets $ cols($X_{stft}$)
@@ -420,7 +418,7 @@ Algoritmul complet are cinci pași:
         \State Extrage Training Cells în 4 cadrane în jurul $(k,n)$
         \State $\mu_i \gets \text{mean}(\text{cadran}_i)$ pentru $i \in \{1,2,3,4\}$
         \State $\mathcal{N}_{local} \gets \max(\mu_1, \mu_2, \mu_3, \mu_4)$ \Comment{GOCA}
-        \State $\lambda \gets R(P_f) \cdot \mathcal{N}_{local}$
+        \State $\lambda \gets R(P_{fa}) \cdot \mathcal{N}_{local}$
         \If{$|X_{stft}(k,n)|^2 > \lambda$}
             \State $H(k,n) \gets 1$
         \EndIf
@@ -506,7 +504,7 @@ Algoritmul complet are cinci pași:
 
 \section{Baza de date IPIX (radar maritim)}
 
-Componenta fundamentală a proiectului este folosirea datelor reale din \textbf{IPIX} (Intelligent Pixel Processing for X-band radar), de la \textbf{McMaster University, Canada}. Datele sunt de la un radar coerent polarimetric X-band folosit pentru monitorizarea activității maritime.
+Componenta fundamentală a proiectului este folosirea datelor reale din \textbf{IPIX} (Intelligent Pixel Processing for X-band radar), de la \textbf{McMaster University, Canada}. Datele provin de la un radar coerent polarimetric X-band folosit pentru monitorizarea activității maritime.
 
 \subsection{Caracteristici tehnice IPIX}
 
@@ -568,9 +566,9 @@ Spectrograma IPIX este \textbf{two-sided} (frecvențe negative/pozitive) pentru 
     \item \textbf{Aspect „punctat"}: energia e în ridges (creste) TF, nu uniformă
 \end{itemize}
 
-\textbf{Ce este sea clutter?}
+\textbf{Ce este clutter-ul marin?}
 
-Sea clutter (zgomot maritim) reprezintă \textbf{ecouri radar de la suprafața mării}:
+Clutter-ul marin (\textit{sea clutter}) reprezintă \textbf{ecouri radar de la suprafața mării}:
 
 \begin{itemize}
     \item Reflexii de la valuri, spumă, picături de apă
@@ -583,7 +581,7 @@ Sea clutter (zgomot maritim) reprezintă \textbf{ecouri radar de la suprafața m
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.95\textwidth]{../results/ipix_figures/ipix_seaclutter_explanation.png}
-\caption{Explicație vizuală: ce sunt sea clutters în date IPIX? Figura arată spectrograma completă (two-sided), zoom pe regiunea clutter în jurul DC (frecvență 0 Hz) și distribuția energiei pe frecvențe. Notă: majoritatea energiei (>90\%) este concentrată în $\pm 50$ Hz în jurul DC.}
+\caption{Explicație vizuală: ce este clutter-ul marin în datele IPIX? Figura arată spectrograma completă (two-sided), zoom pe regiunea clutter în jurul DC (frecvență 0 Hz) și distribuția energiei pe frecvențe. Notă: majoritatea energiei (>90\%) este concentrată în $\pm 50$ Hz în jurul DC.}
 \label{fig:seaclutter_explain}
 \end{figure}
 
@@ -664,11 +662,11 @@ Am rulat detecție animată pe fișierele cu ținte reale. Figurile de mai jos a
 \chapter{Adaptări pentru sea clutter}
 \label{chap:adaptations}
 
-Modificări cheie pentru adaptarea algoritmului din paper la sea clutter real:
+Modificări cheie pentru adaptarea algoritmului din articol la sea clutter real:
 
 \section{Adaptarea 1: K-distribution în loc de Gaussian}
 
-Algoritmul original presupune statistică Gaussian/Rayleigh, însă sea clutter real prezintă valori extreme frecvente (spike-uri) și urmează \textbf{K-distribution}:
+Algoritmul original presupune statistică Gaussian/Rayleigh, însă sea clutter real prezintă pondere mai mare în cozi (spike-uri frecvente) și urmează \textbf{K-distribution}:
 
 \begin{equation}
 p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)
@@ -676,11 +674,11 @@ p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\n
 
 unde $\nu$ e parametrul de formă (mai mic $\rightarrow$ mai „spiky"), iar $K_{\nu-1}$ e funcția Bessel modificată.
 
-\textbf{Soluție}: Estimare parametru din celulele de training: $\nu = \mu^2 / (\sigma^2 - \mu^2)$. Apoi ajustăm multiplicatorul pragului pentru a reduce alarmele false în clutter cu spike-uri frecvente.
+\textbf{Soluție}: Estimare parametru din celulele de training: $\nu = \mu^2 / (\sigma^2 - \mu^2)$. Apoi ajustăm multiplicatorul pragului pentru a reduce alarmele false în clutter cu pondere mai mare în cozi.
 
-\section{Adaptarea 2: Fractal boost cu exponentul Hurst}
+\section{Adaptarea 2: Îmbunătățire bazată pe exponentul Hurst}
 
-CFAR poate rata ținte slabe sub prag. Sea clutter are proprietate fractală (self-similarity) cuantificată de exponentul Hurst:
+CFAR poate rata ținte slabe sub prag. Sea clutter are proprietate fractală (auto-similaritate) cuantificată de exponentul Hurst:
 
 \begin{equation}
 \mathbb{E}\left[|X(t+\tau) - X(t)|^2\right] \propto \tau^{2H}
@@ -688,7 +686,7 @@ CFAR poate rata ținte slabe sub prag. Sea clutter are proprietate fractală (se
 
 Pentru sea clutter: $H \approx 0.75$--$0.85$ (persistent). Când apare o țintă, structura se perturbă și $H$ scade sub $\sim$0.6.
 
-\textbf{Soluție}: Calculăm $H$ per bin de frecvență (analiză R/S). Dacă $H < 0.6$, marcăm punctele cu putere mare ca ținte potențiale. Combinăm cu CFAR: $\text{mască} = \text{CFAR} \lor (\text{anomalie Hurst} \land \text{putere mare})$. Aceasta îmbunătățește detecția țintelor slabe pe care CFAR singur le-ar rata.
+\textbf{Soluție}: Calculăm $H$ per bin de frecvență (analiză R/S). Dacă $H < 0.6$, marcăm punctele cu putere mare ca ținte potențiale. Combinăm cu CFAR: $\text{mască} = \text{CFAR} \lor (\text{anomalie Hurst} \land \text{putere mare})$. Această abordare îmbunătățește detecția țintelor slabe pe care CFAR singur le-ar rata.
 
 \section{Adaptarea 3: DBSCAN asimetric pentru semnături verticale}
 
@@ -729,7 +727,7 @@ Unele alarme false apar ca detecții foarte înguste (single-frequency), implauz
 $N_{fft}$ (window\_size) & 256 & $[128, 512]$ & Lungime FFT \\
 $H$ (hop\_size) & 32 & $[N/8, N/2]$ & Hop = 87.5\% overlap \\
 $\sigma_{window}$ & 8 & [4, 16] & Deviația std. a ferestrei \\
-$P_f$ & 0.001 & [0.0001, 0.01] & Probabilitate alarmă falsă \\
+$P_{fa}$ & 0.001 & [0.0001, 0.01] & Probabilitate alarmă falsă \\
 $N_G$ (cfar\_guard) & 3 & [2, 8] & Mărime celule guard \\
 $N_T$ (cfar\_training) & 12 & [8, 24] & Mărime celule training \\
 $\varepsilon_{DBSCAN}$ & 8 & [4, 16] & Raza de clustering \\
@@ -779,7 +777,7 @@ Implementarea CFAR-STFT demonstrează performanță excelentă:
     \item \textbf{Robustețe}: Performanță consistentă pe 100 rulări MC
     \item \textbf{Eficiență computațională}: $\sim 75$ ms per segment (13 FPS)
     \item \textbf{Reproductibilitate}: Cod open-source, rezultate verificabile
-    \item \textbf{Validare reală}: Funcționează pe date IPIX sea clutter complexe
+    \item \textbf{Validare reală}: Funcționează pe date IPIX cu sea clutter complex
 \end{enumerate}
 
 \section{Perspective de dezvoltare viitoare}
