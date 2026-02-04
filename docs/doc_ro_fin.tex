@@ -303,15 +303,8 @@ Algoritmul complet are cinci pași:
     \item detecție \textbf{CFAR 2D} în plan timp--frecvență;
     \item clustering DBSCAN al punctelor detectate;
     \item extinderea măștii prin \textbf{dilatare geodezică} (geodesic dilation);
-    \item reconstrucție prin \textbf{iSTFT} folosind masca (aplicată element-wise pe STFT).
+    \item extragere detecții (mascare STFT).
 \end{enumerate}
-
-\begin{figure}[H]
-\centering
-\includepdf[scale=0.9]{pipeline_diagrams.pdf}
-\caption{Diagrama pipeline CFAR-STFT: Pași 1-5 pentru detecție și reconstrucție în prezența sea clutter.}
-\label{fig:pipeline}
-\end{figure}
 
 \subsection{Pasul 1: Calcul STFT}
 
@@ -528,5 +521,20 @@ Richards, M. A. (2005).
 McGraw-Hill Professional.
 
 \end{thebibliography}
+
+% ============================================================================
+% ANEXĂ: DIAGRAME PIPELINE
+% ============================================================================
+\appendix
+\chapter{Diagrame detaliate ale pipeline-ului CFAR-STFT}
+
+Planul timp--frecvență și componentele algoritmului sunt ilustrate în figura \ref{fig:pipeline-pdf}.
+
+\begin{figure}[H]
+\centering
+\includepdf[pages=-, scale=0.75]{pipeline_diagrams.pdf}
+\caption{Diagrame detaliate: (1) Pipeline principal, (2) CFAR 2D, (3) Configurația experimentală, (4) Procesare TF, (5) Doppler, (6) Parametri, (7) RQF metric}
+\label{fig:pipeline-pdf}
+\end{figure}
 
 \end{document}

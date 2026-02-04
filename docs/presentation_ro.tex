@@ -63,26 +63,25 @@ Coordonator: Conf. Dr. Cristian Rusu}
 \begin{frame}{Problema: Detecția în Sea Clutter}
 \begin{columns}[T]
 \column{0.55\textwidth}
-\textbf{Ce este sea clutter?}
+\textbf{Sea Clutter}:
 \begin{itemize}
-    \item Ecouri radar de la suprafața mării
-    \item Valuri, spumă, picături de apă
-    \item \alert{Nu este Gaussian!} $\rightarrow$ Pondere mai mare în cozi
-    \item Concentrat în jurul 0 Hz (Doppler mic)
+    \item Ecouri de la suprafața mării
+    \item Non-Gaussian cu spike-uri frecvente
+    \item Ascunde ținte mici
 \end{itemize}
 
-\vspace{0.5em}
-\textbf{Provocări:}
+\vspace{0.3em}
+\textbf{Provocări}:
 \begin{itemize}
-    \item Statistici non-Gaussiene (K-distribution)
-    \item Corelație temporală (valuri structurate)
-    \item Ținte mici ascunse în clutter
+    \item K-distribution statistics
+    \item Corelație temporală
+    \item Ținte slabe sub clutter
 \end{itemize}
 
 \column{0.45\textwidth}
 \begin{figure}
 \includegraphics[width=\textwidth]{ipix_seaclutter_explanation.png}
-\caption{\tiny Spectrogramă IPIX cu sea clutter}
+\caption{\tiny Spectrogramă IPIX}
 \end{figure}
 \end{columns}
 \end{frame}
@@ -220,29 +219,14 @@ CFAR detectează: margini, ridges, ținte reale -- NU zone omogene de clutter!
 \section{Adaptări pentru Sea Clutter}
 
 \begin{frame}{Adaptarea 1: K-Distribution}
-\textbf{Problema}: Sea clutter NU e Gaussian -- are \alert{spike-uri frecvente}!
+\textbf{Sea clutter $\neq$ Gaussian} -- modelează spike-uri cu K-distribution:
 
 \begin{equation*}
 p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)
 \end{equation*}
 
-\begin{columns}[T]
-\column{0.5\textwidth}
-\textbf{Parametri}:
-\begin{itemize}
-    \item $\nu$ = parametru de formă
-    \item $\nu$ mic $\Rightarrow$ mai „spiky"
-    \item Estimare: $\nu = \mu^2/(\sigma^2 - \mu^2)$
-\end{itemize}
-
-\column{0.5\textwidth}
-\textbf{Soluție}:
-\begin{itemize}
-    \item Estimăm $\nu$ din training cells
-    \item Ajustăm multiplicatorul pragului
-    \item Reducem alarme false în clutter
-\end{itemize}
-\end{columns}
+\vspace{0.3em}
+\textbf{Ajustare prag}: $\nu$ mic $\Rightarrow$ mai spiky. Estimare $\nu = \mu^2/(\sigma^2 - \mu^2)$, ajustare multiplicator prag CFAR.
 \end{frame}
 
 \begin{frame}{Adaptarea 2: Fractal Boost (Hurst)}
