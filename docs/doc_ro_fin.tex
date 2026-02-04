@@ -306,6 +306,13 @@ Algoritmul complet are cinci pași:
     \item reconstrucție prin \textbf{iSTFT} folosind masca (aplicată element-wise pe STFT).
 \end{enumerate}
 
+\begin{figure}[H]
+\centering
+\includepdf[scale=0.9]{pipeline_diagrams.pdf}
+\caption{Diagrama pipeline CFAR-STFT: Pași 1-5 pentru detecție și reconstrucție în prezența sea clutter.}
+\label{fig:pipeline}
+\end{figure}
+
 \subsection{Pasul 1: Calcul STFT}
 
 Aplică formula (1) cu $N_{fft}=256$, hop=32, fereastră Gaussiană $\sigma=8$.
@@ -320,26 +327,7 @@ Grupează punctele detectate (k,n) cu distanța asimetrică din ecuația (3). Pa
 
 \subsection{Pasul 4: Dilatare geodezică}
 
-\begin{algorithm}[H]
-\caption{Dilatare geodezică pe mască}
-\begin{algorithmic}[1]
-\Require Mască binară $H$ (de la CFAR), iterații $n_{iter}=3$
-\Ensure Mască dilatată $H_{dil}$
-\State $H_{dil} \gets H$
-\State Kernel $\gets$ binar $3 \times 3$ cruce
-\For{$i \gets 1$ to $n_{iter}$}
-    \State $H_{new} \gets \text{zeros}(H_{dil}.shape)$
-    \For{$k \gets 1$ to rows($H_{dil}$) $-2$}
-        \For{$n \gets 1$ to cols($H_{dil}$) $-2$}
-            \State $H_{new}(k,n) = \max(H_{dil}(k-1,n), H_{dil}(k,n),$ 
-            \State \hspace{3cm} $H_{dil}(k+1,n), H_{dil}(k,n-1), H_{dil}(k,n+1))$
-        \EndFor
-    \EndFor
-    \State $H_{dil} \gets H_{new}$
-\EndFor
-\State \Return $H_{dil}$
-\end{algorithmic}
-\end{algorithm}
+Aplică dilatare cu kernel cruce (3×3) de 3 ori: \texttt{for i in range(3): H\_dil = scipy.ndimage.maximum\_filter(H\_dil, footprint=cross)}. Expandează detecțiile pentru a conecta punctele apropiate.
 
 \subsection{Pasul 5: Extragere detecții}
 
