@@ -240,7 +240,7 @@ Prof. Dr. Cristian Rusu
 \begin{abstractpage}
 
 \begin{abstract}{romanian}
-Acest document prezintă o implementare completă a algoritmului \textbf{CFAR--STFT}, propus de \textbf{Abratkiewicz (2022)}, pentru detecția și reconstrucția semnalelor radar în prezența zgomotului și a sea clutter. Algoritmul combină \textbf{Short-Time Fourier Transform (STFT)}, \textbf{detecție adaptivă CFAR 2D}, \textbf{clustering DBSCAN} și \textbf{dilatare geodezică} pentru a extrage componenta de interes dintr-un amestec cu sea clutter.
+Acest document prezintă o implementare completă a algoritmului \textbf{CFAR--STFT}, propus de \textbf{Abratkiewicz~(2022)}, pentru detecția și reconstrucția semnalelor radar în prezența zgomotului și a sea clutter. Algoritmul combină \textbf{Short-Time Fourier Transform (STFT)}, \textbf{detecție adaptivă CFAR 2D}, \textbf{clustering DBSCAN} și \textbf{dilatare geodezică} pentru a extrage componenta de interes dintr-un amestec cu sea clutter.
 
 Implementarea este validată pe date sintetice (chirp neliniar) și pe date reale (\textbf{IPIX radar}, sea clutter). Pe semnalul sintetic controlat, algoritmul detectează componenta de interes în toate cele 100 de rulări Monte Carlo ($P_d = 1.00$). \textbf{RQF} (Reconstruction Quality Factor) crește de la \textbf{7.28 dB} (SNR = 5 dB) la \textbf{29.17 dB} (SNR = 30 dB).
 
@@ -252,7 +252,7 @@ Implementarea este validată pe date sintetice (chirp neliniar) și pe date real
 \newpage
 
 \begin{abstract}{english}
-This document presents a complete implementation of the \textbf{CFAR-STFT} algorithm, proposed by \textbf{Abratkiewicz (2022)}, for detection and reconstruction of radar signals in the presence of noise and sea clutter. The algorithm combines \textbf{Short-Time Fourier Transform (STFT)}, \textbf{2D adaptive CFAR detection}, \textbf{DBSCAN clustering}, and \textbf{geodesic dilation} to extract the component of interest from a mixture with sea clutter.
+This document presents a complete implementation of the \textbf{CFAR-STFT} algorithm, proposed by \textbf{Abratkiewicz~(2022)}, for detection and reconstruction of radar signals in the presence of noise and sea clutter. The algorithm combines \textbf{Short-Time Fourier Transform (STFT)}, \textbf{2D adaptive CFAR detection}, \textbf{DBSCAN clustering}, and \textbf{geodesic dilation} to extract the component of interest from a mixture with sea clutter.
 
 The implementation is validated on synthetic data (nonlinear chirp) and real data (\textbf{IPIX radar sea clutter}). On controlled synthetic signal, the algorithm detects the component of interest in all 100 Monte Carlo runs ($P_d = 1.00$). \textbf{RQF} (Reconstruction Quality Factor) increases from \textbf{7.28 dB} (SNR = 5 dB) to \textbf{29.17 dB} (SNR = 30 dB).
 
@@ -287,7 +287,7 @@ The implementation is validated on synthetic data (nonlinear chirp) and real dat
 
 Problema principală abordată este \textbf{detecția obiectelor mici în date radar maritime}, într-un mediu complex. Mediul acvatic are caracteristici particulare: (1) statisticile \textbf{nu sunt bine modelate de o distribuție Gaussiană} (valorile extreme sunt frecvente), (2) există \textbf{corelație temporală} (valuri cu tipare structurate), (3) efectele Doppler \textbf{extind spectrul} (valuri în mișcare), (4) apar \textbf{vârfuri de energie (spikes)} vizibile când valurile sunt mari.
 
-Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm Rate) pot fi limitate atunci când pierd informația temporală și nu exploatează structura timp--frecvență. Abratkiewicz (2022)\footnote{Abratkiewicz, K. (2022). Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform. Sensors, 22(16), 5954.} propune o abordare care folosește explicit structura \textbf{time--frequency} pentru a îmbunătăți atât \textbf{detecția}, cât și \textbf{recuperarea/reconstrucția} componentelor semnalului.
+Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm Rate) pot fi limitate atunci când pierd informația temporală și nu exploatează structura timp--frecvență. Abratkiewicz~(2022)\footnote{Abratkiewicz, K. (2022). Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform. Sensors, 22(16), 5954.} propune o abordare care folosește explicit structura \textbf{time--frequency} pentru a îmbunătăți atât \textbf{detecția}, cât și \textbf{recuperarea/reconstrucția} componentelor semnalului.
 
 
 
