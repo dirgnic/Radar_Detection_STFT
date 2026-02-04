@@ -472,17 +472,6 @@ Metrica RQF:
 \vspace{-4pt}
 \end{table}
 
-\begin{figure}[H]
-\centering
-\vspace{-4pt}
-\includegraphics[width=0.42\textwidth]{../results/evaluation/rqf_vs_snr_annotated.pdf}
-\hfill
-\includegraphics[width=0.42\textwidth]{../results/evaluation/detection_rate_vs_snr_annotated.pdf}
-\caption{Performanță vs SNR cu adnotări: RQF și rata de detecție 100\% (SNR 5-30 dB, cu marcarea punctelor).}
-\label{fig:snr_performance}
-\vspace{-4pt}
-\end{figure}
-
 \section{Analiză comparativă: Algoritmi CFAR și Clustering}
 
 \subsection{Principii fundamentale CFAR}
@@ -674,9 +663,39 @@ Pentru sea clutter real neomogen: CA-CFAR nu separă ținta (variabilitate zero)
 
 \label{chap:adaptations}
 
-Modificări cheie pentru adaptarea algoritmului din articol la sea clutter real:
+Modificări cheie pentru adaptarea algoritmului din articol la sea clutter real sunt sintetizate în tabelul de mai jos.
 
-Sea clutter-ul urmează \textbf{K-distribution} cu pdf: $p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)$ (cozi mai grele decât Gaussian, se estimează $\nu = \mu^2 / (\sigma^2 - \mu^2)$ și se ajustează pragul pentru reducerea alarmelor false). Sea clutter prezintă \textbf{exponent Hurst} cu proprietatea $\mathbb{E}\left[|X(t+\tau) - X(t)|^2\right] \propto \tau^{2H}$ unde $H \approx 0.75$--$0.85$ pentru clutter și $H < 0.6$ pentru ținte; se aplică mască combinată: $\text{CFAR} \lor (\text{Hurst anomaly} \land \text{putere mare})$. \textbf{DBSCAN cu metrică anisotropică}: țintele apar ca semnături aproape verticale în plan timp–frecvență (variație mare pe frecvență, redusă în timp), deci se folosește $d = \sqrt{(\Delta t)^2 + \left(\frac{\Delta f}{3.0}\right)^2}$ pentru a menține coeziunea unei ținte. Măști suplimentare: (i) $\pm 8$ bin-uri în jurul frecvenței zero (DC) pentru eliminarea returnărilor staționare; (ii) respingere clustere cu lățime Doppler $< 3$ Hz pentru filtrarea detecțiilor neplauzibile fizic.
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{2.2}
+\begin{tabular}{@{} l p{4.3cm} p{7.3cm} @{}}
+\toprule
+\textbf{Metodă} & \textbf{Model matematic} & \textbf{Pseudocod simplificat} \\ \midrule
+
+K-distribution (model clutter) &
+$p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)$; cozi mai grele decât distribuția Gaussiană; $\nu = \mu^2 / (\sigma^2 - \mu^2)$ &
+\textbf{1.} Estimează media $\mu$ și varianța $\sigma^2$ din ferestre de sea clutter.\\
+\textbf{2.} Calculează $\nu = \mu^2 / (\sigma^2 - \mu^2)$.\\
+\textbf{3.} Ajustează factorul de scalare $R$ sau pragul CFAR pentru a controla $P_{fa}$ în cozi grele. \\ \midrule
+
+Exponent Hurst (fractalitate) &
+$\mathbb{E}\left[|X(t+\tau) - X(t)|^2\right] \propto \tau^{2H}$; clutter: $H \approx 0.75$--$0.85$, ținte: $H < 0.6$ &
+\textbf{1.} Pentru fiecare patch timp--frecvență, estimează exponentul Hurst $H$.\\
+\textbf{2.} Marchează \emph{Hurst anomaly} acolo unde $H < H_{th}$ și puterea locală este mare.\\
+\textbf{3.} Combină masca: $M = M_{CFAR} \lor (M_{Hurst} \land M_{power})$ pentru a evidenția țintele slabe. \\ \midrule
+
+DBSCAN anisotropic + măști Doppler &
+$d = \sqrt{(\Delta t)^2 + \left(\frac{\Delta f}{3.0}\right)^2}$; mască DC $\pm 8$ bin-uri; lățime Doppler $\ge 3$ Hz &
+\textbf{1.} Maschează bin-urile de frecvență din jurul DC ($\pm 8$) înainte de CFAR/clusterizare.\\
+\textbf{2.} Rulează DBSCAN cu metrica anisotropică, parametrii $\varepsilon$ și \texttt{minSamples}.\\
+\textbf{3.} Pentru fiecare cluster, calculează lățimea Doppler și respinge clusterele cu lățime $< 3$ Hz.\\
+\textbf{4.} Păstrează drept ținte valide doar clusterele rămase. \\
+
+\bottomrule
+\end{tabular}
+\caption{Adaptări ale algoritmului CFAR-STFT pentru sea clutter real: model statistic, criterii fractale și clustering anisotropic.}
+\end{table}
 
 % ============================================================================
 % CAPITOLUL 4: DETALII DE IMPLEMENTARE
