@@ -19,6 +19,9 @@ Output: GIF animation file
 """
 
 import numpy as np
+import matplotlib
+# Headless-safe backend (Codex / CI / SSH). This also avoids crashes when no GUI is available.
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.gridspec import GridSpec
@@ -70,8 +73,12 @@ def create_detection_animation(data_name: str = 'hi',
                                 pfa: float = 0.001,
                                 output_suffix: str = '',
                                 dbscan_eps: float = 8.0,
+                                dbscan_min_samples: int = 3,
                                 use_fractal_boost: bool = True,
                                 min_doppler_bw: float = 3.0,
+                                morph_dilate_h: int = 5,
+                                morph_dilate_w: int = 1,
+                                morph_dilate_iters: int = 1,
                                 save_frame: int = None,
                                 save_frame_dir: str = 'results/ipix_figures'):
     """
@@ -87,8 +94,10 @@ def create_detection_animation(data_name: str = 'hi',
         pfa: Probability of false alarm
         output_suffix: Suffix for output filename (e.g. '_vectorized')
         dbscan_eps: DBSCAN clustering distance (larger = merge nearby detections)
+        dbscan_min_samples: Min points per cluster (lower=catches small clusters but can absorb clutter)
         use_fractal_boost: Use Hurst exponent to boost detection (+10-15% Pd)
         min_doppler_bw: Filter out components with Doppler bandwidth < this (Hz)
+        morph_dilate_h/w/iters: Optional binary dilation on the CFAR detection map before clustering
         save_frame: Frame index to save as PDF (e.g., 83)
         save_frame_dir: Directory for saving frame PDF
     """
@@ -144,7 +153,7 @@ def create_detection_animation(data_name: str = 'hi',
         cfar_training_cells=12,       # Training cells for noise estimation
         cfar_pfa=pfa,                 # Probability of false alarm (configurable)
         dbscan_eps=dbscan_eps,        # Clustering distance (larger = merge vertical lines)
-        dbscan_min_samples=3,         # Min points per cluster (lower = catch small detections)
+        dbscan_min_samples=dbscan_min_samples,  # Min points per cluster
         use_vectorized_cfar=use_vectorized,  # True=CA-CFAR (no K-dist), False=GOCA (K-dist)
         mode='radar'
     )
@@ -213,11 +222,29 @@ def create_detection_animation(data_name: str = 'hi',
                 detection_map[:dc_mask_bins, :] = False
                 detection_map[-dc_mask_bins:, :] = False
                 
-                # MORPHOLOGICAL DILATION: Fill small gaps in vertical lines
-                # Use a vertical structuring element to connect discontinuous vertical detections
-                from scipy.ndimage import binary_dilation
-                vertical_struct = np.ones((5, 1), dtype=bool)  # 5 pixels tall, 1 wide
-                detection_map = binary_dilation(detection_map, structure=vertical_struct, iterations=1)
+                # MORPHOLOGICAL DILATION (optional): merge fragmented ridges before clustering.
+                # Keep it conservative; too much dilation will connect clutter.
+                if morph_dilate_iters > 0:
+                    from scipy.ndimage import binary_dilation
+                    h = max(1, int(morph_dilate_h))
+                    w = max(1, int(morph_dilate_w))
+                    struct = np.ones((h, w), dtype=bool)
+                    detection_map = binary_dilation(
+                        detection_map,
+                        structure=struct,
+                        iterations=int(morph_dilate_iters),
+                    )
+
+            # Re-cluster AFTER postprocessing so the "cluster count" matches what we visualize.
+            n_clusters = 0
+            if detection_map is not None and np.any(detection_map):
+                detected_points = np.array(np.where(detection_map)).T  # (N, 2) freq_idx, time_idx
+                labels = detector.dbscan.fit(
+                    detected_points,
+                    detector.stft_result['freqs'],
+                    detector.stft_result['times'],
+                )
+                n_clusters = len(set(labels) - {-1})
 
             frame_data = {
                 'frame_idx': frame_idx,
@@ -228,7 +255,7 @@ def create_detection_animation(data_name: str = 'hi',
                 'freqs': detector.stft_result['freqs'].copy(),
                 'times': detector.stft_result['times'].copy() + t_start,
                 'detection_map': detection_map,
-                'n_components': len(components),
+                'n_components': n_clusters,  # show merged clusters count (postprocessed)
                 'components': components,
                 'n_detected_pixels': np.sum(detection_map) if detection_map is not None else 0
             }
@@ -373,20 +400,21 @@ def create_detection_animation(data_name: str = 'hi',
         detection_history.append(n_det)
         
         total_accum = np.sum(accum_map > 0)
-        
+
         mean_hurst = np.mean(frame['hurst']) if len(frame['hurst']) > 0 else 0
         hurst_anomaly = np.sum(np.abs(frame['hurst'] - 0.75) > 0.15) if len(frame['hurst']) > 0 else 0
+        n_clusters = int(frame.get('n_components', 0))
         
         stats_str = (
             f"Frame {frame_idx + 1}/{n_frames}  |  Time: {frame['t_start']:.1f}s-{frame['t_end']:.1f}s  |  "
-            f"Current: {n_det:,} pixels  |  Accumulated: {total_accum:,}  |  "
-            f"Hurst anomalies: {hurst_anomaly}"
+            f"Current: {n_det:,} pixels  |  Clusters: {n_clusters}  |  "
+            f"Accumulated: {total_accum:,}  |  Hurst anomalies: {hurst_anomaly}"
         )
         ax_stats.set_text(stats_str)
         
         # Update title with detection count
         ax_spec.set_title(f"STFT Spectrogram - IPIX {data_name.upper()} | "
-                          f"CFAR (Pfa={pfa:g}) | Current window: {n_det:,} detections", 
+                          f"CFAR (Pfa={pfa:g}) | Window: {n_det:,} px, {n_clusters} clusters", 
                           fontsize=14, fontweight='bold')
         
         # Save frame as PDF if requested
@@ -457,19 +485,24 @@ def create_detection_animation(data_name: str = 'hi',
             except Exception as e:
                 print(f"  {writer_name} failed: {e}")
         
-        if not saved:
-            # Fallback: save frames as PNG
-            print("Falling back to PNG frames...")
-            frames_dir = OUTPUT_DIR / f"frames_{data_name}"
-            frames_dir.mkdir(exist_ok=True)
-            
-            for i in range(min(n_frames, 50)):  # Save first 50 frames
-                update(i)
-                fig.savefig(frames_dir / f"frame_{i:04d}.png", dpi=100)
-            
-            print(f"Saved {min(n_frames, 50)} frames to {frames_dir}")
-    
-    plt.show()
+    if not saved:
+        # Fallback: save frames as PNG
+        print("Falling back to PNG frames...")
+        frames_dir = OUTPUT_DIR / f"frames_{data_name}"
+        frames_dir.mkdir(exist_ok=True)
+
+        for i in range(min(n_frames, 50)):  # Save first 50 frames
+            update(i)
+            fig.savefig(frames_dir / f"frame_{i:04d}.png", dpi=100)
+
+        print(f"Saved {min(n_frames, 50)} frames to {frames_dir}")
+
+    # In headless runs we don't want to block/crash by trying to open a GUI window.
+    # We force Agg backend at import time, so only show when running with an interactive backend.
+    import matplotlib as _mpl
+    if (not save_video) and (_mpl.get_backend().lower() != "agg"):
+        plt.show()
+    plt.close(fig)
     
     return frames_data, detection_history
 
@@ -553,8 +586,12 @@ def create_summary_plot(frames_data, detection_history, data_name='hi'):
     summary_path = OUTPUT_DIR / f"ipix_{data_name}_summary.png"
     plt.savefig(summary_path, dpi=150)
     print(f"Saved summary to {summary_path}")
-    
-    plt.show()
+
+    # Avoid `plt.show()` when running headless (Agg backend), which raises a warning.
+    import matplotlib as _mpl
+    if _mpl.get_backend().lower() != "agg":
+        plt.show()
+    plt.close(fig)
 
 
 if __name__ == "__main__":
@@ -578,12 +615,20 @@ if __name__ == "__main__":
                         help='Probability of false alarm (default: 0.001)')
     parser.add_argument('--eps', type=float, default=8.0,
                         help='DBSCAN eps: clustering distance in pixels (default: 8.0, larger=merge more)')
+    parser.add_argument('--min-samples', type=int, default=3,
+                        help='DBSCAN min_samples (default: 3, larger=more strict, less clutter merging)')
     parser.add_argument('--suffix', type=str, default='',
                         help='Output filename suffix (e.g. "_vectorized")')
     parser.add_argument('--no-fractal', action='store_true',
                         help='Disable fractal boost (Hurst exponent enhancement)')
     parser.add_argument('--min-doppler-bw', type=float, default=3.0,
                         help='Min Doppler bandwidth (Hz) to keep component (default: 3.0, 0=disabled)')
+    parser.add_argument('--dilate-h', type=int, default=5,
+                        help='Binary dilation struct height (default: 5)')
+    parser.add_argument('--dilate-w', type=int, default=1,
+                        help='Binary dilation struct width (default: 1)')
+    parser.add_argument('--dilate-iters', type=int, default=1,
+                        help='Binary dilation iterations (default: 1, 0=disable)')
     parser.add_argument('--save-frame', type=int, default=None,
                         help='Save specific frame as PDF (e.g., 83)')
     parser.add_argument('--save-frame-dir', type=str, default='results/ipix_figures',
@@ -608,8 +653,12 @@ if __name__ == "__main__":
             pfa=args.pfa,
             output_suffix=args.suffix,
             dbscan_eps=args.eps,
+            dbscan_min_samples=args.min_samples,
             use_fractal_boost=not args.no_fractal,
             min_doppler_bw=args.min_doppler_bw,
+            morph_dilate_h=args.dilate_h,
+            morph_dilate_w=args.dilate_w,
+            morph_dilate_iters=args.dilate_iters,
             save_frame=args.save_frame,
             save_frame_dir=args.save_frame_dir
         )
