@@ -1,0 +1,294 @@
+
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[romanian]{babel}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{multirow}  % ← ADAUGĂ ASTA
+\usepackage{enumitem}
+\usepackage{amssymb}
+\geometry{a4paper, margin=0.8in}
+
+\title{Documentație Tehnică: Strategii de Detecție CFAR și Clustering}
+\author{Analiză comparativă: CA, OS, SOCA, Agglomerative și HDBSCAN}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\section{Algoritmi de detecție CFAR}
+\subsection{Principii fundamentale și concepte comune}
+
+Deși arhitecturile specifice variază, toți algoritmii de tip CFAR (Constant False Alarm Rate) îurmează principii comune, menite să mențină rata alarmelor false la un nivel constant în condițiile unui zgomot de fond (clutter) variabil:
+
+\begin{itemize}
+    \item \textbf{Procesarea prin Fereastră Glisantă:} Algoritmii analizează spectrograma sau semnalul temporal utilizând o fereastră mobilă compusă din trei zone distincte:
+    \begin{enumerate}
+        \item \textbf{CUT (Cell Under Test):} Celula centrală evaluată pentru prezența unei eventuale ținte.
+        \item \textbf{Zona de gardă (Guard Cells):} Celule adiacente CUT-ului, lăsate neprocesate pentru a evita "scurgerea" energiei țintei în statistica zgomotului, fenomen ce ar putea duce la auto-mascare.
+        \item \textbf{Celulele de antrenament (Training Cells):} Celule periferice utilizate pentru eșantionarea și estimarea statistică a puterii zgomotului local ($Z$).
+    \end{enumerate}
+    
+    \item \textbf{Pragul adaptiv:} Spre deosebire de detectoarele cu prag fix, pragul CFAR ($T$) se recalculează dinamic pentru fiecare poziție a ferestrei:
+    \[ T = \alpha \cdot Z \]
+    unde $Z$ reprezintă puterea estimată a zgomotului, iar $\alpha$ (sau $R$) este un factor de scalare dependent de probabilitatea de alarmă falsă ($P_{fa}$) dorită și de numărul de celule de antrenament.
+    
+    \item \textbf{Condiția de detecție:} Dacă puterea semnalului în CUT depășește pragul calculat ($CUT \ge T$), celula este marcată ca detecție (țintă), în caz contrar fiind considerată zgomot.
+
+\end{itemize}
+
+\subsection{Descrierea algoritmilor}
+\begin{itemize}
+    \item \textbf{CA-CFAR (Cell Averaging):} Estimează nivelul de zgomot prin media aritmetică a celulelor de antrenament. Este cel mai eficient în zgomot alb omogen, dar suferă de fenomenul de "mascare" în prezența țintelor multiple (de exemplu, două avioane foarte apropiate sunt procesate simultan, având loc o singură detecție).
+    \item \textbf{OS-CFAR (Ordered Statistic):} Utilizează o percentilă în locul mediei. Este robust la interferențe și ținte apropiate, ignorând valorile extreme.
+    \item \textbf{SOCA-CFAR (Smallest Of Cell Averaging):} Selectează minimul dintre mediile subregiunilor ferestrei. Este optim pentru separarea țintelor de lângă marginile zonelor cu clutter dens.
+\end{itemize}
+
+\subsection{CFAR: Formule și pseudocod}
+\begin{table}[h!]
+\centering
+\small
+\renewcommand{\arraystretch}{2.5}
+\begin{tabular}{@{} l p{4.5cm} p{7cm} @{}}
+\toprule
+\textbf{Metodă} & \textbf{Model matematic} & \textbf{Pseudocod simplificat} \\ \midrule
+
+CA-CFAR & 
+$Z = \frac{1}{N_T} \sum_{i=1}^{N_T} x_i$, $T = R \cdot Z$ & 
+\textbf{1.} Extrage celulele de antrenament $S_{train}$ (fără zona de gardă) \newline
+\textbf{2.} $Z = \text{mean}(S_{train})$ \newline
+\textbf{3.} IF $CUT \ge T$ THEN detectie \\ \midrule
+
+OS-CFAR & 
+$Z = x_{(k)}$, $T = \alpha \cdot Z$ &
+\textbf{1.} Sortează $S_{train}$ → $S_{sorted}$ \newline
+\textbf{2.} $Z = S_{sorted}[k]$ (valoarea de rang k) \newline
+\textbf{3.} IF $CUT \ge T$ THEN detectie \\ \midrule
+
+SOCA-CFAR &
+$Z = \min(\mu_1, \dots, \mu_4)$, $T = R \cdot Z$ &
+\textbf{1.} Împarte fereastra în 4 subregiuni \newline
+\textbf{2.} Calculează media $\mu_i$ pentru fiecare subregiune \newline
+\textbf{3.} $Z = \min(\mu_{1}, \dots, \mu_4)$ \newline
+\textbf{4.} IF $CUT \ge T$ THEN detectie \\ 
+
+\bottomrule
+\end{tabular}
+\caption{Formule și pseudocod pentru metodele CFAR}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{@{} l l l l l @{}}
+\toprule
+\textbf{Metodă} & \textbf{Robustețe} & \textbf{Ținte slabe} & \textbf{Complexitate} & \textbf{Ideal pentru} \\ 
+& \textbf{clutter} & & & \\ \midrule
+CA & Scăzută & Ridicată & Foarte mică & Spectrogramă omogenă \\
+OS & Foarte bună & Medie & Mare & Medii multi-target \\
+SOCA & Bună & Medie & Medie & Margini de clutter \\
+\bottomrule
+\end{tabular}
+\caption{Comparație între metodele CFAR}
+\end{table}
+
+\section{Analiză detaliată a algoritmilor de clustering}
+
+\begin{table}[h!]
+\centering
+\small
+\renewcommand{\arraystretch}{2.0}
+\begin{tabular}{@{} l p{3.5cm} p{7.5cm} @{}}
+\toprule
+\textbf{Metodă} & \textbf{Descriere conceptuală} & \textbf{Pseudocod} \\ \midrule
+
+Agglomerative & 
+Ierarhic \textit{bottom-up}. Fuzionează succesiv perechile cele mai apropiate. & 
+\textbf{1.} Normalizează punctele ($f, t$) \newline
+\textbf{2.} Fiecare punct = cluster individual \newline
+\textbf{3.} WHILE nr\_clustere $> K$: \newline
+\hspace{1em} Găsește clusterele cu $d_{min}$ \newline
+\hspace{1em} Unește-le sub aceeași etichetă \newline
+\textbf{4.} Reindexează etichetele (0, 1, 2...) \\ \midrule
+
+HDBSCAN & 
+Bazat pe densitate ierarhică. Folosește \textit{core distance} și \textit{MST} pentru stabilitate. & 
+\textbf{1.} Normalizează punctele ($f, t$) \newline
+\textbf{2.} Calculează \textbf{core distance} ($c$) pentru fiecare punct \newline
+\textbf{3.} Determină \textbf{MRD}: $d_{mrd}(u,v) = \max(c(u), c(v), d(u,v))$ \newline
+\textbf{4.} Construiește \textbf{MST} folosind MRD \newline
+\textbf{5.} Extrage componente conexe cu prag \textit{eps} \newline
+\textbf{6.} Elimină clusterele sub \textit{min\_samples} $\to$ zgomot (-1) \\ \midrule
+\bottomrule
+\end{tabular}
+\caption{Sinteza implementării metodelor de clustering}
+\end{table}
+
+\subsection{Observații despre algoritmii de clustering}
+\begin{itemize}
+    \item \textbf{Agglomerative:} Lucrează prin proximitate directă. Nu elimină zgomotul, ceea ce poate duce la gruparea eronată a detecțiilor false CFAR în clustere valide.
+    \item \textbf{HDBSCAN:} Utilizează \textit{Mutual Reachability Distance} pentru a penaliza punctele din zonele cu densitate mică. Acest lucru elimină fenomenul de \textit{chaining} (unirea eronată a două ținte prin puncte de zgomot intermediare).
+\end{itemize}
+
+\section{Separare prin triangulare Delaunay}
+\begin{table}[h!]
+\centering
+\small
+\renewcommand{\arraystretch}{2.5}
+\begin{tabular}{@{} l p{4cm} p{7cm} @{}}
+\toprule
+\textbf{Metodă} & \textbf{Idee} & \textbf{Pseudocod simplificat} \\ \midrule
+
+Detectare Vârfuri &
+Maxime locale în spectrograma STFT, filtrate prin prag percentilă:
+\[
+\text{peak}(i,j) = 
+\begin{cases} 
+1 & \text{dacă } S_{i,j} = \max(\text{vecini}) \text{ și } S_{i,j} > T \\
+0 & \text{altfel}
+\end{cases}
+\]
+& 
+\textbf{1.} Calcul STFT și magnitudine \newline
+\textbf{2.} Threshold = magnitudinea percentilei \newline
+\textbf{3.} Identifică maxime locale în fereastra dată \newline
+\textbf{4.} Returnează coordonatele vârfurilor \\ \midrule
+
+Triangulare Delaunay &
+Construiește triunghiuri pentru punctele detectate astfel încât niciun punct să nu fie în cercul circumscris al unui triunghi existent & 
+\textbf{1.} Creează un triunghi care înconjoară toate punctele \newline
+\textbf{2.} Pentru fiecare punct nou introdus, se identifică triunghiurile care încalcă criteriul Delaunay (punctul se află în interiorul cercului circumscris acestora) \newline
+\textbf{3.} Elimină triunghiurile găsite și formează poligonul gol \newline
+\textbf{4.} Triunghiuri noi = combină punctul curent cu fiecare latură a poligonului \newline
+\textbf{5.} Elimină triunghiurile care conțin vârfuri super-triunghi \\ \midrule
+
+Gruparea triunghiurilor &
+Triunghiurile vecine sunt conectate în funcție de energia lor medie, dacă au o muchie comună & 
+\textbf{1.} Construiește lista muchiilor pentru toate triunghiurile \newline
+\textbf{2.} Adaugă muchiile comune ca legături dacă diferența relativă de magnitudine $< \varepsilon$ \newline
+\textbf{3.} Parcurgere DFS pentru a identifica componentele conexe \newline
+\textbf{4.} Calculează puncte, energie, centroid pentru fiecare componentă \\
+\bottomrule
+\end{tabular}
+\caption{Sinteză a pașilor de separare prin triangulare Delaunay și pseudocod asociat}
+\end{table}
+
+\section{Extinderea experimentului pe semnalul sintetic din lucrarea de referință}
+
+\subsection{Scopul experimentului}
+
+Acest experiment urmărește evaluarea performanței metodelor de detecție și separare
+într-un scenariu \textbf{controlat}, similar celui utilizat în lucrarea de referință.
+
+Semnalul de test este sintetic, cu structură bine definită în timp și frecvență,
+iar zgomotul este adăugat (AWGN) pentru valori SNR cuprinse între 5 și 30 dB.
+
+\subsection{Arhitecturile testate}
+
+\textbf{Metoda 1: CA-CFAR + HDBSCAN}
+\begin{itemize}[noitemsep]
+    \item STFT cu fereastră Hamming
+    \item Detecție CA-CFAR pe spectrogramă
+    \item Clusterizare HDBSCAN a punctelor detectate
+    \item Reconstrucție a componentei dominante
+    \item Evaluare prin RQF (Reconstruction Quality Factor)
+\end{itemize}
+
+Această configurație corespunde îndeaproape metodologiei din articolul original.
+
+\vspace{1mm}
+\textbf{Metoda 2: Separare prin Triangulare Delaunay}
+\begin{itemize}[noitemsep]
+    \item STFT cu fereastră Gaussiană
+    \item Detectarea maximelor locale peste prag percentilă
+    \item Triangulare Delaunay în plan timp–frecvență
+    \item Gruparea componentelor după energie
+    \item Estimare Doppler din componenta cu energie maximă
+\end{itemize}
+
+\subsection{Observații experimentale}
+
+\begin{itemize}
+    \item În scenariul sintetic, metoda \textbf{CA-CFAR + HDBSCAN} prezintă:
+    \begin{itemize}[noitemsep]
+        \item rate de detecție ridicate
+        \item valori RQF apropiate de cele ale metodei din lucrare
+        \item comportament stabil relativ la SNR
+    \end{itemize}
+    \item Acest rezultat confirmă validitatea CFAR atunci când
+    ipoteza de zgomot AWGN este respectată.
+    \item Metoda de \textbf{triangulare Delaunay} obține rezultate bune,
+    în special la SNR mediu și ridicat, dar prezintă:
+    \begin{itemize}[noitemsep]
+        \item o variabilitate mai mare a RQF
+        \item o sensibilitate crescută la pragul de detecție al vârfurilor
+    \end{itemize}
+\end{itemize}
+
+\section{Observații pe Date IPIX}
+
+\subsection{Setul de Date}
+
+Experimentele au fost realizate pe date radar reale din setul \textbf{IPIX}, 
+caracterizate prin \textbf{clutter marin sever} și variații puternice de 
+energie în timp și frecvență. Au fost analizate două scenarii:
+\begin{itemize}[noitemsep]
+    \item \textbf{Low Sea State} -- clutter moderat
+    \item \textbf{High Sea State} -- clutter intens, neomogen
+\end{itemize}
+
+Semnalele sunt procesate segmentat (1 s), PRF = 1000 Hz.
+
+\subsection{Metodele comparate}
+Configurațiile sunt cele descrise în secțiunea anterioară
+
+\subsection{Rezultate}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\textbf{Metodă} & \textbf{State} & \textbf{Componente} & \textbf{Viteză [m/s]} \\ \midrule
+\multirow{2}{*}{CA-CFAR + HDBSCAN} 
+    & HIGH & $1.0 \pm 0.0$ & $-0.054$ \\
+    & LOW  & $1.0 \pm 0.0$ & $-0.008$ \\ \midrule
+\multirow{2}{*}{Triangulare} 
+    & HIGH & $4.2$ & $1.30$ \\
+    & LOW  & $13.6$ & $-0.30$ \\ 
+\bottomrule
+\end{tabular}
+\caption{Performanță comparativă pe IPIX (30 segmente × 1s)}
+\end{table}
+
+\subsection{Observații Experimentale}
+
+\textbf{CA-CFAR + HDBSCAN}:
+\begin{itemize}
+    \item Rata de detecție: 100\% (detectează în toate segmentele)
+    \item \textit{Problemă}: Detectează \textbf{clutter}, nu ținte
+    \item Variabilitate zero ($\sigma = 0$) → HDBSCAN grupează tot clutter-ul într-un cluster unic
+    \item \textbf{Concluzie}: CA nu poate separa ținta de clutter în mediu neomogen
+\end{itemize}
+
+\textbf{Triangulare Delaunay}:
+\begin{itemize}
+    \item Rate de detecție ridicate, dar \textit{instabile}
+    \item HIGH sea: 4.2 componente, LOW sea: 13.6 componente (ar trebui invers!)
+    \item Viteza Doppler variază de 4× între scenarii (+1.30 vs. -0.30 m/s)
+    \item \textbf{Concluzie}: Metoda geometrică fragmentează clutter-ul în componente multe componente, reducându-se consistența detecțiilor
+\end{itemize}
+
+
+\subsection{Concluzie validată experimental}
+
+Pentru sea clutter real neomogen:
+\begin{itemize}[noitemsep]
+    \item \textbf{CA-CFAR eșuează} la separarea țintă--clutter (detectează doar clutter)
+    \item \textbf{Triangularea} oferă detecție geometrică, dar instabilă (fragmentare excesivă)
+    \item \textbf{GOCA-CFAR} cu DBSCAN tradițional (metoda paper) oferă performanța optimă
+\end{itemize}
+
+
+\end{document}

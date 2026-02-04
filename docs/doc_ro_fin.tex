@@ -465,6 +465,112 @@ Metrica RQF:
 \end{tabular}
 \end{table}
 
+\section{Analiză comparativă: Algoritmi CFAR și Clustering}
+
+\subsection{Principii fundamentale CFAR}
+
+Toți algoritmii de tip CFAR (Constant False Alarm Rate) urmează principii comune pentru menținerea ratei alarmelor false la nivel constant în condiții de zgomot variabil:
+
+\begin{itemize}
+    \item \textbf{Procesarea prin Fereastră Glisantă:} Analiza spectrogramei cu fereastră mobilă compusă din:
+    \begin{enumerate}
+        \item \textbf{CUT (Cell Under Test):} Celula centrală evaluată
+        \item \textbf{Zona de gardă (Guard Cells):} Celule adiacente neprocesate pentru evitarea scurgerii energiei țintei
+        \item \textbf{Celulele de antrenament (Training Cells):} Celule periferice pentru eșantionarea zgomotului local ($Z$)
+    \end{enumerate}
+    
+    \item \textbf{Pragul adaptiv:} Recalculat dinamic: $T = \alpha \cdot Z$ unde $Z$ este puterea zgomotului estimată și $\alpha$ depinde de $P_{fa}$ dorită
+    
+    \item \textbf{Condiția de detecție:} Dacă puterea în CUT depășește pragul: $CUT \ge T$ → detecție
+\end{itemize}
+
+\subsection{Descrierea algoritmilor CFAR testați}
+
+\begin{itemize}
+    \item \textbf{CA-CFAR (Cell Averaging):} Estimează nivelul zgomotului prin media aritmetică a celulelor de antrenament. Eficient în zgomot omogen, dar suferă mascare în prezența țintelor multiple.
+    
+    \item \textbf{OS-CFAR (Ordered Statistic):} Utilizează percentila în locul mediei. Robust la interferențe, ignorând valorile extreme.
+    
+    \item \textbf{SOCA-CFAR (Smallest Of Cell Averaging):} Selectează minimul dintre mediile subregiunilor. Optim pentru separarea țintelor la marginile clutter-ului dens.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{2.0}
+\begin{tabular}{@{} l l l l l @{}}
+\toprule
+\textbf{Metodă} & \textbf{Robustețe clutter} & \textbf{Ținte slabe} & \textbf{Complexitate} & \textbf{Ideal pentru} \\ \midrule
+CA & Scăzută & Ridicată & Foarte mică & Spectrograme omogene \\
+OS & Foarte bună & Medie & Mare & Medii multi-target \\
+SOCA & Bună & Medie & Medie & Margini clutter \\
+\bottomrule
+\end{tabular}
+\caption{Comparație între metodele CFAR}
+\end{table}
+
+\subsection{Metode de clustering}
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{2.0}
+\begin{tabular}{@{} l p{3.5cm} p{7.5cm} @{}}
+\toprule
+\textbf{Metodă} & \textbf{Descriere} & \textbf{Caracteristici} \\ \midrule
+
+Agglomerative & 
+Ierarhic bottom-up & 
+Fuzionează succesiv perechile cele mai apropiate. Fiecare punct inițial = cluster. Unește până la K clustere. \\
+
+HDBSCAN & 
+Bazat pe densitate ierarhică & 
+Folosește \textit{core distance} și \textit{MST}. Determină MRD: $d_{mrd}(u,v) = \max(c(u), c(v), d(u,v))$. Elimină clusterele sub \textit{min\_samples}. \\
+
+DBSCAN & 
+Bazat pe densitate & 
+Grupeaza puncte cu distanță $\le \varepsilon$. Asymetric: $d = \sqrt{\Delta t^2 + (\Delta f / \text{freq\_scale})^2}$ optimizează pentru semnături verticale. \\
+\bottomrule
+\end{tabular}
+\caption{Metode de clustering utilizate}
+\end{table}
+
+\subsection{Observații despre algoritmii de clustering}
+
+\begin{itemize}
+    \item \textbf{Agglomerative:} Lucrează prin proximitate directă. Nu elimină zgomotul, ceea ce poate duce la gruparea eronată a detecțiilor false CFAR în clustere valide.
+    
+    \item \textbf{HDBSCAN:} Utilizează \textit{Mutual Reachability Distance} pentru a penaliza punctele din zonele cu densitate mică. Elimină fenomenul de \textit{chaining} (unirea eronată a două ținte prin puncte de zgomot intermediare).
+    
+    \item \textbf{DBSCAN asimetric:} Țintele apar ca linii verticale în timp-frecvență (multe frecvențe, puține momente). Distanța asimetrică cu \texttt{freq\_scale=3.0} păstrează coeziunea țintelor.
+\end{itemize}
+
+\subsection{Experimente pe semnale sintetice controlate}
+
+\textbf{Metodă 1: CA-CFAR + HDBSCAN}
+\begin{itemize}
+    \item STFT cu fereastră Hamming
+    \item Detecție CA-CFAR pe spectrograma
+    \item Clusterizare HDBSCAN a punctelor detectate
+    \item Reconstrucție a componentei dominante
+    \item Evaluare prin RQF (Reconstruction Quality Factor)
+\end{itemize}
+
+\textbf{Metodă 2: Separare prin Triangulare Delaunay}
+\begin{itemize}
+    \item STFT cu fereastră Gaussiană
+    \item Detectarea maximelor locale peste prag percentilă
+    \item Triangulare Delaunay în plan timp–frecvență
+    \item Gruparea componentelor după energie
+    \item Estimare Doppler din componenta cu energie maximă
+\end{itemize}
+
+\textbf{Rezultate sintetice:}
+\begin{itemize}
+    \item CA-CFAR + HDBSCAN: rate de detecție ridicate (100\%), RQF apropiate de articolul de referință, comportament stabil relativ la SNR. Confirmă validitatea CFAR cu ipoteza AWGN.
+    \item Triangulare Delaunay: rezultate bune la SNR mediu și ridicat, dar variabilitate mai mare a RQF și sensibilitate crescută la pragul de detecție.
+\end{itemize}
+
 \section{Experimente pe IPIX cu ținte reale}
 
 Am rulat detecție animată pe fișierele cu ținte reale. Figurile de mai jos arată cadre din animațiile de detecție:
@@ -483,10 +589,73 @@ Am rulat detecție animată pe fișierele cu ținte reale. Figurile de mai jos a
 \label{fig:fractal_boost_detection}
 \end{figure}
 
-% ============================================================================
-% CAPITOLUL 6: ADAPTĂRI PENTRU SEA CLUTTER
-% ============================================================================
-\chapter{Adaptări pentru sea clutter}
+\subsection{Setul de Date și Scenarii}
+
+Experimentele au fost realizate pe date radar reale din setul \textbf{IPIX} (McMaster University), caracterizate prin \textbf{clutter marin sever} și variații puternice de energie în timp și frecvență:
+
+\begin{itemize}
+    \item \textbf{Low Sea State} -- clutter moderat, detecție ușoară
+    \item \textbf{High Sea State} -- clutter intens și neomogen, detecție dificilă
+\end{itemize}
+
+Semnalele sunt procesate segmentat (1 s), PRF = 1000 Hz, complexe I/Q.
+
+\subsection{Rezultate comparative: CA-CFAR+HDBSCAN vs. Triangulare Delaunay}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\textbf{Metodă} & \textbf{Sea State} & \textbf{Componente} & \textbf{Viteza [m/s]} \\ \midrule
+\multirow{2}{*}{CA-CFAR + HDBSCAN} 
+    & HIGH & $1.0 \pm 0.0$ & $-0.054$ \\
+    & LOW  & $1.0 \pm 0.0$ & $-0.008$ \\ \midrule
+\multirow{2}{*}{Triangulare Delaunay} 
+    & HIGH & $4.2$ & $+1.30$ \\
+    & LOW  & $13.6$ & $-0.30$ \\ 
+\bottomrule
+\end{tabular}
+\caption{Performanță comparativă pe IPIX (30 segmente × 1s per scenariu)}
+\end{table}
+
+\subsection{Observații Experimentale Detaliate}
+
+\textbf{CA-CFAR + HDBSCAN}:
+\begin{itemize}
+    \item \textbf{Rata de detecție}: 100\% (detectează în toate segmentele)
+    \item \textbf{Problemă critică}: Detectează clutter masiv, nu ținta (variabilitate zero: $\sigma = 0$)
+    \item HDBSCAN grupează întreg clutter-ul într-un cluster unic
+    \item \textbf{Concluzie}: CA-CFAR nu poate separa ținta de clutter neomogen în mediu marin real
+\end{itemize}
+
+\textbf{Triangulare Delaunay}:
+\begin{itemize}
+    \item Rate de detecție ridicate, dar instabile și inconsistente
+    \item HIGH sea: 4.2 componente; LOW sea: 13.6 componente (invers față de așteptat!)
+    \item Viteza Doppler variază 4× între scenarii: +1.30 vs. -0.30 m/s
+    \item Metoda geometrică fragmentează clutter-ul în componente multiple
+    \item \textbf{Concluzie}: Instabilitate extremă, reducând consistența detecțiilor
+\end{itemize}
+
+\subsection{Concluzie validată experimental}
+
+Pentru sea clutter real neomogen:
+
+\begin{itemize}
+    \item \textbf{CA-CFAR eșuează} -- detectează doar clutter, nu ținte (variabilitate zero)
+    \item \textbf{Triangularea Delaunay} -- oferă detecție geometrică, dar instabilă (fragmentare excesivă)
+    \item \textbf{GOCA-CFAR cu DBSCAN asimetric} (metoda din această implementare) -- **oferă performanța optimă** cu detecții stabile și consistent identificate
+\end{itemize}
+
+Motivul succesului GOCA + DBSCAN asimetric:
+\begin{enumerate}
+    \item GOCA-CFAR adaptează pragul local și pe 4 cadrane, nu doar global (CA)
+    \item DBSCAN asimetric ($\text{freq\_scale}=3.0$) păstrează coeziunea țintelor (linii verticale în timp-frecvență)
+    \item Combinația K-distribution + Hurst + DC masking + Doppler filter elimină alarmele false din clutter sever
+\end{enumerate}
+
+
 \label{chap:adaptations}
 
 Modificări cheie pentru adaptarea algoritmului din articol la sea clutter real:
