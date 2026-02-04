@@ -182,6 +182,8 @@ def create_detection_animation(data_name: str = 'hi',
         # Run detection
         try:
             # Use fractal boost for improved detection (GOCA only)
+            cfar_map_base = None
+            n_fractal_boosted = 0
             if use_fractal_boost and not use_vectorized:
                 # detect_with_fractal_boost internally calls detect_components
                 # and updates self.detection_map with the boosted version
@@ -194,6 +196,9 @@ def create_detection_animation(data_name: str = 'hi',
                     time_step_frames=6 if fractal_mode == 'tf' else 12,
                     freq_stride=2 if fractal_mode == 'tf' else 4,
                 )
+                cfar_map_base = getattr(detector, "_last_cfar_map", None)
+                if isinstance(fractal_stats, dict):
+                    n_fractal_boosted = int(fractal_stats.get("n_fractal_boosted", 0))
                 # Get components from the detector (already computed inside fractal boost)
                 # Need to re-extract components from the boosted map
                 components = []  # fractal boost doesn't return components directly
@@ -220,6 +225,7 @@ def create_detection_animation(data_name: str = 'hi',
             
             # Get the detection map from CFAR
             detection_map = detector.detection_map.copy() if detector.detection_map is not None else None
+            cfar_map_base = cfar_map_base.copy() if isinstance(cfar_map_base, np.ndarray) else None
             
             # IMPORTANT: Mask out DC component (0 Hz bin) - always has high energy, not a real target
             # For complex data STFT, DC is at bin 0, and nearby low-freq bins also have clutter
@@ -243,6 +249,15 @@ def create_detection_animation(data_name: str = 'hi',
                         iterations=int(morph_dilate_iters),
                     )
 
+            # For visualization: highlight pixels that were added by fractal boost (after postprocessing).
+            fractal_added_map = None
+            if cfar_map_base is not None and detection_map is not None:
+                cfar_post = cfar_map_base.copy()
+                dc_mask_bins = 8
+                cfar_post[:dc_mask_bins, :] = False
+                cfar_post[-dc_mask_bins:, :] = False
+                fractal_added_map = detection_map & ~cfar_post
+
             # Re-cluster AFTER postprocessing so the "cluster count" matches what we visualize.
             n_clusters = 0
             if detection_map is not None and np.any(detection_map):
@@ -263,6 +278,9 @@ def create_detection_animation(data_name: str = 'hi',
                 'freqs': detector.stft_result['freqs'].copy(),
                 'times': detector.stft_result['times'].copy() + t_start,
                 'detection_map': detection_map,
+                'cfar_map_base': cfar_map_base,
+                'fractal_added_map': fractal_added_map,
+                'n_fractal_boosted': n_fractal_boosted,
                 'n_components': n_clusters,  # show merged clusters count (postprocessed)
                 'components': components,
                 'n_detected_pixels': np.sum(detection_map) if detection_map is not None else 0
@@ -305,14 +323,19 @@ def create_detection_animation(data_name: str = 'hi',
     # Custom colormap for detection overlay - more visible
     # Use RGBA directly: transparent for 0, bright red for 1
     from matplotlib.colors import ListedColormap
-    det_colors = [(0, 0, 0, 0), (1, 0, 0, 0.9)]  # Transparent -> Bright Red with alpha=0.9
+    # 0=none, 1=CFAR, 2=added by fractal boost
+    det_colors = [
+        (0, 0, 0, 0),
+        (1, 0, 0, 0.85),
+        (1, 0, 1, 0.85),
+    ]
     det_cmap = ListedColormap(det_colors)
     
     # Initialize plots
     spec_img = ax_spec.imshow([[0]], aspect='auto', origin='lower', 
                                cmap='viridis', interpolation='bilinear')
     det_img = ax_spec.imshow([[0]], aspect='auto', origin='lower',
-                              cmap=det_cmap, vmin=0, vmax=1, interpolation='nearest')
+                              cmap=det_cmap, vmin=0, vmax=2, interpolation='nearest')
     
     hurst_line, = ax_hurst.plot([], [], 'g-', lw=2, label='Hurst Exponent')
     hurst_ref = ax_hurst.axhline(y=0.75, color='r', linestyle='--', lw=2, label='Clutter baseline (H≈0.75)')
@@ -377,11 +400,13 @@ def create_detection_animation(data_name: str = 'hi',
         
         # Update detection overlay
         if frame['detection_map'] is not None:
-            # Ensure detection_map is binary (0 or 1)
-            det_data = (frame['detection_map'] > 0).astype(float)
+            det_data = np.zeros_like(frame['detection_map'], dtype=float)
+            det_data[frame['detection_map'] > 0] = 1.0
+            if frame.get('fractal_added_map') is not None:
+                det_data[frame['fractal_added_map'] > 0] = 2.0
             det_img.set_data(det_data)
             det_img.set_extent(extent)
-            det_img.set_clim(0, 1)  # Ensure proper color mapping
+            det_img.set_clim(0, 2)  # Ensure proper color mapping
             
             # ACCUMULATE: Add this frame's detections to the accumulated map
             # Sum across time axis of current detection to get "any detection at this freq"
@@ -412,11 +437,12 @@ def create_detection_animation(data_name: str = 'hi',
         mean_hurst = np.mean(frame['hurst']) if len(frame['hurst']) > 0 else 0
         hurst_anomaly = np.sum(np.abs(frame['hurst'] - 0.75) > 0.15) if len(frame['hurst']) > 0 else 0
         n_clusters = int(frame.get('n_components', 0))
+        n_fractal = int(frame.get('n_fractal_boosted', 0))
         
         stats_str = (
             f"Frame {frame_idx + 1}/{n_frames}  |  Time: {frame['t_start']:.1f}s-{frame['t_end']:.1f}s  |  "
             f"Current: {n_det:,} pixels  |  Clusters: {n_clusters}  |  "
-            f"Accumulated: {total_accum:,}  |  Hurst anomalies: {hurst_anomaly}"
+            f"Fractal(+): {n_fractal:,}  |  Accumulated: {total_accum:,}  |  Hurst anomalies: {hurst_anomaly}"
         )
         ax_stats.set_text(stats_str)
         

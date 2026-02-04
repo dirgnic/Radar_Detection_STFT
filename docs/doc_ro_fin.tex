@@ -460,14 +460,12 @@ $X_{\text{masked}} = X_{\text{STFT}}\odot H_{\text{dil}}$.
 \end{tikzpicture}
 \hspace{1cm}
 \begin{tikzpicture}[scale=0.85]
-	    % Formula box (wider so the main equation stays on a single line)
+	    % Formula box: explicit 2 lines (avoid ugly wrapping in a narrow box)
 	    \node[draw, rounded corners, fill=gray!10, text width=7.2cm, minimum width=7.2cm, minimum height=4cm, align=left] (formulas) {
 		        \begin{tabular}{@{}l@{}}
 	        \textbf{GOCA-CFAR:}\\[0.2em]
-	        {\small$\begin{aligned}
-	        \hat{Z} &= \max(\mu_1,\mu_2,\mu_3,\mu_4) \\
-	        T &= \alpha\cdot\hat{Z}
-	        \end{aligned}$}\\[0.4em]
+	        {\small $\hat{Z}=\max(\mu_1,\mu_2,\mu_3,\mu_4)$}\\
+	        {\small $T=\alpha\cdot\hat{Z}$}\\[0.4em]
 	        {\scriptsize Rayleigh (CA, aprox.): $\alpha=N_T(P_{fa}^{-1/N_T}-1)$}\\
 	        {\scriptsize K-dist.: $\alpha=q_K(P_{fa};a_K,b_K)/b_K$}\\[0.5em]
 		        \textbf{Decizie:}\\[0.2em]
