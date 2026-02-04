@@ -548,7 +548,7 @@ CA-CFAR: folosește media aritmetică, robust în zgomot (aproape) omogen. OS-CF
 CA-CFAR & 
 $\begin{aligned}
 Z &= \frac{1}{N_T} \sum_{i=1}^{N_T} x_i \\
-T &= R \cdot Z
+T &= \alpha \cdot Z
 \end{aligned}$ & 
 \textbf{1.} Extrage celulele de antrenament $S_{train}$ (fără zona de guard) \newline
 \textbf{2.} $Z = \text{mean}(S_{train})$ \newline
@@ -563,7 +563,7 @@ $Z = x_{(k)}$, $T = \alpha \cdot Z$ &
 SOCA-CFAR &
 $\begin{aligned}
 Z &= \min(\mu_1, \dots, \mu_4) \\
-T &= R \cdot Z
+T &= \alpha \cdot Z
 \end{aligned}$ &
 \textbf{1.} Împarte fereastra în 4 subregiuni \newline
 \textbf{2.} Calculează media $\mu_i$ pentru fiecare subregiune \newline

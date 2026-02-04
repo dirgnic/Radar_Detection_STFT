@@ -490,6 +490,7 @@ def create_detection_animation(data_name: str = 'hi',
         blit=False
     )
     
+    saved = False
     if save_video:
         # Add timestamp to preserve old test files
         from datetime import datetime
@@ -499,7 +500,6 @@ def create_detection_animation(data_name: str = 'hi',
         
         # Try different writers
         writers_to_try = ['ffmpeg', 'pillow', 'html']
-        saved = False
         
         for writer_name in writers_to_try:
             try:
