@@ -262,109 +262,32 @@ Problema principală pe care o rezolvăm este \textbf{detecția obiectelor mici 
 
 Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm Rate) pot fi limitate atunci când pierd informația temporală și nu exploatează structura timp--frecvență. Abratkiewicz (2022)\footnote{Abratkiewicz, K. (2022). Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform. Sensors, 22(16), 5954.} propune o abordare care folosește explicit structura \textbf{time--frequency} pentru a îmbunătăți atât \textbf{detecția}, cât și \textbf{recuperarea/reconstrucția} componentelor semnalului.
 
-\section{Obiectivele proiectului}
 
-În acest proiect ne propunem:
 
-\begin{enumerate}
-    \item implementarea completă a algoritmului \textbf{CFAR--STFT} în \textbf{Python};
-    \item validarea pe date sintetice: \textbf{chirp neliniar} conform Ecuației (14);
-    \item testarea pe date reale: \textbf{IPIX} cu sea clutter complex;
-    \item analiză Doppler pentru estimarea vitezei radiale (din frecvența Doppler);
-    \item documentație detaliată și reproductibilitate;
-    \item validare rezultate: detecție și reconstrucție a componentelor;
-    \item \textbf{adaptări sea clutter}: K-distribution, îmbunătățire bazată pe exponentul Hurst, DBSCAN asimetric.
-\end{enumerate}
 
-\section{Structura documentului}
-
-Documentul este organizat astfel:
-
-\begin{itemize}
-    \item \textbf{Secțiunea 2}: fundamente teoretice și formule esențiale;
-    \item \textbf{Secțiunea 3}: pașii algoritmului + pseudocod;
-    \item \textbf{Secțiunea 4}: surse de date și validare (IPIX);
-    \item \textbf{Secțiunea 5}: rezultate experimentale (sintetic + real);
-    \item \textbf{Secțiunea 6}: adaptări pentru sea clutter;
-    \item \textbf{Secțiunea 7}: detalii implementare;
-    \item \textbf{Secțiunea 8}: concluzii și direcții viitoare.
-\end{itemize}
 
 % ============================================================================
-% DIAGRAME PIPELINE - incluse după Introducere
+% CAPITOLUL 2: STATE-OF-THE-ART (FUNDAMENTE TEORETICE)
 % ============================================================================
-\section{Diagrame Pipeline CFAR-STFT}
+\chapter{State-of-the-art și Fundamente}
 
-Următoarele pagini prezintă diagramele vizuale ale pipeline-ului algoritmului CFAR-STFT, incluzând structura detectorului GOCA-CFAR 2D, configurația experimentală și comparația parametrilor.
-
-\includepdf[pages=1,scale=0.95,offset=0 -20,pagecommand={}]{pipeline_diagrams.pdf}
-\includepdf[pages=2-,scale=0.95,offset=0 -20,pagecommand={}]{pipeline_diagrams.pdf}
-
-% ============================================================================
-% CAPITOLUL 2: FUNDAMENTE TEORETICE
-% ============================================================================
-\chapter{Fundamente teoretice}
-
-\section{Short-Time Fourier Transform (STFT)}
-
-STFT este baza algoritmului și produce o reprezentare \textbf{timp--frecvență} a semnalului:
+\section{STFT - Transformata Fourier cu Timp Scurt}
 
 \begin{equation}
 X(k,n) = \sum_{m=0}^{N-1} x(m) \cdot w(m - nH) \cdot e^{-j2\pi km/N}
 \end{equation}
+cu $N=256$, $H=32$ (87.5\% overlap), fereastră Gaussiană $w(m) = e^{-m^2/(2\sigma^2)}$, $\sigma=8$.
 
-unde:
-\begin{itemize}
-    \item $x(m)$ --- semnalul de intrare
-    \item $w(\cdot)$ --- fereastra (Gaussiană, $\sigma=8$ bin-uri)
-    \item $n$ --- indexul de timp (ferestre succesive)
-    \item $k$ --- indexul de frecvență
-    \item $N$ --- lungimea FFT (512)
-    \item $H$ --- hop-size între ferestre (256, 50\% overlap)
-\end{itemize}
+\section{CFAR 2D (GOCA-CFAR)}
 
-\textbf{Fereastra Gaussiană}:
+Detecție adaptivă cu prag local: $H(k,n) = 1$ dacă $|X(k,n)|^2 > T$, unde
 \begin{equation}
-w(m) = e^{-m^2/(2\sigma^2)} \quad \text{cu} \quad \sigma=8
+T = R \cdot \hat{Z}, \quad \hat{Z} = \max(\mu_1, \mu_2, \mu_3, \mu_4), \quad R = N_T (P_f^{-1/N_T} - 1)
 \end{equation}
 
-Se alege pentru minimizarea spectral leakage.
+\section{DBSCAN}
 
-\section{Detecție adaptivă CFAR 2D (GOCA-CFAR)}
-
-CFAR adaptează pragul local pe baza nivelului de zgomot din vecinătate:
-
-\begin{equation}
-H(k,n) = \begin{cases}
-1 & \text{dacă } |X(k,n)|^2 > \lambda \cdot \mathcal{N}(k,n) \\
-0 & \text{altfel}
-\end{cases}
-\end{equation}
-
-unde $\mathcal{N}(k,n)$ este estimarea zgomotului local.
-
-În \textbf{GOCA-CFAR} (Greatest-Of Cell Averaging), zona de training se împarte în 4 cadrane și se ia maximul mediilor:
-
-\begin{equation}
-\hat{Z} = \max(\mu_1, \mu_2, \mu_3, \mu_4), \qquad T = R \cdot \hat{Z}
-\end{equation}
-
-\begin{equation}
-R = N_T \left( P_{fa}^{-1/N_T} - 1 \right)
-\end{equation}
-
-Decizie (în plan TF, pe puterea spectrogramelor):
-\begin{equation}
-|X(k,n)|^2 \ge T \Rightarrow \text{Detectat}, \quad |X(k,n)|^2 < T \Rightarrow \text{Zgomot}
-\end{equation}
-
-\section{DBSCAN pentru clustering}
-
-După CFAR, punctele detectate sunt grupate cu \textbf{DBSCAN} (clustering pe densitate). Pentru semnături verticale tipice țintelor, folosim o \textbf{distanță asimetrică} cu toleranță mai mare pe frecvență (factor 3):
-
-\begin{equation}
-d = \sqrt{\Delta t^2 + \left(\frac{\Delta f}{3}\right)^2}
-\end{equation}
+Clustering pe densitate cu distanță asimetrică pentru semnături verticale: $d = \sqrt{\Delta t^2 + (\Delta f/3)^2}$.
 
 % ============================================================================
 % CAPITOLUL 3: DESCRIEREA ALGORITMULUI
@@ -385,73 +308,15 @@ Algoritmul complet are cinci pași:
 
 \subsection{Pasul 1: Calcul STFT}
 
-\begin{algorithm}[H]
-\caption{Calcul STFT cu fereastră Gaussiană}
-\begin{algorithmic}[1]
-\Require Semnal de intrare $x[n]$, lungime FFT $N_{fft}=512$, hop $H=256$, $\sigma=8$
-\Ensure Matrice STFT $X_{stft} \in \mathbb{C}^{N_f \times N_t}$
-\State $N_t \gets \lceil (len(x) - N_{fft}) / H \rceil + 1$
-\State $X_{stft} \gets \text{zeros}(N_{fft}/2 + 1, N_t)$ \Comment{One-sided}
-\State Precalculează fereastra Gaussiană: $w[m] \gets e^{-m^2/(2\sigma^2)}$
-\For{$n \gets 0$ to $N_t - 1$}
-    \State Extrage fereastră: $x_n \gets x[nH : nH + N_{fft}]$
-    \State Aplică fereastră: $x_w \gets x_n \odot w$
-    \State Calculează FFT: $X_n \gets \text{fft}(x_w, N_{fft})$
-    \State Stochează one-sided: $X_{stft}[:, n] \gets X_n[0 : N_{fft}/2 + 1]$
-\EndFor
-\State Normalizează: $X_{stft} \gets X_{stft} / \sum_m w[m]^2$
-\State \Return $X_{stft}$
-\end{algorithmic}
-\end{algorithm}
+Aplică formula (1) cu $N_{fft}=256$, hop=32, fereastră Gaussiană $\sigma=8$.
 
 \subsection{Pasul 2: Detecție CFAR 2D}
 
-\begin{algorithm}[H]
-\caption{Detecție CFAR 2D (GOCA)}
-\begin{algorithmic}[1]
-\Require Matrice STFT $X_{stft}$, $P_{fa}=0.001$, $N_G=3$, $N_T=12$
-\Ensure Mască binară de detecție $H \in \{0,1\}^{N_f \times N_t}$
-\State $H \gets \text{zeros}(N_f, N_t)$
-\State $N_f \gets $ rows($X_{stft}$), $N_t \gets $ cols($X_{stft}$)
-\For{$k \gets N_G + N_T$ to $N_f - N_G - N_T - 1$}
-    \For{$n \gets N_G + N_T$ to $N_t - N_G - N_T - 1$}
-        \State Extrage Training Cells în 4 cadrane în jurul $(k,n)$
-        \State $\mu_i \gets \text{mean}(\text{cadran}_i)$ pentru $i \in \{1,2,3,4\}$
-        \State $\mathcal{N}_{local} \gets \max(\mu_1, \mu_2, \mu_3, \mu_4)$ \Comment{GOCA}
-        \State $\lambda \gets R(P_{fa}) \cdot \mathcal{N}_{local}$
-        \If{$|X_{stft}(k,n)|^2 > \lambda$}
-            \State $H(k,n) \gets 1$
-        \EndIf
-    \EndFor
-\EndFor
-\State \Return $H$
-\end{algorithmic}
-\end{algorithm}
+Pentru fiecare bin (k,n): calculează media puterii în 4 cadrane, prag $T = R \cdot \max(\mu_1, \mu_2, \mu_3, \mu_4)$, decizie dacă $|X(k,n)|^2 > T$. Parametri: $P_f=0.001$, $N_G=3$, $N_T=12$.
 
 \subsection{Pasul 3: Clustering DBSCAN}
 
-\begin{algorithm}[H]
-\caption{Clustering DBSCAN în plan timp--frecvență}
-\begin{algorithmic}[1]
-\Require Puncte detectate $\{(f_i, t_i)\}_{i=1}^{N_p}$, $\varepsilon=8$, minSamples$=5$
-\Ensure Etichete cluster $\text{labels} \in \mathbb{Z}$
-\State $\text{labels} \gets -1 \cdot \text{ones}(N_p)$ \Comment{-1 = zgomot}
-\State $C \gets 0$ \Comment{Index cluster curent}
-\For{$i \gets 1$ to $N_p$}
-    \If{labels$[i] \neq$ nevizitat}
-        \State Continue
-    \EndIf
-    \State $N \gets \text{RangeQuery}(i, \varepsilon)$ \Comment{Vecini în rază}
-    \If{$|N| < $ minSamples}
-        \State labels$[i] \gets -1$ \Comment{Zgomot}
-    \Else
-        \State $C \gets C + 1$
-        \State \textbf{ExpandCluster}$(i, C, N, \varepsilon, \text{minSamples})$
-    \EndIf
-\EndFor
-\State \Return labels
-\end{algorithmic}
-\end{algorithm}
+Grupează punctele detectate (k,n) cu distanța asimetrică din ecuația (3). Parametri: $\varepsilon=8$, minSamples=5.
 
 \subsection{Pasul 4: Dilatare geodezică}
 
@@ -502,114 +367,9 @@ Algoritmul complet are cinci pași:
 % ============================================================================
 \chapter{Date și surse de validare}
 
-\section{Baza de date IPIX (radar maritim)}
+\section{Baza de date IPIX}
 
-Componenta fundamentală a proiectului este folosirea datelor reale din \textbf{IPIX} (Intelligent Pixel Processing for X-band radar), de la \textbf{McMaster University, Canada}. Datele provin de la un radar coerent polarimetric X-band folosit pentru monitorizarea activității maritime.
-
-\subsection{Caracteristici tehnice IPIX}
-
-Caracteristici tehnice (esențiale pentru interpretarea Doppler și rezoluție):
-
-\begin{itemize}
-    \item \textbf{Frecvența RF}: $f_{RF} = 9.39$ GHz (X-band) -- optim pentru detectarea obiectelor mici
-    \item \textbf{PRF (Pulse Repetition Frequency)}: 1000 Hz -- permite detecție Doppler
-    \item \textbf{Lungime puls}: 200 ns -- rezoluție spațială mare
-    \item \textbf{Lățime fascicul}: 0.9 grade -- precizie unghiulară excelentă
-    \item \textbf{Format date}: Complex I/Q (In-phase + Quadrature)
-\end{itemize}
-
-\subsection{Ce sunt datele complexe I/Q?}
-
-Fiecare eșantion radar este complex: $x(t) = I(t) + j \cdot Q(t)$.
-
-\begin{itemize}
-    \item \textbf{Componenta I (In-phase)}: Proiecția semnalului pe axa cosinus
-    \item \textbf{Componenta Q (Quadrature)}: Proiecția pe axa sinus (decalată cu 90°)
-    \item \textbf{Magnitudine}: $|x(t)| = \sqrt{I^2 + Q^2}$ -- intensitatea ecoului
-    \item \textbf{Fază}: $\phi(t) = \arctan(Q/I)$ -- informația Doppler
-\end{itemize}
-
-Reprezentarea I/Q permite \textbf{detecția frecvențelor Doppler pozitive și negative}, esențială pentru:
-\begin{itemize}
-    \item Ținte care se apropie (frecvență Doppler pozitivă)
-    \item Ținte care se îndepărtează (frecvență Doppler negativă)
-    \item Clutter static (frecvență Doppler $\approx$ 0 Hz)
-\end{itemize}
-
-\subsection{Target real}
-
-Ținta folosită în fișierele IPIX: o \textbf{sferă de $\sim$1m} învelită în plasă de sârmă, ancorată la \textbf{$\sim$2660m}.
-
-\begin{table}[H]
-\centering
-\caption{Fișiere IPIX cu ținte reale}
-\begin{tabular}{lccc}
-\toprule
-\textbf{Fișier} & \textbf{Range Cell} & \textbf{Polarizare} & \textbf{Stare mare} \\
-\midrule
-\#17 (19931106\_180557) & 7 & HH & Moderată \\
-\#18 (19931106\_181048) & 7 & HH & Moderată \\
-\#30 (19931106\_191449) & 7 & HH & Ridicată \\
-\#40 (19931106\_195609) & 7 & HH & Moderată \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Interpretarea spectrogramelor IPIX și „de ce arată ciudat"}
-
-Spectrograma IPIX este \textbf{two-sided} (frecvențe negative/pozitive) pentru că datele sunt complexe I/Q. Elemente cheie:
-
-\begin{itemize}
-    \item \textbf{Linie roșie groasă la 0 Hz (DC)}: ecouri staționare de la suprafața mării
-    \item \textbf{Verde/galben în jurul DC}: sea clutter activ (valuri/spumă/mișcare)
-    \item \textbf{Zone albastre laterale}: zgomot termic slab uniform
-    \item \textbf{Aspect „punctat"}: energia e în ridges (creste) TF, nu uniformă
-\end{itemize}
-
-\textbf{Ce este clutter-ul marin?}
-
-Clutter-ul marin (\textit{sea clutter}) reprezintă \textbf{ecouri radar de la suprafața mării}:
-
-\begin{itemize}
-    \item Reflexii de la valuri, spumă, picături de apă
-    \item Concentrat în jurul frecvenței 0 Hz (Doppler mic -- mișcare lentă)
-    \item Energie aproximativ 90--95\% din cazuri în intervalul $[-50, +50]$ Hz
-    \item Are structură neuniformă -- unele zone sunt mai intense (ridges)
-    \item Țintele reale (nave, obiecte) apar departe de DC ($\pm 100$--$400$ Hz)
-\end{itemize}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.95\textwidth]{../results/ipix_figures/ipix_seaclutter_explanation.png}
-\caption{Explicație vizuală: ce este clutter-ul marin în datele IPIX? Figura arată spectrograma completă (two-sided), zoom pe regiunea clutter în jurul DC (frecvență 0 Hz) și distribuția energiei pe frecvențe. Notă: majoritatea energiei (>90\%) este concentrată în $\pm 50$ Hz în jurul DC.}
-\label{fig:seaclutter_explain}
-\end{figure}
-
-\subsection{De ce CFAR nu detectează „toată zona albă"?}
-
-Întrebare legitimă când te uiți la rezultate: \textit{„De ce detectează doar puncte împrăștiate și nu toată regiunea cu energie mare?"}. Răspunsul stă în natura \textbf{local-adaptivă} a CFAR:
-
-\begin{itemize}
-    \item \textbf{Prag global}: Un algoritm simplist ar seta un prag fix (ex: „detectează tot ce e peste -20 dB"). Asta ar detecta \textit{toată zona albă} --- dar ar detecta și zgomot puternic, generând mii de alarme false!
-    
-    \item \textbf{CFAR local-adaptiv}: Compară fiecare pixel cu \textit{vecinii săi} (training cells). Dacă pixelul e „mult peste media vecinilor locali" $\rightarrow$ detectat. Altfel $\rightarrow$ ignorat.
-\end{itemize}
-
-\textbf{Consecință}: Într-o zonă uniformă de energie mare (sea clutter), toți pixelii au \textit{vecini la fel de puternici} $\rightarrow$ CFAR nu îi detectează, pentru că nu sunt „outlieri" relativ la contextul local! CFAR detectează doar:
-\begin{itemize}
-    \item \textbf{Margini} unde energia crește brusc
-    \item \textbf{Ridges} (creste de energie) care depășesc clutter-ul înconjurător
-    \item \textbf{Ținte reale} care ies din zgomot/clutter
-\end{itemize}
-
-De aceea pare că ia „puncte aleatorii" --- în realitate, ia exact punctele care reprezintă \textit{tranziții de putere}!
-
-Aceasta e \textit{puterea} CFAR: reduce dramatic rata de alarme false adaptându-se la zgomot. Prețul plătit: nu mai detectăm „zone întregi", doar puncte care conțin informație nouă (schimbări bruște în spectrogramă).
-
-% ============================================================================
-% CAPITOLUL 5: REZULTATE EXPERIMENTALE
-% ============================================================================
-\chapter{Rezultate experimentale}
+IPIX (McMaster University): radar X-band coerent, $f_{RF}=9.39$ GHz, PRF=1000 Hz, date complexe I/Q. Ținta: sferă 1m la 2660m. Ținte validate: \#17, \#18, \#30, \#40.
 
 \section{Experimente pe semnale sintetice}
 
@@ -664,55 +424,37 @@ Am rulat detecție animată pe fișierele cu ținte reale. Figurile de mai jos a
 
 Modificări cheie pentru adaptarea algoritmului din articol la sea clutter real:
 
-\section{Adaptarea 1: K-distribution în loc de Gaussian}
-
-Algoritmul original presupune statistică Gaussian/Rayleigh, însă sea clutter real prezintă pondere mai mare în cozi (spike-uri frecvente) și urmează \textbf{K-distribution}:
+\section{Adaptarea 1: K-distribution}
 
 \begin{equation}
 p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)
 \end{equation}
 
-unde $\nu$ e parametrul de formă (mai mic $\rightarrow$ mai „spiky"), iar $K_{\nu-1}$ e funcția Bessel modificată.
+Sea clutter urmează K-distribution (cozi mai grele decât Gaussian). Estimare: $\nu = \mu^2 / (\sigma^2 - \mu^2)$. Ajustare prag pentru reducerea alarmelor false.
 
-\textbf{Soluție}: Estimare parametru din celulele de training: $\nu = \mu^2 / (\sigma^2 - \mu^2)$. Apoi ajustăm multiplicatorul pragului pentru a reduce alarmele false în clutter cu pondere mai mare în cozi.
-
-\section{Adaptarea 2: Îmbunătățire bazată pe exponentul Hurst}
-
-CFAR poate rata ținte slabe sub prag. Sea clutter are proprietate fractală (auto-similaritate) cuantificată de exponentul Hurst:
+\section{Adaptarea 2: Exponentul Hurst}
 
 \begin{equation}
 \mathbb{E}\left[|X(t+\tau) - X(t)|^2\right] \propto \tau^{2H}
 \end{equation}
 
-Pentru sea clutter: $H \approx 0.75$--$0.85$ (persistent). Când apare o țintă, structura se perturbă și $H$ scade sub $\sim$0.6.
-
-\textbf{Soluție}: Calculăm $H$ per bin de frecvență (analiză R/S). Dacă $H < 0.6$, marcăm punctele cu putere mare ca ținte potențiale. Combinăm cu CFAR: $\text{mască} = \text{CFAR} \lor (\text{anomalie Hurst} \land \text{putere mare})$. Această abordare îmbunătățește detecția țintelor slabe pe care CFAR singur le-ar rata.
+Sea clutter: $H \approx 0.75$--$0.85$; ținte: $H < 0.6$. Mască combinată: $\text{CFAR} \lor (\text{Hurst anomaly} \land \text{putere mare})$ pentru detecție ținte slabe.
 
 \section{Adaptarea 3: DBSCAN asimetric pentru semnături verticale}
 
 Țintele apar ca \textbf{linii verticale} (multe frecvențe, puține momente). DBSCAN standard fragmentează acestea în clustere multiple.
 
-\textbf{Soluție}: Distanță asimetrică cu \texttt{freq\_scale=3.0}: $d = \sqrt{\Delta t^2 + (\Delta f / 3)^2}$.
+\textbf{Soluție}: Distanță asimetrică }
 
-\textbf{Impact}: Un target întins pe $\sim$50 bin-uri de frecvență devine un singur cluster.
+Distanță asimetrică: $d = \sqrt{\Delta t^2 + (\Delta f / 3)^2}$ cu \texttt{freq\_scale=3.0}. Ținte pe 50 bin-uri frecvență $\rightarrow$ 1valuri.
 
-\section{Adaptarea 4: Mascare componentă DC}
+\textbf{Soluție}: Mascăm $\pm DC}
 
-Componenta DC (0 Hz) produce detecții persistente de la returnări staționare de la valuri.
+Mască $\pm 8$ bin-uri frecvență în jurul DC înainte de CFAR (returnări staționare non-ținte)
 
-\textbf{Soluție}: Mascăm $\pm 8$ bin-uri de frecvență în jurul DC înainte de CFAR.
+\textbf{Soluție}: Respingem cDoppler}
 
-\textbf{Justificare}: DC reprezintă returnări staționare; țintele în mișcare au Doppler non-zero.
-
-\section{Adaptarea 5: Filtru de lățime Doppler}
-
-Unele alarme false apar ca detecții foarte înguste (single-frequency), implauzibil fizic.
-
-\textbf{Soluție}: Respingem clustere cu bandwidth Doppler $< 3$ Hz.
-
-% ============================================================================
-% CAPITOLUL 7: DETALII DE IMPLEMENTARE
-% ============================================================================
+Respingem clustere cu bandwidth Doppler $< 3$ Hz (detecții fizic implauzibile)============
 \chapter{Detalii de implementare}
 
 \section{Parametri și calibrare}
@@ -753,48 +495,22 @@ Viteza maximă neambiguă:
 v_{max} = \frac{PRF \cdot c}{4 f_{RF}} \approx \pm 8 \text{ m/s}
 \end{equation}
 
-\section{Dependențe software}
-
-\begin{itemize}
-    \item \textbf{NumPy} $\geq$ 1.19 -- operații matriciale
-    \item \textbf{SciPy} $\geq$ 1.5 -- STFT, convoluție, iFFT
-    \item \textbf{matplotlib} $\geq$ 3.3 -- vizualizări
-    \item \textbf{Pillow} -- extragere cadre GIF
-    \item (opțional) \textbf{scikit-learn} -- referință DBSCAN
-\end{itemize}
-
 % ============================================================================
 % CAPITOLUL 8: CONCLUZII
 % ============================================================================
 \chapter{Concluzii și direcții viitoare}
 
-\section{Concluzii principale}
+\section{Concluzii}
 
-Implementarea CFAR-STFT demonstrează performanță excelentă:
+Implementarea CFAR-STFT demonstrează: (1) RQF = 29.17 dB @ SNR=30dB cu 100\% detecție pe sintetice; (2) performance consistentă pe 100 MC runs; (3) validare pe date IPIX reale cu sea clutter complex; (4) reproductibilitate via GitHub.
 
-\begin{enumerate}
-    \item \textbf{Acuratețe}: RQF = 29.17 dB @ SNR=30dB, detecție 100\%
-    \item \textbf{Robustețe}: Performanță consistentă pe 100 rulări MC
-    \item \textbf{Eficiență computațională}: $\sim 75$ ms per segment (13 FPS)
-    \item \textbf{Reproductibilitate}: Cod open-source, rezultate verificabile
-    \item \textbf{Validare reală}: Funcționează pe date IPIX cu sea clutter complex
-\end{enumerate}
+\section{Direcții viitoare}
 
-\section{Perspective de dezvoltare viitoare}
+GPU acceleration, auto-calibration, sistem operațional, multi-target tracking, ML-based parameter adaptation.
 
-\begin{itemize}
-    \item \textbf{Accelerare GPU}: Implementare CUDA/OpenCL pentru timp real
-    \item \textbf{Optimizare parametri}: Adaptare automată CFAR în funcție de tipul semnalului
-    \item \textbf{Sistem real}: Integrare cu radar operațional
-    \item \textbf{Multi-target}: Tracking și predicție traiectorii
-    \item \textbf{Machine learning}: Calibrare automată a parametrilor
-\end{itemize}
+\section{Cod}
 
-\section{Disponibilitate cod}
-
-\textbf{Repository GitHub}: \url{https://github.com/dirgnic/Radar_Detection_STFT}
-
-Toate fișierele de cod, date și rezultate sunt disponibile public pentru reproductibilitate și replicare independentă.
+GitHub: \url{https://github.com/dirgnic/Radar_Detection_STFT} (reproductibilitate, replicare independentă).
 
 \begin{thebibliography}{99}
 
