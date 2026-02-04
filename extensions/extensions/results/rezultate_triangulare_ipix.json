@@ -3,6 +3,7 @@
         "n_segments": 30,
         "mean_components": 4.2,
         "detection_segments": 30,
+        "detection_rate_percent": 100.0,
         "doppler_stats": {
             "n_detections": 30,
             "mean_doppler_hz": 81.39562564614893,
@@ -13,6 +14,7 @@
         "n_segments": 30,
         "mean_components": 13.566666666666666,
         "detection_segments": 30,
+        "detection_rate_percent": 100.0,
         "doppler_stats": {
             "n_detections": 30,
             "mean_doppler_hz": -18.804253472222225,
