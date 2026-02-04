@@ -285,14 +285,7 @@ The implementation is validated on synthetic data (nonlinear chirp) and real dat
 % ============================================================================
 \chapter{Introducere}
 
-Problema principală abordată este \textbf{detecția obiectelor mici în date radar maritime}, într-un mediu complex caracterizat prin variații rapide generate de valuri. Spre deosebire de multe scenarii terestre unde zgomotul/clutter-ul poate fi mai stabil, mediul acvatic are caracteristici particulare:
-
-\begin{itemize}
-    \item statisticile \textbf{nu sunt bine modelate Gaussian} (apar valori extreme mai frecvent decât în distribuția normală),
-    \item există \textbf{corelație temporală} (valurile creează tipare structurate),
-    \item efectele Doppler duc la \textbf{extinderea spectrului} (valuri în mișcare),
-    \item apar \textbf{vârfuri de energie (spikes)} vizibile în spectrograme când valurile sunt mai mari.
-\end{itemize}
+Problema principală abordată este \textbf{detecția obiectelor mici în date radar maritime}, într-un mediu complex. Mediul acvatic are caracteristici particulare: (1) statisticile \textbf{nu sunt bine modelate Gaussian} (valori extreme frecvente), (2) există \textbf{corelație temporală} (valuri cu tipare structurate), (3) efectele Doppler \textbf{extind spectrul} (valuri în mișcare), (4) apar \textbf{vârfuri de energie (spikes)} vizibile când valurile sunt mari.
 
 Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm Rate) pot fi limitate atunci când pierd informația temporală și nu exploatează structura timp--frecvență. Abratkiewicz (2022)\footnote{Abratkiewicz, K. (2022). Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform. Sensors, 22(16), 5954.} propune o abordare care folosește explicit structura \textbf{time--frequency} pentru a îmbunătăți atât \textbf{detecția}, cât și \textbf{recuperarea/reconstrucția} componentelor semnalului.
 
@@ -635,23 +628,9 @@ Triunghiuri vecine conectate după energie medie, dacă au muchie comună &
 
 \subsection{Experimente pe semnale sintetice controlate}
 
-\textbf{Metodă 1: CA-CFAR + HDBSCAN}
-\begin{itemize}
-    \item STFT cu fereastră Hamming
-    \item Detecție CA-CFAR pe spectrograma
-    \item Clusterizare HDBSCAN a punctelor detectate
-    \item Reconstrucție a componentei dominante
-    \item Evaluare prin RQF (Reconstruction Quality Factor)
-\end{itemize}
+\textbf{Metodă 1: CA-CFAR + HDBSCAN:} STFT Hamming, CA-CFAR, HDBSCAN clustering, reconstrucție componentă, evaluare RQF.
 
-\textbf{Metodă 2: Separare prin Triangulare Delaunay}
-\begin{itemize}
-    \item STFT cu fereastră Gaussiană
-    \item Detectarea maximelor locale peste prag percentilă
-    \item Triangulare Delaunay în plan timp–frecvență
-    \item Gruparea componentelor după energie
-    \item Estimare Doppler din componenta cu energie maximă
-\end{itemize}
+\textbf{Metodă 2: Triangulare Delaunay:} STFT Gaussiană, maxime locale, triangulare Delaunay timp-frecvență, grupare după energie, Doppler din component dominantă.
 
 \textbf{Rezultate sintetice:}
 CA-CFAR+HDBSCAN: 100\% detecție, RQF stabil SNR 5-30 dB. Triangulare: bună SNR mediu/ridicat, variabilitate mai mare RQF.
@@ -703,39 +682,15 @@ Date IPIX reale: Low Sea State (clutter moderat) vs High Sea State (clutter inte
 
 \subsection{Observații Experimentale Detaliate}
 
-\textbf{CA-CFAR + HDBSCAN}:
-\begin{itemize}
-    \item \textbf{Rata de detecție}: 100\% (detectează în toate segmentele)
-    \item \textbf{Problemă critică}: Produce detecții dominante asociate clutter-ului; ținta nu este izolată (variabilitate zero: $\sigma = 0$)
-    \item HDBSCAN grupează întreg clutter-ul într-un cluster unic
-    \item \textbf{Concluzie}: CA-CFAR nu separă adecvat ținta de clutter neomogen în scenariile analizate
-\end{itemize}
+\textbf{CA-CFAR + HDBSCAN:} Detecție 100\%, dar produce detecții dominante de clutter; ținta nu izolată ($\sigma = 0$). HDBSCAN grupează întreg clutter-ul. \textbf{Concluzie:} CA-CFAR nu separă ținta de clutter neomogen.
 
-\textbf{Triangulare Delaunay}:
-\begin{itemize}
-    \item Rate de detecție ridicate, dar instabile și inconsistente
-    \item HIGH sea: 4.2 componente; LOW sea: 13.6 componente (contrar așteptărilor)
-    \item Viteza Doppler variază de aproximativ patru ori între scenarii: +1.30 vs. -0.30 m/s
-    \item Metoda geometrică fragmentează clutter-ul în componente multiple
-    \item \textbf{Concluzie}: Variabilitate ridicată a rezultatelor, reducând consistența detecțiilor
-\end{itemize}
+\textbf{Triangulare Delaunay:} Detecție ridicată dar instabilă. HIGH sea: 4.2 comp., LOW sea: 13.6 comp. (neașteptat). Doppler variază 4×: +1.30 vs. -0.30 m/s. Metoda fragmentează clutter. \textbf{Concluzie:} Variabilitate prea mare.
 
 \subsection{Concluzie validată experimental}
 
-Pentru sea clutter real neomogen:
+Pentru sea clutter real neomogen: CA-CFAR nu separă ținta (variabilitate zero). Triangularea oferă detecție dar variabilitate mare. \textbf{GOCA-CFAR + DBSCAN anisotropic} (această implementare) oferă cea mai bună performanță cu detecții stabile.
 
-\begin{itemize}
-    \item \textbf{CA-CFAR} nu separă adecvat ținta de clutter (produce detecții dominante de zgomot, variabilitate zero)
-    \item \textbf{Triangularea Delaunay} -- oferă detecție geometrică, dar cu variabilitate ridicată (fragmentare excesivă)
-    \item \textbf{GOCA-CFAR cu DBSCAN anisotropic} (metoda din această implementare) -- oferă cea mai bună performanță în experimentele efectuate, cu detecții stabile și consistent identificate
-\end{itemize}
-
-Motivul succesului GOCA + DBSCAN asimetric:
-\begin{enumerate}
-    \item GOCA-CFAR adaptează pragul local și pe 4 cadrane, nu doar global (CA)
-    \item DBSCAN anisotropic ($\text{freq\_scale}=3.0$) păstrează coeziunea țintelor (linii verticale în plan timp-frecvență)
-    \item Combinația K-distribution + Hurst + DC masking + Doppler filter elimină alarmele false din clutter sever
-\end{enumerate}
+\textbf{Motivul succesului:} (1) GOCA adaptează prag pe 4 cadrane local, (2) DBSCAN anisotropic ($\text{freq\_scale}=3.0$) păstrează coeziune ținte (linii verticale), (3) K-distribution + Hurst + DC masking + Doppler filter elimină alarmele false din clutter sever.
 
 
 \label{chap:adaptations}
