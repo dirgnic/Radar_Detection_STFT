@@ -106,9 +106,8 @@
 \setlength{\textfloatsep}{3pt}
 \setlength{\intextsep}{2pt}
 
-% Reduce paragraph spacing
-\setlength{\parskip}{2pt plus 1pt}
-\setlength{\parsep}{1pt}
+% Reduce paragraph spacing (but keep readable)
+\setlength{\parskip}{4pt plus 2pt}
 
 % Stiluri diferite de headere și footere
 \usepackage{fancyhdr}
@@ -304,30 +303,30 @@ Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm
 % ============================================================================
 % CAPITOLUL 2: STADIUL ACTUAL (FUNDAMENTE TEORETICE)
 % ============================================================================
-\chapter{Stadiul actual și fundamente teoretice}
+% ============================================================================
+% CAPITOLUL 2: DESCRIEREA COMPLETĂ A ALGORITMULUI
+% ============================================================================
+\chapter{Descrierea completă a algoritmului}
 
-\section{STFT -- Transformata Fourier pe Ferestre Scurte}
+\section{Fundamente teoretice și STFT}
+
+\subsection{STFT -- Transformata Fourier pe Ferestre Scurte}
 
 \begin{equation}
 X(k,n) = \sum_{m=0}^{N-1} x(m) \cdot w(m - nH) \cdot e^{-j2\pi km/N}
 \end{equation}
 cu $N=256$, $H=32$ (87.5\% overlap), fereastră Gaussiană $w(m) = e^{-m^2/(2\sigma^2)}$, $\sigma=8$.
 
-\section{CFAR 2D (GOCA-CFAR)}
+\subsection{CFAR 2D (GOCA-CFAR)}
 
 Detecție adaptivă cu prag local: $H(k,n) = 1$ dacă $|X(k,n)|^2 > T$, unde
 \begin{equation}
 T = R \cdot \hat{Z}, \quad \hat{Z} = \max(\mu_1, \mu_2, \mu_3, \mu_4), \quad R = N_T (P_{fa}^{-1/N_T} - 1)
 \end{equation}
 
-\section{DBSCAN}
+\subsection{DBSCAN}
 
 Clustering pe densitate cu distanță asimetrică pentru semnături verticale: $d = \sqrt{\Delta t^2 + (\Delta f/3)^2}$.
-
-% ============================================================================
-% CAPITOLUL 3: DESCRIEREA ALGORITMULUI
-% ============================================================================
-\chapter{Descrierea completă a algoritmului}
 
 \section{Pipeline general (5 pași)}
 
@@ -464,7 +463,7 @@ Aplică dilatare cu kernel cruce (3×3) de 3 ori: \texttt{for i in range(3): H\_
 Aplică masca pe STFT: \texttt{X\_masked = X\_stft \(\odot\) H\_dil}, apoi extrage binarele detectate.
 
 % ============================================================================
-% CAPITOLUL 4: DATE ȘI SURSE DE VALIDARE
+% CAPITOLUL 3: DATE ȘI SURSE DE VALIDARE
 % ============================================================================
 \chapter{Date și surse de validare}
 
@@ -772,6 +771,10 @@ Această modificare crește toleranța pe axa frecvenței și menține coeziunea
 Pentru reducerea detecțiilor persistente asociate returnărilor staționare, se maschează un număr fix de bin-uri în jurul frecvenței zero (DC), înainte de aplicarea CFAR ($\pm 8$ bin-uri).
 
 Pentru eliminarea detecțiilor neplauzibile fizic, se resping clusterele a căror lățime Doppler este sub pragul minim ($< 3$ Hz).
+
+% ============================================================================
+% CAPITOLUL 4: DETALII DE IMPLEMENTARE
+% ============================================================================
 \chapter{Detalii de implementare}
 
 \section{Framework și tehnologii}
@@ -807,7 +810,7 @@ min\_doppler\_bw & 3.0 Hz & [1, 10] & Lățime Doppler minimă \\
 $v_r = \frac{f_d \cdot c}{2 f_{RF}}$. IPIX: $f_d = +100$ Hz → $v_r \approx +1.6$ m/s, max $\pm 8$ m/s.
 
 % ============================================================================
-% CAPITOLUL 8: CONCLUZII
+% CAPITOLUL 5: CONCLUZII ȘI DIRECȚII VIITOARE
 % ============================================================================
 \chapter{Concluzii și direcții viitoare}
 
