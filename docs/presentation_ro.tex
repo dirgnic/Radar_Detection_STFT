@@ -88,10 +88,16 @@ Coordonator: Prof. Dr. Cristian Rusu}
 \begin{columns}[T]
 \column{0.5\textwidth}
 \begin{tikzpicture}[scale=0.45]
-    % Training cells
-    \fill[cfarorange!40] (-4,-4) rectangle (4,4);
-    % Guard cells
+    % Training regions (mu_k) = ONLY training cells (exclude Guard + CUT).
+    % Draw as "L-shape" (outer quadrant minus guard overlap) for clarity.
+    \path[fill=blue!18, even odd rule] (-4,0.4) rectangle (-0.4,4) (-2,0.4) rectangle (-0.4,2);
+    \path[fill=green!18, even odd rule] (0.4,0.4) rectangle (4,4) (0.4,0.4) rectangle (2,2);
+    \path[fill=purple!16, even odd rule] (-4,-4) rectangle (-0.4,-0.4) (-2,-2) rectangle (-0.4,-0.4);
+    \path[fill=orange!18, even odd rule] (0.4,-4) rectangle (4,-0.4) (0.4,-2) rectangle (2,-0.4);
+
+    % Guard cells (excluded from mu_k)
     \fill[yellow!40] (-2,-2) rectangle (2,2);
+
     % CUT
     \fill[red!60] (-0.4,-0.4) rectangle (0.4,0.4);
     
@@ -140,7 +146,7 @@ $N_G = 3$, $N_T = 12$, $P_f = 0.001$ (mult mai mic decât paper!)
 \textbf{1. K-Distribution}:
 \begin{itemize}
     \item Sea clutter $\neq$ Gaussian
-    \item Pondere mai mare în cozi
+    \item (heavy tails): valori extreme mai frecvente
     \item Ajustare prag CFAR
 \end{itemize}
 
