@@ -285,7 +285,7 @@ The implementation is validated on synthetic data (nonlinear chirp) and real dat
 % ============================================================================
 \chapter{Introducere}
 
-Problema principală abordată este \textbf{detecția obiectelor mici în date radar maritime}, într-un mediu complex. Mediul acvatic are caracteristici particulare: (1) statisticile \textbf{nu sunt bine modelate de o distribuție Gaussiană} (valorile extreme sunt frecvente), (2) există \textbf{corelație temporală} (valuri cu tipare structurate), (3) efectele Doppler \textbf{extind spectrul} (valuri în mișcare), (4) apar \textbf{vârfuri de energie (spikes)} vizibile când valurile sunt mari.
+Problema principală abordată este \textbf{detecția obiectelor mici în date radar maritime}, într-un mediu complex. Mediul acvatic are următoarele caracteristici particulare: (1) statisticile \textbf{nu sunt bine modelate de o distribuție Gaussiană} (valorile extreme sunt frecvente), (2) există \textbf{corelație temporală} (valuri cu tipare structurate), (3) efectele Doppler \textbf{extind spectrul} (valuri în mișcare), (4) apar \textbf{vârfuri de energie (spikes)} vizibile când valurile sunt mari.
 
 Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm Rate) pot fi limitate atunci când pierd informația temporală și nu exploatează structura timp--frecvență. \mbox{Abratkiewicz~(2022)}\footnote{Abratkiewicz, K. (2022). Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform. Sensors, 22(16), 5954.} propune o abordare care folosește explicit structura \textbf{timp--frecvență} pentru a îmbunătăți atât \textbf{detecția}, cât și \textbf{recuperarea/reconstrucția} componentelor semnalului.
 
@@ -819,7 +819,7 @@ $v_r = \frac{f_d \cdot c}{2 f_{RF}}$. IPIX: $f_d = +100$ Hz → $v_r \approx +1.
 
 \section{Concluzii}
 
-Am obținut RQF = 29.17 dB (SNR = 30 dB, $P_d = 100\%$), cu performanță stabilă în intervalul 5--30 dB, validare pe date IPIX și reproductibilitate prin repository-ul GitHub.
+Am obținut RQF = 29.17 dB (SNR = 30 dB, $P_d = 100\%$), cu performanță stabilă în intervalul 5--30 dB, validare pe date IPIX și replicare independentă prin repository-ul GitHub.
 
 \section{Direcții viitoare}
 
@@ -836,7 +836,7 @@ Direcții viitoare includ accelerare pe GPU, calibrare automată a parametrilor,
 
 \section{Cod}
 
-Repository GitHub: \url{https://github.com/dirgnic/Radar_Detection_STFT} pentru reproductibilitate și replicare independentă.
+Repository GitHub: \url{https://github.com/dirgnic/Radar_Detection_STFT} pentru replicare independentă.
 
 \begin{thebibliography}{99}
 
