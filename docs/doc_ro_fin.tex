@@ -676,35 +676,7 @@ Pentru sea clutter real neomogen: CA-CFAR nu separă ținta (variabilitate zero)
 
 Modificări cheie pentru adaptarea algoritmului din articol la sea clutter real:
 
-\section{Adaptarea 1: K-distribution}
-
-\begin{equation}
-p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)
-\end{equation}
-
-Sea clutter-ul urmează K-distribution (cozi mai grele decât Gaussian). Se estimează: $\nu = \mu^2 / (\sigma^2 - \mu^2)$. Pragul se ajustează pentru a reduce alarmele false.
-
-\section{Adaptarea 2: Exponentul Hurst}
-
-\begin{equation}
-\mathbb{E}\left[|X(t+\tau) - X(t)|^2\right] \propto \tau^{2H}
-\end{equation}
-
-Sea clutter: $H \approx 0.75$--$0.85$; ținte: $H < 0.6$. Se aplică o mască combinată: $\text{CFAR} \lor (\text{Hurst anomaly} \land \text{putere mare})$ pentru detecție ținte slabe.
-
-\section{Adaptarea 3: DBSCAN cu metrică anisotropică}
-
-Țintele apar frecvent ca semnături aproape verticale în plan timp–frecvență (variație mare pe frecvență, variație redusă în timp), iar DBSCAN standard poate fragmenta o singură țintă în mai multe clustere. Prin urmare, se utilizează o metrică anisotropică prin ponderarea diferenței de frecvență cu factorul \texttt{freq\_scale}:
-
-\[
-d = \sqrt{(\Delta t)^2 + \left(\frac{\Delta f}{\texttt{freq\_scale}}\right)^2}, \quad \texttt{freq\_scale}=3.0
-\]
-
-Această modificare crește toleranța pe axa frecvenței și menține coeziunea unei ținte întinse pe mai multe bin-uri de frecvență.
-
-Pentru reducerea detecțiilor persistente asociate returnărilor staționare, se maschează un număr fix de bin-uri în jurul frecvenței zero (DC), înainte de aplicarea CFAR ($\pm 8$ bin-uri).
-
-Pentru eliminarea detecțiilor neplauzibile fizic, se resping clusterele a căror lățime Doppler este sub pragul minim ($< 3$ Hz).
+Sea clutter-ul urmează \textbf{K-distribution} cu pdf: $p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)$ (cozi mai grele decât Gaussian, se estimează $\nu = \mu^2 / (\sigma^2 - \mu^2)$ și se ajustează pragul pentru reducerea alarmelor false). Sea clutter prezintă \textbf{exponent Hurst} cu proprietatea $\mathbb{E}\left[|X(t+\tau) - X(t)|^2\right] \propto \tau^{2H}$ unde $H \approx 0.75$--$0.85$ pentru clutter și $H < 0.6$ pentru ținte; se aplică mască combinată: $\text{CFAR} \lor (\text{Hurst anomaly} \land \text{putere mare})$. \textbf{DBSCAN cu metrică anisotropică}: țintele apar ca semnături aproape verticale în plan timp–frecvență (variație mare pe frecvență, redusă în timp), deci se folosește $d = \sqrt{(\Delta t)^2 + \left(\frac{\Delta f}{3.0}\right)^2}$ pentru a menține coeziunea unei ținte. Măști suplimentare: (i) $\pm 8$ bin-uri în jurul frecvenței zero (DC) pentru eliminarea returnărilor staționare; (ii) respingere clustere cu lățime Doppler $< 3$ Hz pentru filtrarea detecțiilor neplauzibile fizic.
 
 % ============================================================================
 % CAPITOLUL 4: DETALII DE IMPLEMENTARE
