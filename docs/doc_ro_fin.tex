@@ -303,23 +303,30 @@ Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm
 
 \section{Fundamente teoretice și STFT}
 
-\subsection{STFT -- Transformata Fourier pe Ferestre Scurte}
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{2.3}
+\begin{tabular}{@{} l p{5cm} p{6.8cm} @{}}
+\toprule
+\textbf{Componentă} & \textbf{Model matematic} & \textbf{Rol în algoritm} \\ \midrule
 
-\begin{equation}
-X(k,n) = \sum_{m=0}^{N-1} x(m) \cdot w(m - nH) \cdot e^{-j2\pi km/N}
-\end{equation}
-cu $N=256$, $H=32$ (87.5\% overlap), fereastră Gaussiană $w(m) = e^{-m^2/(2\sigma^2)}$, $\sigma=8$.
+STFT (Transformata Fourier pe Ferestre Scurte) &
+$X(k,n) = \sum_{m=0}^{N-1} x(m) \, w(m - nH) \, e^{-j2\pi km/N}$, cu $N = 256$, $H = 32$ (87.5\% overlap), fereastră Gaussiană $w(m) = e^{-m^2/(2\sigma^2)}$, $\sigma = 8$ &
+Transformă semnalul $x[n]$ în plan timp--frecvență; oferă reprezentarea $|X(k,n)|^2$ pe care se aplică ulterior CFAR 2D și clusteringul. \\ \midrule
 
-\subsection{CFAR 2D (GOCA-CFAR)}
+CFAR 2D (GOCA-CFAR) &
+Prag adaptiv local: $H(k,n) = 1$ dacă $|X(k,n)|^2 > T$, unde $T = R \, \hat{Z}$, $\hat{Z} = \max(\mu_1, \mu_2, \mu_3, \mu_4)$, $R = N_T (P_{fa}^{-1/N_T} - 1)$ &
+Evaluează fiecare bin $(k,n)$ în context local (4 cadrane de training) și generează o mască binară $H(k,n)$ ce marchează candidații de detecție cu rată de alarmă falsă controlată. \\ \midrule
 
-Detecție adaptivă cu prag local: $H(k,n) = 1$ dacă $|X(k,n)|^2 > T$, unde
-\begin{equation}
-T = R \cdot \hat{Z}, \quad \hat{Z} = \max(\mu_1, \mu_2, \mu_3, \mu_4), \quad R = N_T (P_{fa}^{-1/N_T} - 1)
-\end{equation}
+DBSCAN (clustering pe densitate) &
+Metrică asimetrică pentru semnături verticale: $d = \sqrt{\Delta t^2 + (\Delta f / 3)^2}$ &
+Gruparea punctelor detectate $(k,n)$ în clustere coerente (ținte) printr-un algoritm de tip densitate, sensibil la structura aproape verticală a componentelor în plan timp--frecvență. \\
 
-\subsection{DBSCAN}
-
-Clustering pe densitate cu distanță asimetrică pentru semnături verticale: $d = \sqrt{\Delta t^2 + (\Delta f/3)^2}$.
+\bottomrule
+\end{tabular}
+\caption{Fundamente teoretice: reprezentarea STFT, detecția CFAR 2D și clusteringul DBSCAN utilizate în algoritmul CFAR-STFT.}
+\end{table}
 
 \section{Pipeline general (5 pași)}
 
