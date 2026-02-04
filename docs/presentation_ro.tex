@@ -87,6 +87,7 @@ Coordonator: Prof. Dr. Cristian Rusu}
 \begin{frame}{GOCA-CFAR 2D -- Detecție Adaptivă}
 \begin{columns}[T]
 \column{0.5\textwidth}
+\centering
 \begin{tikzpicture}[scale=0.45]
     % Training regions (mu_k) = ONLY training cells (exclude Guard + CUT).
     % Draw as "L-shape" (outer quadrant minus guard overlap) for clarity.
@@ -122,6 +123,12 @@ Coordonator: Prof. Dr. Cristian Rusu}
     \node[orange!80!black, font=\tiny] at (3.0,-3.0) {$\mu_4$};
 \end{tikzpicture}
 
+\vspace{0.3em}
+{\scriptsize \textit{Notă:} excludem o „cruce” (buffer) între cadrane pentru a evita ridge/sidelobe-uri pe axe.}
+
+\vspace{0.2em}
+{\footnotesize \textbf{Parametri IPIX:} $N_G = 3$, $N_T = 12$, $P_f = 0.001$ \textit{(semnificativ mai mic decat in paper!)}}
+
 \column{0.5\textwidth}
 \textbf{GOCA = Greatest-Of Cell Averaging}
 \begin{align*}
@@ -132,12 +139,7 @@ R &= N_T (P_f^{-1/N_T} - 1)
 
 \textbf{Decizie}:
 $$|X(k,n)|^2 \geq T \Rightarrow \text{\color{dbscangreen}Detectat}$$
-
-{\tiny \textit{Notă:} excludem o „cruce” (buffer) între cadrane pentru a evita ridge/sidelobe-uri pe axe.}
 \end{columns}
-
-\vspace{0em}
-{\tiny \textbf{Parametri IPIX:} $N_G = 3$, $N_T = 12$, $P_f = 0.001$}
 \end{frame}
 
 % ============================================================================
@@ -220,19 +222,18 @@ $\checkmark$ RQF crește cu SNR
 \begin{columns}[T]
 \column{0.5\textwidth}
 \begin{figure}
-\includegraphics[width=\textwidth]{ipix_target_17_goca_frame83.png}
-\caption{\small GOCA-CFAR pe Target \#17}
+\includegraphics[width=\textwidth,height=0.55\textheight,keepaspectratio]{ipix_target_17_goca_frame83.png}
+\caption{\scriptsize GOCA-CFAR pe Target \#17}
 \end{figure}
 
 \column{0.5\textwidth}
 \begin{figure}
-\includegraphics[width=\textwidth]{ipix_target_17_fractal_frame83.png}
-\caption{\small Cu Fractal Boost}
+\includegraphics[width=\textwidth,height=0.55\textheight,keepaspectratio]{ipix_target_17_fractal_frame83.png}
+\caption{\scriptsize Cu Fractal Boost}
 \end{figure}
 \end{columns}
 
-\vspace{0.2em}
-\small IPIX: Radar X-band 9.39 GHz, PRF=1000 Hz, țintă sferă 1m la 2660m
+{\scriptsize IPIX: Radar X-band 9.39 GHz, PRF=1000 Hz, țintă sferă 1m la 2660m}
 \end{frame}
 
 % ============================================================================
