@@ -285,7 +285,7 @@ The implementation is validated on synthetic data (nonlinear chirp) and real dat
 % ============================================================================
 \chapter{Introducere}
 
-Problema principală abordată este \textbf{detecția obiectelor mici în date radar maritime}, într-un mediu complex. Mediul acvatic are caracteristici particulare: (1) statisticile \textbf{nu sunt bine modelate Gaussian} (valori extreme frecvente), (2) există \textbf{corelație temporală} (valuri cu tipare structurate), (3) efectele Doppler \textbf{extind spectrul} (valuri în mișcare), (4) apar \textbf{vârfuri de energie (spikes)} vizibile când valurile sunt mari.
+Problema principală abordată este \textbf{detecția obiectelor mici în date radar maritime}, într-un mediu complex. Mediul acvatic are caracteristici particulare: (1) statisticile \textbf{nu sunt bine modelate de o distribuție Gaussiană} (valorile extreme sunt frecvente), (2) există \textbf{corelație temporală} (valuri cu tipare structurate), (3) efectele Doppler \textbf{extind spectrul} (valuri în mișcare), (4) apar \textbf{vârfuri de energie (spikes)} vizibile când valurile sunt mari.
 
 Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm Rate) pot fi limitate atunci când pierd informația temporală și nu exploatează structura timp--frecvență. Abratkiewicz (2022)\footnote{Abratkiewicz, K. (2022). Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform. Sensors, 22(16), 5954.} propune o abordare care folosește explicit structura \textbf{time--frequency} pentru a îmbunătăți atât \textbf{detecția}, cât și \textbf{recuperarea/reconstrucția} componentelor semnalului.
 
@@ -445,7 +445,7 @@ IPIX (McMaster University): radar X-band ($f_{RF}=9.39$ GHz, PRF=1000 Hz), date 
 
 \section{Experimente pe semnale sintetice}
 
-S-au rulat 100 simulări Monte Carlo pentru fiecare nivel SNR, chirp neliniar, rata 100\%.
+S-au rulat 100 de simulări Monte Carlo pentru fiecare nivel SNR, folosind un chirp neliniar, cu rată de detecție 100\%.
 
 Metrica RQF:
 \begin{equation}
@@ -478,7 +478,7 @@ Metrica RQF:
 \includegraphics[width=0.42\textwidth]{../results/evaluation/rqf_vs_snr_annotated.pdf}
 \hfill
 \includegraphics[width=0.42\textwidth]{../results/evaluation/detection_rate_vs_snr_annotated.pdf}
-\caption{Performanță vs SNR cu adnotări: RQF și rata detecție 100\% (SNR 5-30 dB cu marcare punctelor).}}
+\caption{Performanță vs SNR cu adnotări: RQF și rata de detecție 100\% (SNR 5-30 dB, cu marcarea punctelor).}
 \label{fig:snr_performance}
 \vspace{-4pt}
 \end{figure}
@@ -722,11 +722,11 @@ $v_r = \frac{f_d \cdot c}{2 f_{RF}}$. IPIX: $f_d = +100$ Hz → $v_r \approx +1.
 
 \section{Concluzii}
 
-RQF = 29.17 dB (SNR=30 dB, 100\% Pd), performanță stabilă 5--30 dB, validare IPIX, reproductibilitate GitHub.
+Am obținut RQF = 29.17 dB (SNR = 30 dB, $P_d = 100\%$), cu performanță stabilă în intervalul 5--30 dB, validare pe date IPIX și reproductibilitate prin repository-ul GitHub.
 
 \section{Direcții viitoare}
 
-GPU acceleration, calibrare automată, multi-target tracking, ML-based adaptation.
+Direcții viitoare includ accelerare pe GPU, calibrare automată a parametrilor, urmărire multi-țintă și adaptare bazată pe metode de învățare automată.
 
 \section{Cod}
 
