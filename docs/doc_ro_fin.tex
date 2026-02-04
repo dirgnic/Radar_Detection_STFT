@@ -350,59 +350,57 @@ Grupează punctele detectate $(k,n)$ în clustere coerente (ținte radar) păstr
 % Punem pașii în paralel cu schema (Figura 2.1) ca să nu ocupe o pagină întreagă.
 \noindent
 \vspace{-4pt}
-\begin{minipage}[t]{0.53\textwidth}
+\begin{minipage}[t]{0.42\textwidth}
+\vspace{0pt}
 \centering
-\resizebox{0.90\linewidth}{!}{%
+\resizebox{0.80\linewidth}{!}{%
 \begin{tikzpicture}[
-    node distance=1.1cm and 1.2cm,
-    box/.style={rectangle, draw, rounded corners, minimum width=2.0cm, minimum height=0.7cm, align=center, font=\scriptsize\bfseries},
+    node distance=0.75cm and 0.75cm,
+    box/.style={rectangle, draw, rounded corners, minimum width=1.55cm, minimum height=0.6cm, align=center, font=\scriptsize\bfseries},
     arrow/.style={-{Stealth[length=2mm]}, thick},
     label/.style={font=\tiny, align=center},
     eqlabel/.style={font=\tiny, text=gray}
 ]
 
-% Rândul 1: Input -> STFT -> CFAR
-\node[box, fill=signalgray!20] (input) {Semnal de intrare\\$x[n]$};
-\node[box, fill=stftblue!30, right=of input] (stft) {STFT\\Gaussiană $\sigma=8$};
-\node[box, fill=cfarorange!30, right=of stft] (cfar) {GOCA-CFAR 2D\\$P_f=0.001$};
+% Două rânduri (mai lizibil, tip "serpentină"): rândul 1 stânga->dreapta, rândul 2 dreapta->stânga
+\node[box, fill=signalgray!20] (input) {Input\\$x[n]$};
+\node[box, fill=stftblue!30, right=of input] (stft) {STFT\\$\sigma=8$};
+\node[box, fill=cfarorange!30, right=of stft] (cfar) {GOCA-CFAR\\$P_f=0.001$};
 
-% Rândul 2: DBSCAN -> Mask -> Detecții
-\node[box, fill=dbscangreen!30, below=1.4cm of cfar] (dbscan) {DBSCAN\\Clustering};
-\node[box, fill=maskpurple!30, below=1.4cm of stft] (mask) {Mask Expansion\\Geodesic Dilation};
-\node[box, fill=istftred!30, below=1.4cm of input] (output) {Detecții\\finale};
+\node[box, fill=dbscangreen!30, below=of cfar] (dbscan) {DBSCAN};
+\node[box, fill=maskpurple!30, left=of dbscan] (mask) {Mask\\+ dilation};
+\node[box, fill=istftred!30, left=of mask] (output) {Detecții};
 
-% Rândul 3: Output
-\node[box, fill=signalgray!20, below=1.4cm of mask] (final) {Ținte detectate};
-
-% Săgeți rândul 1
-\draw[arrow] (input) -- node[above, label] {$x[n]$} (stft);
-\draw[arrow] (stft) -- node[above, label] {$|F_x^h|^2$} (cfar);
-
-% Săgeți verticale și rândul 2
-\draw[arrow] (cfar) -- node[right, label] {Mască\\binară} (dbscan);
-\draw[arrow] (dbscan) -- node[above, label] {Clustere} (mask);
-\draw[arrow] (mask) -- node[above, label] {Măști} (output);
-
-% Săgeată finală
-\draw[arrow] (output) -- (final);
+\draw[arrow] (input) -- (stft);
+\draw[arrow] (stft) -- (cfar);
+\draw[arrow] (cfar) -- (dbscan);
+\draw[arrow] (dbscan) -- (mask);
+\draw[arrow] (mask) -- (output);
 
 \end{tikzpicture}%
 } % resizebox
-{\captionsetup{skip=1pt}\captionof{figure}{Pipeline-ul complet al algoritmului CFAR-STFT pentru detecția componentelor din planul timp--frecvență.}}
-\label{fig:pipeline}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{0.46\textwidth}
-\scriptsize
+\end{minipage}\hfill%
+\begin{minipage}[t]{0.57\textwidth}
+\vspace{0pt}
+\footnotesize
+\raggedright
+\setlength{\emergencystretch}{1em}
 \textbf{Algoritmul complet constă din cinci etape:}
 \begin{enumerate}[leftmargin=*,label=\textbf{(\arabic*)},topsep=0pt,itemsep=0pt,parsep=0pt]
-\item \textbf{STFT}: fereastră Gaussiană ($N_{fft}=256$, hop $H=32$, $\sigma=8$).
-\item \textbf{GOCA-CFAR 2D}: prag local $T=\alpha\cdot\max(\mu_1,\mu_2,\mu_3,\mu_4)$; condiție $|X(k,n)|^2>T$.
-\item \textbf{DBSCAN}: distanță anizotropică; tipic $\varepsilon=8$, \texttt{minSamples}=5.
-\item \textbf{Dilatare geodezică}: kernel cruce (3$\times$3), de 3 ori cu \texttt{maximum\_filter}.
-\item \textbf{Extragere}: mască pe STFT $X_{\text{masked}}=X_{\text{STFT}}\odot H_{\text{dil}}$.
+\item \textbf{STFT}: fereastră Gaussiană; $N_{fft}=256$, $H=32$, $\sigma=8$.
+\item \textbf{GOCA-CFAR 2D}:\\
+prag $T=\alpha\cdot\max(\mu_1,\ldots,\mu_4)$;\\
+decizie $|X(k,n)|^2 > T$.
+\item \textbf{DBSCAN}:\\
+distanță anizotropică; tipic $\varepsilon=8$, \texttt{minSamples}=5.
+\item \textbf{Dilatare geodezică}:\\
+kernel cruce (3$\times$3), de 3 ori cu \texttt{maximum\_filter}.
+\item \textbf{Extragere}:\\
+$X_{\text{masked}} = X_{\text{STFT}}\odot H_{\text{dil}}$.
 \end{enumerate}
 \end{minipage}
+\par\vspace{8pt}
+{\captionsetup{skip=1pt,font=scriptsize}\captionof{figure}{Pipeline-ul complet al algoritmului CFAR-STFT pentru detecția componentelor din planul timp--frecvență.}\label{fig:pipeline}}
 \vspace{-4pt}
 \end{samepage}
 
@@ -567,19 +565,23 @@ Ierarhic \textit{bottom-up}. Fuzionează succesiv perechile cele mai apropiate. 
 
 	HDBSCAN & 
 	Bazat pe densitate ierarhică. Folosește \textit{core distance} și \textit{MST} pentru stabilitate. & 
-	\textbf{1.} Normalizează punctele $(f, t)$ \newline
-	\textbf{2.} Calculează \textbf{core distance} $(c)$ pentru fiecare punct \newline
-	\textbf{3.} Determină \textbf{MRD}:\par\vspace{0.35em}
-	$d_{mrd}(u,v) = \max(c(u), c(v), d(u,v))$ \newline
-	\textbf{4.} Construiește \textbf{MST} folosind MRD \newline
-	\textbf{5.} Extrage componente conexe cu prag $\varepsilon$ \newline
-	\textbf{6.} Elimină clusterele sub $min\_samples$ $\to$ zgomot (-1) \\ \midrule
+	\begin{tabular}[t]{@{}l@{}}
+	\textbf{1.} Normalizează punctele $(f, t)$ \\
+	\textbf{2.} Calculează \textbf{core distance} $(c)$ pentru fiecare punct \\
+	\textbf{3.} Determină \textbf{MRD}: \\[0.35em]
+	$d_{mrd}(u,v) = \max(c(u), c(v), d(u,v))$ \\
+	\textbf{4.} Construiește \textbf{MST} folosind MRD \\
+	\textbf{5.} Extrage componente conexe cu prag $\varepsilon$ \\
+	\textbf{6.} Elimină clusterele sub $min\_samples$ $\to$ zgomot (-1)
+	\end{tabular} \\ \midrule
 
 	DBSCAN & 
 	Bazat pe densitate & 
-	Grupeaza puncte cu distanță $\le \varepsilon$. \newline
-	Asimetric:\par\vspace{0.25em}
-	$d = \sqrt{\Delta t^2 + (\Delta f / \text{freq\_scale})^2}$ \\
+	\begin{tabular}[t]{@{}l@{}}
+	Grupeaza puncte cu distanță $\le \varepsilon$. \\
+	Asimetric: \\[0.25em]
+	$d = \sqrt{\Delta t^2 + (\Delta f / \text{freq\_scale})^2}$
+	\end{tabular} \\
 	\bottomrule
 	\end{tabular}
 	\caption{Metode de clustering utilizate}
@@ -597,7 +599,7 @@ Alternativă geometrică la CFAR + clustering:
 \toprule
 \textbf{Pas} & \textbf{Idee} & \textbf{Pseudocod simplificat} \\ \midrule
 
-Detectare Vârfuri &
+Detectare \newline Vârfuri &
 Maxime locale în spectrograma STFT peste un prag percentilă ($S=|X|^2$) &
 \begin{tabular}[t]{@{}l@{}}
 1. STFT $\rightarrow$ $S=|X|^2$ \\
@@ -606,7 +608,7 @@ Maxime locale în spectrograma STFT peste un prag percentilă ($S=|X|^2$) &
 4. Salvează coordonate vârfuri
 \end{tabular} \\ \midrule
 
-Triangulare Delaunay &
+Triangulare \newline Delaunay &
 Triangulare pe vârfuri cu criteriul cercului circumscris (Delaunay) &
 \begin{tabular}[t]{@{}l@{}}
 1. Delaunay pe setul de vârfuri \\
@@ -614,7 +616,7 @@ Triangulare pe vârfuri cu criteriul cercului circumscris (Delaunay) &
 3. Filtrează în zona de interes (ROI)
 \end{tabular} \\ \midrule
 
-Gruparea triunghiurilor &
+Gruparea \newline triunghiurilor &
 Triunghiuri vecine conectate după energie medie, dacă au muchie comună & 
 \begin{tabular}[t]{@{}l@{}}
 1. Construiește graful de adiacență (muchiilor comune) \\
