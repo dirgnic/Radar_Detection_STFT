@@ -2,7 +2,7 @@
 % Autori: Ingrid Corobana, Teodora Nae
 % Compilare recomandată: xelatex doc_ro_fin.tex
 
-\documentclass[12pt, a4paper]{report}
+\documentclass[11pt, a4paper]{report}
 
 % Suport pentru diacritice și alte simboluri
 \usepackage{fontspec}
@@ -30,12 +30,12 @@
   {\guillemotleft}
   {\guillemotright}
 
-% Setează spațiere inter-linie la 1.5
+% Setează spațiere inter-linie la single (compress)
 \usepackage{setspace}
-\onehalfspacing
+\singlespacing
 
-% Modificarea geometriei paginii (cu margini de 0.8 inch)
-\usepackage[margin=0.8in]{geometry}
+% Modificarea geometriei paginii (cu margini mai mici - 0.5 inch)
+\usepackage[margin=0.5in]{geometry}
 
 % Include funcțiile de grafică
 \usepackage{graphicx}
@@ -72,12 +72,43 @@
 \usepackage{caption}
 \usepackage{multirow}
 
+% Reduce caption spacing
+\captionsetup{skip=3pt}
+
 % Pentru includerea PDF-urilor
 \usepackage{pdfpages}
 
 % Pachete pentru figurile complexe TikZ
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,fit,calc,shadows.blur,backgrounds}
+
+% Reduce spacing around sections (aggressive but balanced)
+\usepackage{titlesec}
+\titlespacing{\chapter}{0pt}{2pt}{1pt}
+\titlespacing{\section}{0pt}{2pt}{1pt}
+\titlespacing{\subsection}{0pt}{1pt}{0pt}
+
+% Reduce spacing in lists
+\usepackage{enumitem}
+\setlist{nosep}
+
+% Reduce table row height
+\renewcommand{\arraystretch}{0.75}
+
+% Reduce space around equations
+\setlength{\abovedisplayskip}{3pt}
+\setlength{\belowdisplayskip}{3pt}
+\setlength{\abovedisplayshortskip}{2pt}
+\setlength{\belowdisplayshortskip}{2pt}
+
+% Reduce space around floats (figures, tables)
+\setlength{\floatsep}{3pt}
+\setlength{\textfloatsep}{3pt}
+\setlength{\intextsep}{2pt}
+
+% Reduce paragraph spacing
+\setlength{\parskip}{2pt plus 1pt}
+\setlength{\parsep}{1pt}
 
 % Stiluri diferite de headere și footere
 \usepackage{fancyhdr}
@@ -443,7 +474,7 @@ IPIX (McMaster University): radar X-band ($f_{RF}=9.39$ GHz, PRF=1000 Hz), date 
 
 \section{Experimente pe semnale sintetice}
 
-S-au rulat 100 simulări Monte Carlo pentru fiecare nivel de SNR (5, 10, 15, 20, 25, 30 dB), folosind chirp neliniar (Ec. 14). Rata de detecție: 100\% în toate rulările.
+S-au rulat 100 simulări Monte Carlo pentru fiecare nivel SNR, chirp neliniar, rata 100\%.
 
 Metrica RQF:
 \begin{equation}
@@ -452,59 +483,44 @@ Metrica RQF:
 
 \begin{table}[H]
 \centering
-\caption{Rezultate CFAR-STFT pe chirp neliniar sintetic -- 100 rulări MC}
+\vspace{-4pt}
+\caption{Rezultate CFAR-STFT (100 MC)}
 \label{tab:results_synthetic}
 \begin{tabular}{ccccc}
 \toprule
-\textbf{SNR [dB]} & \textbf{RQF\_mean [dB]} & \textbf{RQF\_std [dB]} & \textbf{P\_detecție [\%]} & \textbf{N\_rulări} \\
+\textbf{SNR} & \textbf{RQF\_mean} & \textbf{RQF\_std} & \textbf{P\_d [\%]} & \textbf{N} \\
 \midrule
-5 & 7.28 & 0.47 & 100.0 & 100 \\
-10 & 16.81 & 0.60 & 100.0 & 100 \\
-15 & 22.95 & 0.56 & 100.0 & 100 \\
-20 & 26.40 & 0.51 & 100.0 & 100 \\
-25 & 28.43 & 0.39 & 100.0 & 100 \\
-30 & 29.17 & 0.25 & 100.0 & 100 \\
+5 & 7.28 & 0.47 & 100 & 100 \\
+10 & 16.81 & 0.60 & 100 & 100 \\
+15 & 22.95 & 0.56 & 100 & 100 \\
+20 & 26.40 & 0.51 & 100 & 100 \\
+25 & 28.43 & 0.39 & 100 & 100 \\
+30 & 29.17 & 0.25 & 100 & 100 \\
 \bottomrule
 \end{tabular}
+\vspace{-4pt}
 \end{table}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.48\textwidth]{rqf_vs_snr.pdf}
+\vspace{-4pt}
+\includegraphics[width=0.42\textwidth]{rqf_vs_snr.pdf}
 \hfill
-\includegraphics[width=0.48\textwidth]{detection_rate_vs_snr.pdf}
-\caption{Performanță vs SNR pe semnale sintetice: (stânga) RQF mediu și deviație standard pentru 100 rulări MC la fiecare nivel SNR, arătând trend crescător și convergență; (dreapta) rata de detecție de 100\% pe toată gama SNR 5-30 dB}
+\includegraphics[width=0.42\textwidth]{detection_rate_vs_snr.pdf}
+\caption{Performanță vs SNR: RQF și rata detecție 100\% (SNR 5-30 dB).}
 \label{fig:snr_performance}
+\vspace{-4pt}
 \end{figure}
 
 \section{Analiză comparativă: Algoritmi CFAR și Clustering}
 
 \subsection{Principii fundamentale CFAR}
 
-Toți algoritmii de tip CFAR (Constant False Alarm Rate) urmează principii comune pentru menținerea ratei alarmelor false la nivel constant în condiții de zgomot variabil:
+CFAR menține rata alarmelor false constantă: (1) fereastră glisantă cu CUT, guard cells, training cells; (2) prag adaptiv $T = \alpha Z$; (3) detecție dacă $CUT \ge T$.
 
-\begin{itemize}
-    \item \textbf{Procesarea prin Fereastră Glisantă:} Analiza spectrogramei cu fereastră mobilă compusă din:
-    \begin{enumerate}
-        \item \textbf{CUT (Cell Under Test):} Celula centrală evaluată
-        \item \textbf{Zona de gardă (Guard Cells):} Celule adiacente neprocesate pentru evitarea scurgerii energiei țintei
-        \item \textbf{Celulele de antrenament (Training Cells):} Celule periferice pentru eșantionarea zgomotului local ($Z$)
-    \end{enumerate}
-    
-    \item \textbf{Pragul adaptiv:} Recalculat dinamic: $T = \alpha \cdot Z$ unde $Z$ este puterea zgomotului estimată și $\alpha$ depinde de $P_{fa}$ dorită
-    
-    \item \textbf{Condiția de detecție:} Dacă puterea în CUT depășește pragul: $CUT \ge T$ → detecție
-\end{itemize}
+\subsection{Algoritmi CFAR}
 
-\subsection{Descrierea algoritmilor CFAR testați}
-
-\begin{itemize}
-    \item \textbf{CA-CFAR (Cell Averaging):} Estimează nivelul zgomotului prin media aritmetică a celulelor de antrenament. Eficient în zgomot omogen, dar suferă mascare în prezența țintelor multiple.
-    
-    \item \textbf{OS-CFAR (Ordered Statistic):} Utilizează percentila în locul mediei. Robust la interferențe, ignorând valorile extreme.
-    
-    \item \textbf{SOCA-CFAR (Smallest Of Cell Averaging):} Selectează minimul dintre mediile subregiunilor. Optim pentru separarea țintelor la marginile clutter-ului dens.
-\end{itemize}
+CA-CFAR: media aritmetică, robustă în zgomot omogen. OS-CFAR: percentilă, robust la interferențe. SOCA-CFAR: minim subregiuni, optim la marginile dense.
 
 \subsection{CFAR: Formule și pseudocod}
 
@@ -538,20 +554,6 @@ $Z = \min(\mu_1, \dots, \mu_4)$, $T = R \cdot Z$ &
 \bottomrule
 \end{tabular}
 \caption{Formule și pseudocod pentru metodele CFAR}
-\end{table}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{@{} l l l l l @{}}
-\toprule
-\textbf{Metodă} & \textbf{Robustețe clutter} & \textbf{Ținte slabe} & \textbf{Complexitate} & \textbf{Ideal pentru} \\ \midrule
-CA & Scăzută & Ridicată & Foarte mică & Spectrograme omogene \\
-OS & Foarte bună & Medie & Mare & Medii multi-target \\
-SOCA & Bună & Medie & Medie & Margini clutter \\
-\bottomrule
-\end{tabular}
-\caption{Comparație între metodele CFAR}
 \end{table}
 
 \subsection{Metode de clustering}
@@ -589,16 +591,6 @@ Grupeaza puncte cu distanță $\le \varepsilon$. Asymetric: $d = \sqrt{\Delta t^
 \end{tabular}
 \caption{Metode de clustering utilizate}
 \end{table}
-
-\subsection{Observații despre algoritmii de clustering}
-
-\begin{itemize}
-    \item \textbf{Agglomerative:} Lucrează prin proximitate directă. Nu elimină zgomotul, ceea ce poate duce la gruparea eronată a detecțiilor false CFAR în clustere valide.
-    
-    \item \textbf{HDBSCAN:} Utilizează \textit{Mutual Reachability Distance} pentru a penaliza punctele din zonele cu densitate mică. Elimină fenomenul de \textit{chaining} (unirea eronată a două ținte prin puncte de zgomot intermediare).
-    
-    \item \textbf{DBSCAN asimetric:} Țintele apar ca linii verticale în timp-frecvență (multe frecvențe, puține momente). Distanța asimetrică cu \texttt{freq\_scale=3.0} păstrează coeziunea țintelor.
-\end{itemize}
 
 \subsection{Separare prin triangulare Delaunay}
 
@@ -663,10 +655,7 @@ Triunghiuri vecine conectate după energie medie, dacă au muchie comună &
 \end{itemize}
 
 \textbf{Rezultate sintetice:}
-\begin{itemize}
-    \item CA-CFAR + HDBSCAN: rate de detecție ridicate (100\%), RQF apropiate de articolul de referință, comportament stabil relativ la SNR. Confirmă validitatea CFAR cu ipoteza AWGN.
-    \item Triangulare Delaunay: rezultate bune la SNR mediu și ridicat, dar variabilitate mai mare a RQF și sensibilitate crescută la pragul de detecție.
-\end{itemize}
+CA-CFAR+HDBSCAN: 100\% detecție, RQF stabil SNR 5-30 dB. Triangulare: bună SNR mediu/ridicat, variabilitate mai mare RQF.
 
 \section{Experimente pe IPIX cu ținte reale}
 
@@ -674,28 +663,25 @@ S-au efectuat experimente pe date reale din baza IPIX. Figurile de mai jos arat�
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{../results/ipix_figures/ipix_target_17_goca_frame83.pdf}
-\caption{Detecție GOCA-CFAR pe IPIX Target \#17 -- Cadru din animație arătând detecții active. Cele trei panouri arată: (stânga) spectrograma cu detecții acumulate (overlay roșu), (centru) heatmap de detecție, (dreapta) detecțiile cadrului curent. Linia verticală luminoasă reprezintă ținta plutitoare la Doppler pozitiv (se apropie de radar).}
+\vspace{-4pt}
+\includegraphics[width=0.85\textwidth]{../results/ipix_figures/ipix_target_17_goca_frame83.pdf}
+\caption{GOCA-CFAR pe IPIX Target \#17: spectrograma (stânga), heatmap detecții (centru), detecții cadru (dreapta). Linie verticală = țintă la Doppler pozitiv.}
 \label{fig:goca_detection}
+\vspace{-4pt}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{../results/ipix_figures/ipix_target_17_fractal_frame83.pdf}
-\caption{GOCA-CFAR cu Fractal Boost pe IPIX Target \#17 -- Cadru arătând detecții active. Fractal boost folosește analiza exponentului Hurst pentru a detecta ținte care perturbă structura self-similar a sea clutter, îmbunătățind detecția țintelor slabe.}
+\vspace{-4pt}
+\includegraphics[width=0.85\textwidth]{../results/ipix_figures/ipix_target_17_fractal_frame83.pdf}
+\caption{GOCA-CFAR cu Fractal Boost pe IPIX Target \#17: Hurst exponent boost îmbunătățește detecția țintelor slabe.}
 \label{fig:fractal_boost_detection}
+\vspace{-4pt}
 \end{figure}
 
 \subsection{Setul de Date și Scenarii}
 
-Experimentele au fost realizate pe date radar reale din setul \textbf{IPIX} (McMaster University), caracterizate prin \textbf{clutter marin sever} și variații puternice de energie în timp și frecvență:
-
-\begin{itemize}
-    \item \textbf{Low Sea State} -- clutter moderat, detecție ușoară
-    \item \textbf{High Sea State} -- clutter intens și neomogen, detecție dificilă
-\end{itemize}
-
-Semnalele sunt procesate segmentat (1 s), PRF = 1000 Hz, complexe I/Q.
+Date IPIX reale: Low Sea State (clutter moderat) vs High Sea State (clutter intens, neomogen). Procesare segmentată 1s, PRF=1000 Hz, I/Q complex.
 
 \subsection{Rezultate comparative: CA-CFAR+HDBSCAN vs. Triangulare Delaunay}
 
@@ -818,7 +804,7 @@ min\_doppler\_bw & 3.0 Hz & [1, 10] & Lățime Doppler minimă \\
 
 \section{Notă asupra Doppler}
 
-Conversie: $v_r = \frac{f_d \cdot c}{2 f_{RF}}$. Pentru IPIX ($f_{RF} = 9.39$ GHz), $f_d = +100$ Hz $\rightarrow$ $v_r \approx +1.6$ m/s; viteza max neambiguă $\approx \pm 8$ m/s.
+$v_r = \frac{f_d \cdot c}{2 f_{RF}}$. IPIX: $f_d = +100$ Hz → $v_r \approx +1.6$ m/s, max $\pm 8$ m/s.
 
 % ============================================================================
 % CAPITOLUL 8: CONCLUZII
@@ -827,11 +813,11 @@ Conversie: $v_r = \frac{f_d \cdot c}{2 f_{RF}}$. Pentru IPIX ($f_{RF} = 9.39$ GH
 
 \section{Concluzii}
 
-Rezultatele obținute indică: (1) RQF = 29.17 dB la SNR=30 dB cu 100\% rată de detecție pe setul de 100 rulări Monte Carlo; (2) performanță stabilă pe toată gama SNR 5--30 dB; (3) evaluare pe date IPIX reale cu clutter marin complex; (4) reproductibilitate prin repository GitHub.
+RQF = 29.17 dB (SNR=30 dB, 100\% Pd), performanță stabilă 5--30 dB, validare IPIX, reproductibilitate GitHub.
 
 \section{Direcții viitoare}
 
-Accelerare pe GPU, calibrare automată, sistem operațional, urmărirea mai multor ținte (multi-target tracking), adaptarea parametrilor bazată pe metode de învățare automată.
+GPU acceleration, calibrare automată, multi-target tracking, ML-based adaptation.
 
 \section{Cod}
 
