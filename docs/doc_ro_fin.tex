@@ -30,11 +30,11 @@
   {\guillemotleft}
   {\guillemotright}
 
-% Setează spațiere inter-linie (compactă)
+% Setează spațiere inter-linie la 1.5
 \usepackage{setspace}
-\renewcommand{\baselinestretch}{1.1}
+\onehalfspacing
 
-% Modificarea geometriei paginii (cu margini de 0.8 inch - mai mici pentru mai mult conținut)
+% Modificarea geometriei paginii (cu margini de 0.8 inch)
 \usepackage[margin=0.8in]{geometry}
 
 % Include funcțiile de grafică
@@ -254,13 +254,13 @@ The implementation is validated on synthetic data (nonlinear chirp) and real dat
 % ============================================================================
 \chapter{Introducere}
 
-Problema principală pe care o rezolvăm este \textbf{detecția obiectelor mici în date radar maritime}, într-un mediu complex care se schimbă constant din cauza valurilor. Spre deosebire de multe scenarii terestre unde zgomotul/clutter-ul poate fi mai stabil, mediul acvatic are caracteristici particulare:
+Problema principală abordată este \textbf{detecția obiectelor mici în date radar maritime}, într-un mediu complex caracterizat prin variații rapide generate de valuri. Spre deosebire de multe scenarii terestre unde zgomotul/clutter-ul poate fi mai stabil, mediul acvatic are caracteristici particulare:
 
 \begin{itemize}
     \item statisticile \textbf{nu sunt bine modelate Gaussian} (apar valori extreme mai frecvent decât în distribuția normală),
     \item există \textbf{corelație temporală} (valurile creează tipare structurate),
     \item efectele Doppler duc la \textbf{extinderea spectrului} (valuri în mișcare),
-    \item apar \textbf{spike-uri} vizibile în spectrograme când valurile sunt mai mari.
+    \item apar \textbf{vârfuri de energie (spikes)} vizibile în spectrograme când valurile sunt mai mari.
 \end{itemize}
 
 Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm Rate) pot fi limitate atunci când pierd informația temporală și nu exploatează structura timp--frecvență. Abratkiewicz (2022)\footnote{Abratkiewicz, K. (2022). Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform. Sensors, 22(16), 5954.} propune o abordare care folosește explicit structura \textbf{time--frequency} pentru a îmbunătăți atât \textbf{detecția}, cât și \textbf{recuperarea/reconstrucția} componentelor semnalului.
@@ -270,11 +270,11 @@ Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm
 
 
 % ============================================================================
-% CAPITOLUL 2: STATE-OF-THE-ART (FUNDAMENTE TEORETICE)
+% CAPITOLUL 2: STADIUL ACTUAL (FUNDAMENTE TEORETICE)
 % ============================================================================
-\chapter{State-of-the-art și Fundamente}
+\chapter{Stadiul actual și fundamente teoretice}
 
-\section{STFT - Transformata Fourier cu Timp Scurt}
+\section{STFT -- Transformata Fourier pe Ferestre Scurte}
 
 \begin{equation}
 X(k,n) = \sum_{m=0}^{N-1} x(m) \cdot w(m - nH) \cdot e^{-j2\pi km/N}
@@ -285,7 +285,7 @@ cu $N=256$, $H=32$ (87.5\% overlap), fereastră Gaussiană $w(m) = e^{-m^2/(2\si
 
 Detecție adaptivă cu prag local: $H(k,n) = 1$ dacă $|X(k,n)|^2 > T$, unde
 \begin{equation}
-T = R \cdot \hat{Z}, \quad \hat{Z} = \max(\mu_1, \mu_2, \mu_3, \mu_4), \quad R = N_T (P_f^{-1/N_T} - 1)
+T = R \cdot \hat{Z}, \quad \hat{Z} = \max(\mu_1, \mu_2, \mu_3, \mu_4), \quad R = N_T (P_{fa}^{-1/N_T} - 1)
 \end{equation}
 
 \section{DBSCAN}
@@ -667,7 +667,7 @@ Triunghiuri vecine conectate după energie medie, dacă au muchie comună &
 
 \section{Experimente pe IPIX cu ținte reale}
 
-Am rulat detecție animată pe fișierele cu ținte reale. Figurile de mai jos arată cadre din animațiile de detecție:
+S-au efectuat experimente pe date reale din baza IPIX. Figurile de mai jos arată cadre reprezentative din secvențele de detecție:
 
 \begin{figure}[H]
 \centering
@@ -718,18 +718,18 @@ Semnalele sunt procesate segmentat (1 s), PRF = 1000 Hz, complexe I/Q.
 \textbf{CA-CFAR + HDBSCAN}:
 \begin{itemize}
     \item \textbf{Rata de detecție}: 100\% (detectează în toate segmentele)
-    \item \textbf{Problemă critică}: Detectează clutter masiv, nu ținta (variabilitate zero: $\sigma = 0$)
+    \item \textbf{Problemă critică}: Produce detecții dominante asociate clutter-ului; ținta nu este izolată (variabilitate zero: $\sigma = 0$)
     \item HDBSCAN grupează întreg clutter-ul într-un cluster unic
-    \item \textbf{Concluzie}: CA-CFAR nu poate separa ținta de clutter neomogen în mediu marin real
+    \item \textbf{Concluzie}: CA-CFAR nu separă adecvat ținta de clutter neomogen în scenariile analizate
 \end{itemize}
 
 \textbf{Triangulare Delaunay}:
 \begin{itemize}
     \item Rate de detecție ridicate, dar instabile și inconsistente
-    \item HIGH sea: 4.2 componente; LOW sea: 13.6 componente (invers față de așteptat!)
-    \item Viteza Doppler variază 4× între scenarii: +1.30 vs. -0.30 m/s
+    \item HIGH sea: 4.2 componente; LOW sea: 13.6 componente (contrar așteptărilor)
+    \item Viteza Doppler variază de aproximativ patru ori între scenarii: +1.30 vs. -0.30 m/s
     \item Metoda geometrică fragmentează clutter-ul în componente multiple
-    \item \textbf{Concluzie}: Instabilitate extremă, reducând consistența detecțiilor
+    \item \textbf{Concluzie}: Variabilitate ridicată a rezultatelor, reducând consistența detecțiilor
 \end{itemize}
 
 \subsection{Concluzie validată experimental}
@@ -737,15 +737,15 @@ Semnalele sunt procesate segmentat (1 s), PRF = 1000 Hz, complexe I/Q.
 Pentru sea clutter real neomogen:
 
 \begin{itemize}
-    \item \textbf{CA-CFAR eșuează} -- detectează doar clutter, nu ținte (variabilitate zero)
-    \item \textbf{Triangularea Delaunay} -- oferă detecție geometrică, dar instabilă (fragmentare excesivă)
-    \item \textbf{GOCA-CFAR cu DBSCAN asimetric} (metoda din această implementare) -- **oferă performanța optimă** cu detecții stabile și consistent identificate
+    \item \textbf{CA-CFAR} nu separă adecvat ținta de clutter (produce detecții dominante de zgomot, variabilitate zero)
+    \item \textbf{Triangularea Delaunay} -- oferă detecție geometrică, dar cu variabilitate ridicată (fragmentare excesivă)
+    \item \textbf{GOCA-CFAR cu DBSCAN anisotropic} (metoda din această implementare) -- oferă cea mai bună performanță în experimentele efectuate, cu detecții stabile și consistent identificate
 \end{itemize}
 
 Motivul succesului GOCA + DBSCAN asimetric:
 \begin{enumerate}
     \item GOCA-CFAR adaptează pragul local și pe 4 cadrane, nu doar global (CA)
-    \item DBSCAN asimetric ($\text{freq\_scale}=3.0$) păstrează coeziunea țintelor (linii verticale în timp-frecvență)
+    \item DBSCAN anisotropic ($\text{freq\_scale}=3.0$) păstrează coeziunea țintelor (linii verticale în plan timp-frecvență)
     \item Combinația K-distribution + Hurst + DC masking + Doppler filter elimină alarmele false din clutter sever
 \end{enumerate}
 
@@ -760,7 +760,7 @@ Modificări cheie pentru adaptarea algoritmului din articol la sea clutter real:
 p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)
 \end{equation}
 
-Sea clutter urmează K-distribution (cozi mai grele decât Gaussian). Estimare: $\nu = \mu^2 / (\sigma^2 - \mu^2)$. Ajustare prag pentru reducerea alarmelor false.
+Sea clutter-ul urmează K-distribution (cozi mai grele decât Gaussian). Se estimează: $\nu = \mu^2 / (\sigma^2 - \mu^2)$. Pragul se ajustează pentru a reduce alarmele false.
 
 \section{Adaptarea 2: Exponentul Hurst}
 
@@ -768,23 +768,21 @@ Sea clutter urmează K-distribution (cozi mai grele decât Gaussian). Estimare: 
 \mathbb{E}\left[|X(t+\tau) - X(t)|^2\right] \propto \tau^{2H}
 \end{equation}
 
-Sea clutter: $H \approx 0.75$--$0.85$; ținte: $H < 0.6$. Mască combinată: $\text{CFAR} \lor (\text{Hurst anomaly} \land \text{putere mare})$ pentru detecție ținte slabe.
+Sea clutter: $H \approx 0.75$--$0.85$; ținte: $H < 0.6$. Se aplică o mască combinată: $\text{CFAR} \lor (\text{Hurst anomaly} \land \text{putere mare})$ pentru detecție ținte slabe.
 
-\section{Adaptarea 3: DBSCAN asimetric pentru semnături verticale}
+\section{Adaptarea 3: DBSCAN cu metrică anisotropică}
 
-Țintele apar ca \textbf{linii verticale} (multe frecvențe, puține momente). DBSCAN standard fragmentează acestea în clustere multiple.
+Țintele apar frecvent ca semnături aproape verticale în plan timp–frecvență (variație mare pe frecvență, variație redusă în timp), iar DBSCAN standard poate fragmenta o singură țintă în mai multe clustere. Prin urmare, se utilizează o metrică anisotropică prin ponderarea diferenței de frecvență cu factorul \texttt{freq\_scale}:
 
-\textbf{Soluție}: Distanță asimetrică }
+\[
+d = \sqrt{(\Delta t)^2 + \left(\frac{\Delta f}{\texttt{freq\_scale}}\right)^2}, \quad \texttt{freq\_scale}=3.0
+\]
 
-Distanță asimetrică: $d = \sqrt{\Delta t^2 + (\Delta f / 3)^2}$ cu \texttt{freq\_scale=3.0}. Ținte pe 50 bin-uri frecvență $\rightarrow$ 1valuri.
+Această modificare crește toleranța pe axa frecvenței și menține coeziunea unei ținte întinse pe mai multe bin-uri de frecvență.
 
-\textbf{Soluție}: Mascăm $\pm DC}
+Pentru reducerea detecțiilor persistente asociate returnărilor staționare, se maschează un număr fix de bin-uri în jurul frecvenței zero (DC), înainte de aplicarea CFAR ($\pm 8$ bin-uri).
 
-Mască $\pm 8$ bin-uri frecvență în jurul DC înainte de CFAR (returnări staționare non-ținte)
-
-\textbf{Soluție}: Respingem cDoppler}
-
-Respingem clustere cu bandwidth Doppler $< 3$ Hz (detecții fizic implauzibile)============
+Pentru eliminarea detecțiilor neplauzibile fizic, se resping clusterele a căror lățime Doppler este sub pragul minim ($< 3$ Hz).
 \chapter{Detalii de implementare}
 
 \section{Parametri și calibrare}
@@ -799,12 +797,12 @@ Respingem clustere cu bandwidth Doppler $< 3$ Hz (detecții fizic implauzibile)=
 $N_{fft}$ (window\_size) & 256 & $[128, 512]$ & Lungime FFT \\
 $H$ (hop\_size) & 32 & $[N/8, N/2]$ & Hop = 87.5\% overlap \\
 $\sigma_{window}$ & 8 & [4, 16] & Deviația std. a ferestrei \\
-$P_{fa}$ & 0.001 & [0.0001, 0.01] & Probabilitate alarmă falsă \\
+$P_{fa}$ & $10^{-3}$ & [$10^{-4}$, $10^{-2}$] & Probabilitate alarmă falsă \\
 $N_G$ (cfar\_guard) & 3 & [2, 8] & Mărime celule guard \\
 $N_T$ (cfar\_training) & 12 & [8, 24] & Mărime celule training \\
 $\varepsilon_{DBSCAN}$ & 8 & [4, 16] & Raza de clustering \\
 minSamples & 5 & [3, 10] & Puncte minime per cluster \\
-freq\_scale & 3.0 & [2, 5] & Scalare DBSCAN asimetric \\
+freq\_scale & 3.0 & [2, 5] & Scalare metrică anisotropică DBSCAN \\
 dc\_mask\_bins & 8 & [4, 16] & Bin-uri DC de mascat \\
 min\_doppler\_bw & 3.0 Hz & [1, 10] & Lățime Doppler minimă \\
 \bottomrule
@@ -822,15 +820,15 @@ Conversie: $v_r = \frac{f_d \cdot c}{2 f_{RF}}$. Pentru IPIX ($f_{RF} = 9.39$ GH
 
 \section{Concluzii}
 
-Implementarea CFAR-STFT demonstrează: (1) RQF = 29.17 dB @ SNR=30dB cu 100\% detecție pe sintetice; (2) performance consistentă pe 100 MC runs; (3) validare pe date IPIX reale cu sea clutter complex; (4) reproductibilitate via GitHub.
+Rezultatele obținute indică: (1) RQF = 29.17 dB la SNR=30 dB cu 100\% rată de detecție pe setul de 100 rulări Monte Carlo; (2) performanță stabilă pe toată gama SNR 5--30 dB; (3) evaluare pe date IPIX reale cu clutter marin complex; (4) reproductibilitate prin repository GitHub.
 
 \section{Direcții viitoare}
 
-GPU acceleration, auto-calibration, sistem operațional, multi-target tracking, ML-based parameter adaptation.
+Accelerare pe GPU, calibrare automată, sistem operațional, urmărirea mai multor ținte (multi-target tracking), adaptarea parametrilor bazată pe metode de învățare automată.
 
 \section{Cod}
 
-GitHub: \url{https://github.com/dirgnic/Radar_Detection_STFT} (reproductibilitate, replicare independentă).
+Repository GitHub: \url{https://github.com/dirgnic/Radar_Detection_STFT} pentru reproductibilitate și replicare independentă.
 
 \begin{thebibliography}{99}
 
