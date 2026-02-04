@@ -75,10 +75,12 @@ def create_detection_animation(data_name: str = 'hi',
                                 dbscan_eps: float = 8.0,
                                 dbscan_min_samples: int = 3,
                                 use_fractal_boost: bool = True,
+                                fractal_mode: str = 'time',
                                 min_doppler_bw: float = 3.0,
                                 morph_dilate_h: int = 5,
                                 morph_dilate_w: int = 1,
                                 morph_dilate_iters: int = 1,
+                                hurst_threshold: float = 0.15,
                                 save_frame: int = None,
                                 save_frame_dir: str = 'results/ipix_figures'):
     """
@@ -96,8 +98,10 @@ def create_detection_animation(data_name: str = 'hi',
         dbscan_eps: DBSCAN clustering distance (larger = merge nearby detections)
         dbscan_min_samples: Min points per cluster (lower=catches small clusters but can absorb clutter)
         use_fractal_boost: Use Hurst exponent to boost detection (+10-15% Pd)
+        fractal_mode: 'time' (legacy) or 'tf' (TF-local Hurst)
         min_doppler_bw: Filter out components with Doppler bandwidth < this (Hz)
         morph_dilate_h/w/iters: Optional binary dilation on the CFAR detection map before clustering
+        hurst_threshold: Deviation threshold for Hurst-based boost
         save_frame: Frame index to save as PDF (e.g., 83)
         save_frame_dir: Directory for saving frame PDF
     """
@@ -140,7 +144,7 @@ def create_detection_animation(data_name: str = 'hi',
     #
     cfar_type = 'CA-CFAR (vectorized)' if use_vectorized else 'GOCA-CFAR + K-dist'
     if use_fractal_boost and not use_vectorized:
-        cfar_type += ' + Fractal'
+        cfar_type += f' + Fractal({fractal_mode})'
     print(f"Using: {cfar_type}, Pfa={pfa}")
     if min_doppler_bw > 0:
         print(f"Filtering components with Doppler BW < {min_doppler_bw} Hz")
@@ -183,8 +187,12 @@ def create_detection_animation(data_name: str = 'hi',
                 # and updates self.detection_map with the boosted version
                 boosted_map, fractal_stats = detector.detect_with_fractal_boost(
                     window_signal, 
-                    hurst_deviation_threshold=0.15,
-                    window_samples=64
+                    hurst_deviation_threshold=hurst_threshold,
+                    window_samples=64,
+                    fractal_mode=fractal_mode,
+                    # TF-local mode needs denser sampling to be useful.
+                    time_step_frames=6 if fractal_mode == 'tf' else 12,
+                    freq_stride=2 if fractal_mode == 'tf' else 4,
                 )
                 # Get components from the detector (already computed inside fractal boost)
                 # Need to re-extract components from the boosted map
@@ -621,6 +629,11 @@ if __name__ == "__main__":
                         help='Output filename suffix (e.g. "_vectorized")')
     parser.add_argument('--no-fractal', action='store_true',
                         help='Disable fractal boost (Hurst exponent enhancement)')
+    parser.add_argument('--fractal-mode', type=str, default='time',
+                        choices=['time', 'tf'],
+                        help='Fractal boost mode: time=Hurst(|x[n]|) projected to TF, tf=Hurst on TF patches (default: time)')
+    parser.add_argument('--hurst-th', type=float, default=0.15,
+                        help='Hurst deviation threshold for fractal boost (default: 0.15; TF-local often needs smaller, e.g. 0.05-0.10)')
     parser.add_argument('--min-doppler-bw', type=float, default=3.0,
                         help='Min Doppler bandwidth (Hz) to keep component (default: 3.0, 0=disabled)')
     parser.add_argument('--dilate-h', type=int, default=5,
@@ -655,10 +668,12 @@ if __name__ == "__main__":
             dbscan_eps=args.eps,
             dbscan_min_samples=args.min_samples,
             use_fractal_boost=not args.no_fractal,
+            fractal_mode=args.fractal_mode,
             min_doppler_bw=args.min_doppler_bw,
             morph_dilate_h=args.dilate_h,
             morph_dilate_w=args.dilate_w,
             morph_dilate_iters=args.dilate_iters,
+            hurst_threshold=args.hurst_th,
             save_frame=args.save_frame,
             save_frame_dir=args.save_frame_dir
         )

@@ -331,12 +331,13 @@ $T(k,n)=\alpha\,\hat{Z}$\\
 $\hat{Z}=\max(\mu_1,\mu_2,\mu_3,\mu_4)$\\
 \textit{unde} $\alpha$ depinde de $P_{fa}$ și $N_T$
 \end{tabular} &
-Detectează candidații de target pe baza unui prag adaptiv local aplicat în 4 cadrane; controlează rata de alarmă falsă. \\ \midrule
+Detectează candidații de target pe baza unui prag adaptiv local, folosind 4 cadrane de training (colțuri); controlează rata de alarmă falsă. \\ \midrule
 
 DBSCAN -- clustering pe densitate &
 \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
-$d=\sqrt{(\Delta t)^2 + (\Delta f/s_f)^2}$\\
-\textit{Anizotropic} $\Rightarrow$ scalare diferită pe axe; \textit{aici} $s_f=3$ (favorizează elemente verticale)
+$d=\sqrt{(s_t\,\Delta t)^2 + (\Delta f/s_f)^2}$\\
+\textit{Anizotropic} $\Rightarrow$ scalare diferită pe axe; \textit{aici} $s_f=3$, $s_t=1.5$\\
+\textit{Notă:} $\Delta f,\Delta t$ sunt măsurate în unități normalizate la rezoluția STFT (bin-uri)
 \end{tabular} &
 Grupează punctele detectate $(k,n)$ în clustere coerente (target-uri radar) păstrând structura aproape verticală. \\
 
@@ -394,9 +395,9 @@ Grupează punctele detectate $(k,n)$ în clustere coerente (target-uri radar) p�
 prag $T=\alpha\cdot\max(\mu_1,\ldots,\mu_4)$;\\
 decizie $|X(k,n)|^2 > T$.
 \item \textbf{DBSCAN}:\\
-distanță anizotropică (scalare diferită pe axe: $\Delta f/s_f$); tipic $\varepsilon=8$, \texttt{minSamples}=5.
+distanță anizotropică în unități de bin: $d=\sqrt{(s_t\Delta t)^2 + (\Delta f/s_f)^2}$; tipic $\varepsilon=8$, \texttt{minSamples}=5.
 \item \textbf{Dilatare geodezică}:\\
-kernel cruce (3$\times$3), de 3 ori cu \texttt{maximum\_filter}.
+dilatare geodezică iterativă cu conectivitate 4, limitată de o mască de energie joasă (până la convergență / max. iterații).
 \item \textbf{Extragere}:\\
 $X_{\text{masked}} = X_{\text{STFT}}\odot H_{\text{dil}}$.
 \end{enumerate}
@@ -459,22 +460,24 @@ $X_{\text{masked}} = X_{\text{STFT}}\odot H_{\text{dil}}$.
 \end{tikzpicture}
 \hspace{1cm}
 \begin{tikzpicture}[scale=0.85]
-    % Formula box
-    \node[draw, rounded corners, fill=gray!10, minimum width=5.5cm, minimum height=4cm, align=left] (formulas) {
-        \textbf{GOCA-CFAR:}\\[0.3em]
-        $\hat{Z} = \max(\mu_1, \mu_2, \mu_3, \mu_4)$\\[0.3em]
-        $T = R \cdot \hat{Z}$\\[0.3em]
-        $R = N_T \cdot (P_{fa}^{-1/N_T} - 1)$\\[0.8em]
-        \textbf{Decizie:}\\[0.3em]
-        $|F_x^h[m,k]|^2 \geq T \Rightarrow$ \textcolor{green!60!black}{Det}\\
-        $|F_x^h[m,k]|^2 < T \Rightarrow$ \textcolor{red}{Zgomot}
-    };
+	    % Formula box (wider so the main equation stays on a single line)
+	    \node[draw, rounded corners, fill=gray!10, text width=7.2cm, minimum width=7.2cm, minimum height=4cm, align=left] (formulas) {
+		        \begin{tabular}{@{}l@{}}
+	        \textbf{GOCA-CFAR:}\\[0.2em]
+	        $\hat{Z}=\max(\mu_1,\mu_2,\mu_3,\mu_4),\quad T=\alpha\cdot\hat{Z}$\\[0.4em]
+	        {\scriptsize Rayleigh (CA, aprox.): $\alpha=N_T(P_{fa}^{-1/N_T}-1)$}\\
+	        {\scriptsize K-dist.: $\alpha=q_K(P_{fa};a_K,b_K)/b_K$}\\[0.5em]
+		        \textbf{Decizie:}\\[0.2em]
+	        $|F_x^h[m,k]|^2 \geq T \Rightarrow$ \textcolor{green!60!black}{Det}\\
+	        $|F_x^h[m,k]|^2 < T \Rightarrow$ \textcolor{red}{Zgomot}
+	        \end{tabular}
+	    };
 \end{tikzpicture}
-\caption{Structura celulelor GOCA-CFAR 2D: CUT (roșu), Guard (galben), Training (colorat pe cadrane). Mediile $\mu_1,\dots,\mu_4$ se calculează \textbf{doar} pe celulele de training (excluzând zona de guard și CUT), iar GOCA folosește maximul pentru adaptare locală.}
+\caption{Structura celulelor GOCA-CFAR 2D: CUT (roșu), Guard (galben), Training (colorat pe 4 cadrane). Mediile $\mu_1,\dots,\mu_4$ se calculează \textbf{doar} pe celulele de training (excluzând zona de guard și CUT), iar GOCA folosește maximul pentru adaptare locală.}
 \label{fig:cfar}
 \end{figure}
 
-\noindent\textit{Notă:} în unele implementări 2D, se mai exclude intenționat o „cruce” de celule pe axele verticală/orizontală dintre cadrane (buffer alb), pentru a evita contaminarea estimării de fond de către „ridge”-uri/sidelobe-uri ale unui target puternic (energie care se scurge pe axele timp/frecvență sau range/Doppler). Astfel, mediile $\mu_k$ rămân estimate din zone mai curate de clutter.
+\noindent\textit{Notă:} pentru a evita contaminarea estimării de fond de către „ridge”-uri/sidelobe-uri ale unui target puternic (energie care se scurge pe axele timp/frecvență sau range/Doppler), se exclude o „cruce” de celule pe axele verticală/orizontală dintre cadrane (buffer alb); în implementarea de față aceasta este realizată implicit prin definirea cadranelor în colțuri, separate de zona de guard.
 
 % ============================================================================
 % CAPITOLUL 3: DATE ȘI SURSE DE VALIDARE
@@ -543,8 +546,7 @@ CA-CFAR: folosește media aritmetică, robust în zgomot (aproape) omogen. OS-CF
 CA-CFAR & 
 $\begin{aligned}
 Z &= \frac{1}{N_T} \sum_{i=1}^{N_T} x_i \\
-T &= \\
-&\; R \cdot Z
+T &= R \cdot Z
 \end{aligned}$ & 
 \textbf{1.} Extrage celulele de antrenament $S_{train}$ (fără zona de guard) \newline
 \textbf{2.} $Z = \text{mean}(S_{train})$ \newline
@@ -559,8 +561,7 @@ $Z = x_{(k)}$, $T = \alpha \cdot Z$ &
 SOCA-CFAR &
 $\begin{aligned}
 Z &= \min(\mu_1, \dots, \mu_4) \\
-T &= \\
-&\; R \cdot Z
+T &= R \cdot Z
 \end{aligned}$ &
 \textbf{1.} Împarte fereastra în 4 subregiuni \newline
 \textbf{2.} Calculează media $\mu_i$ pentru fiecare subregiune \newline
@@ -735,7 +736,7 @@ Date IPIX reale: Low Sea State (clutter moderat) vs High Sea State (clutter inte
 
 Pentru date reale neomogene, \textbf{CA-CFAR + HDBSCAN} produce detecții dominate de clutter (target-ul nu este izolat), \textbf{Triangulare Delaunay} oferă detecție geometrică dar instabilă (fragmentare excesivă), iar \textbf{GOCA-CFAR + DBSCAN anisotropic} (această implementare) oferă performanță optimă cu detecții stabile.
 
-\textbf{Motivul succesului:} (1) GOCA adaptează prag pe 4 cadrane local, (2) DBSCAN anisotropic ($\text{freq\_scale}=3.0$) păstrează coeziunea target-urilor (linii verticale), (3) K-distribution + Hurst + DC masking + filtrul Doppler reduce alarmele false generate de clutter.
+\textbf{Motivul reușitei:} (1) GOCA adaptează pragul local pe 4 cadrane de training (colțuri), (2) DBSCAN anisotropic ($s_f=3.0$, $s_t=1.5$) păstrează coeziunea target-urilor (linii verticale), (3) K-distribution + extensia Hurst reduc alarmele false generate de clutter.
 
 
 \label{chap:adaptations}
@@ -744,23 +745,23 @@ Modificări cheie pentru adaptarea algoritmului din articol pe date reale sunt s
 
 \begin{table}[H]
 \centering
-\small
-\renewcommand{\arraystretch}{1.2}
+\scriptsize
+\renewcommand{\arraystretch}{1.05}
 \begin{tabular}{@{} l p{5.2cm} p{6.2cm} @{}}
 \toprule
 \textbf{Metodă} & \textbf{Model / idee} & \textbf{Pași de implementare} \\ \midrule
 
 K-distribution (clutter) &
 Datele marine au \textit{(heavy tails)}: în „margini” apar valori cu ponderi mari; puterea $Z=|X(k,n)|^2$ este mai bine modelată de o distribuție de tip K decât de una Gaussiană/exponențială &
-Estimează parametrii distribuției K (de ex. prin MLE sau momente) pe regiuni fără target; ajustează factorul de prag $\alpha$ astfel încât $P_{fa}$ să fie respectat; aplică în GOCA-CFAR local (4 cadrane). \\ \midrule
+Parametrii K se estimează o singură dată din celule de training (cache); pragul se obține din ICDF pentru $P_{fa}$ și se aplică adaptiv local prin GOCA ($\hat{Z}=\max(\mu_i)$). \\ \midrule
 
 Hartă Hurst (fractalitate) &
 Separă target-uri slabe ($H<0.6$) de clutter ($H\approx 0.8$) &
-Calculează $H$ pe patch-uri timp--frecvență; masca $M_H = [H < H_{th}]$; combină $M_H$ cu detecțiile CFAR pentru a evidenția target-urile slabe. \\ \midrule
+Extensie opțională: (\textit{time}) $H$ pe ferestre în timp (pe $|x[n]|$) și proiectare pe axa timp STFT, sau (\textit{tf}) $H$ pe patch-uri TF. Masca $M_H$ se combină cu detecțiile CFAR. \\ \midrule
 
 DBSCAN anisotropic + măști &
 Păstrează semnăturile verticale și taie DC &
-Distanță $d = \sqrt{(\Delta t)^2 + (\Delta f/3)^2}$; maschează DC $\pm 8$ bin-uri; elimină clustere cu lățime Doppler $<3$ Hz; rezultatul reduce alarmele false din clutter. \\
+Distanță în bin-uri normalizate: $d = \sqrt{(s_t\Delta t)^2 + (\Delta f/s_f)^2}$, cu $s_f=3$, $s_t=1.5$. (Opțional, în animația IPIX: mascare DC și filtru pe lățime Doppler.) \\
 
 \bottomrule
 \end{tabular}
@@ -801,12 +802,11 @@ $N_T$ (cfar\_training) & 12 & [8, 24] & Dimensiune celule training \\
 $\varepsilon_{DBSCAN}$ & 8 & [4, 16] & Raza de clustering \\
 minSamples & 5 & [3, 10] & Puncte minime per cluster \\
 freq\_scale & 3.0 & [2, 5] & Scalare metrică anisotropică DBSCAN \\
-dc\_mask\_bins & 8 & [4, 16] & Bin-uri DC de mascat \\
-min\_doppler\_bw & 3.0 Hz & [1, 10] & Lățime Doppler minimă \\
 \bottomrule
 \end{tabular}
 \endgroup
 \end{table}
+
 
 \section{Notă asupra Doppler}
 

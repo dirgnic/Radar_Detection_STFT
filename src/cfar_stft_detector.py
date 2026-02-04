@@ -219,7 +219,7 @@ class CFAR2D:
     Implementeaza GOCA-CFAR (Greatest Of Cell Averaging) conform
     tehnicilor standard radar pentru detectie adaptiva.
     
-    GOCA imparte regiunea de antrenament in 4 sub-regiuni (sus/jos/stanga/dreapta),
+    GOCA imparte regiunea de antrenament in 4 sub-regiuni (cadrane / colturi),
     calculeaza media pentru fiecare si ia MAXIMUL ca estimare de zgomot.
     Acest lucru ofera robustete la clutter neuniform.
     """
@@ -247,13 +247,9 @@ class CFAR2D:
         self.pfa = pfa
         self.distribution = distribution.lower()
         
-        # Calculam N_T corect: numarul REAL de celule de antrenament
-        # Formula: aria totala - aria garda - CUT
-        total_v = guard_cells_v + training_cells_v
-        total_h = guard_cells_h + training_cells_h
-        total_area = (2 * total_v + 1) * (2 * total_h + 1)
-        guard_area = (2 * guard_cells_v + 1) * (2 * guard_cells_h + 1)
-        self.N_T = total_area - guard_area  # Nu scadem CUT, e inclus in guard_area
+        # Numarul celulelor de training folosite in GOCA (4 cadrane in colturi).
+        # Fiecare cadran are N_T_v x N_T_h celule -> total 4*N_T_v*N_T_h.
+        self.N_T = 4 * training_cells_v * training_cells_h
         
         # Factorul de scalare R pentru Rayleigh
         # Pentru CA-CFAR cu zgomot Rayleigh: R = N_T * (Pfa^(-1/N_T) - 1)
@@ -287,40 +283,50 @@ class CFAR2D:
         # Dimensiunile totale ale ferestrei
         total_v = self.N_G_v + self.N_T_v
         total_h = self.N_G_h + self.N_T_h
+
+        # K-distribution: estimate once per call from a broad sample of background cells.
+        # Estimating from a single local window can under-estimate tails and create "always-on" detections.
+        if self.distribution == 'k' and (self.k_alpha is None or self.k_beta is None):
+            data = stft_magnitude.astype(float).ravel()
+            data = data[data > 1e-12]
+            if len(data) >= 1000:
+                # Exclude extreme peaks (likely targets / spikes) to focus on clutter/background.
+                hi = np.percentile(data, 95.0)
+                sample = data[data <= hi]
+                if len(sample) > 20000:
+                    # Deterministic subsample for speed/reproducibility.
+                    sample = sample[:: max(1, len(sample) // 20000)]
+                self.k_alpha, self.k_beta = estimate_k_distribution_params(sample)
         
         for k in range(total_v, n_freq - total_v):
             for m in range(total_h, n_time - total_h):
                 # Celula sub test (CUT)
                 cut_value = stft_magnitude[k, m]
                 
-                # GOCA-CFAR: calculam 4 estimari de zgomot din sub-regiuni
-                # Sub-regiunea SUS (above CUT)
-                region_up = stft_magnitude[
+                # GOCA-CFAR: 4 sub-regiuni in colturi (cadrane),
+                # excluzand complet CUT + guard (si implicit "crucea" centrala).
+                #
+                # Fiecare sub-regiune are dimensiune (N_T_v x N_T_h).
+                region_ul = stft_magnitude[
                     k - total_v : k - self.N_G_v,
-                    m - total_h : m + total_h + 1
-                ]
-                
-                # Sub-regiunea JOS (below CUT)
-                region_down = stft_magnitude[
-                    k + self.N_G_v + 1 : k + total_v + 1,
-                    m - total_h : m + total_h + 1
-                ]
-                
-                # Sub-regiunea STANGA (left of CUT, fara sus/jos)
-                region_left = stft_magnitude[
-                    k - self.N_G_v : k + self.N_G_v + 1,
                     m - total_h : m - self.N_G_h
                 ]
-                
-                # Sub-regiunea DREAPTA (right of CUT, fara sus/jos)
-                region_right = stft_magnitude[
-                    k - self.N_G_v : k + self.N_G_v + 1,
+                region_ur = stft_magnitude[
+                    k - total_v : k - self.N_G_v,
+                    m + self.N_G_h + 1 : m + total_h + 1
+                ]
+                region_ll = stft_magnitude[
+                    k + self.N_G_v + 1 : k + total_v + 1,
+                    m - total_h : m - self.N_G_h
+                ]
+                region_lr = stft_magnitude[
+                    k + self.N_G_v + 1 : k + total_v + 1,
                     m + self.N_G_h + 1 : m + total_h + 1
                 ]
                 
                 # Calculam media fiecarei regiuni (ignoram regiunile goale)
                 estimates = []
-                for region in [region_up, region_down, region_left, region_right]:
+                for region in [region_ul, region_ur, region_ll, region_lr]:
                     if region.size > 0:
                         estimates.append(np.mean(region))
                 
@@ -333,10 +339,6 @@ class CFAR2D:
                 
                 # Pragul adaptiv: calculeaza dupa distributia aleasa
                 if self.distribution == 'k':
-                    # K-distribution: estimam parametri din prima apel sau folosim valorile stocate
-                    if self.k_alpha is None or self.k_beta is None:
-                        training_data = np.concatenate([r.flatten() for r in [region_up, region_down, region_left, region_right] if r.size > 0])
-                        self.k_alpha, self.k_beta = estimate_k_distribution_params(training_data)
                     threshold = k_distribution_icdf(self.pfa, self.k_alpha, self.k_beta, self.N_T) * noise_estimate / self.k_beta
                 else:
                     # Rayleigh (default pentru compatibilitate): T = R * noise_estimate
@@ -597,7 +599,8 @@ class CFARSTFTDetector:
                  dbscan_min_samples: int = 10,
                  use_vectorized_cfar: bool = True,
                  zero_threshold_percentile: float = 5.0,
-                 mode: str = 'auto'):
+                 mode: str = 'auto',
+                 fractal_mode: str = 'time'):
         """
         Initializare detector
         
@@ -625,6 +628,10 @@ class CFARSTFTDetector:
         self.zero_threshold_percentile = zero_threshold_percentile
         self.mode = mode
         self._is_complex_input = False  # Set during processing
+        # Fractal boost mode:
+        # - 'time': Hurst computed on time-domain envelope |x[n]| and projected to TF time bins
+        # - 'tf':   Hurst computed from local TF patches (power series) -> M_H(k,n) in TF
+        self.fractal_mode = (fractal_mode or 'time').lower().strip()
         
         # Initializam componentele
         self.cfar = CFAR2D(
@@ -962,8 +969,13 @@ class CFARSTFTDetector:
         return components
     
     def detect_with_fractal_boost(self, signal_data: np.ndarray, 
-                                   hurst_deviation_threshold: float = 0.15,
-                                   window_samples: int = 64) -> Tuple[np.ndarray, Dict]:
+                                  hurst_deviation_threshold: float = 0.15,
+                                  window_samples: int = 64,
+                                  fractal_mode: Optional[str] = None,
+                                  time_window_frames: int = 24,
+                                  time_step_frames: int = 12,
+                                  freq_band_bins: int = 9,
+                                  freq_stride: int = 4) -> Tuple[np.ndarray, Dict]:
         """
         Enhanced detection combining GOCA-CFAR with fractal features.
         
@@ -982,48 +994,132 @@ class CFARSTFTDetector:
         Returns:
             (combined_detection_map, stats_dict)
         """
-        # Step 1: Standard CFAR detection
+        # Step 1: Standard CFAR detection (GOCA/CA depending on configuration)
         components = self.detect_components(signal_data)
         cfar_map = self.detection_map.copy() if self.detection_map is not None else None
         
         if cfar_map is None:
             return None, {}
-        
-        # Step 2: Compute Hurst exponent along time axis
-        print("   [FRACTAL] Computing Hurst exponent for fractal boost...")
-        magnitude = np.abs(signal_data)
-        n_samples = len(magnitude)
-        n_windows = n_samples // window_samples
-        
-        hurst_values = []
-        for i in range(n_windows):
-            window = magnitude[i * window_samples : (i + 1) * window_samples]
-            h = hurst_exponent(window, max_lag=window_samples // 4)
-            hurst_values.append(h)
-        
-        hurst_values = np.array(hurst_values)
-        clutter_hurst = np.median(hurst_values)  # Typical clutter H
-        
-        # Step 3: Find Hurst anomalies
-        hurst_anomaly = np.abs(hurst_values - clutter_hurst) > hurst_deviation_threshold
-        
-        # Map back to spectrogram time axis
-        times = self.stft_result['times']
-        time_per_window = window_samples / self.fs
-        
+
+        mode_to_use = (fractal_mode or self.fractal_mode or 'time').lower().strip()
+
+        # Build the fractal anomaly mask in TF.
         fractal_boost_map = np.zeros_like(cfar_map, dtype=bool)
-        for i, is_anomaly in enumerate(hurst_anomaly):
-            if is_anomaly:
+
+        # --- Mode A: time-domain Hurst projected to TF (legacy behavior) ---
+        hurst_values = None
+        clutter_hurst = None
+        if mode_to_use == 'time':
+            # Step 2: Compute Hurst exponent along time axis (on |x[n]| envelope)
+            print("   [FRACTAL] Computing Hurst exponent for fractal boost (time-domain)...")
+            magnitude = np.abs(signal_data)
+            n_samples = len(magnitude)
+            n_windows = max(1, n_samples // max(1, int(window_samples)))
+
+            hv = []
+            for i in range(n_windows):
+                w = magnitude[i * window_samples : (i + 1) * window_samples]
+                if len(w) < max(16, window_samples // 2):
+                    continue
+                h = hurst_exponent(w, max_lag=max(8, window_samples // 4))
+                hv.append(h)
+
+            hurst_values = np.array(hv, dtype=float)
+            clutter_hurst = float(np.median(hurst_values)) if len(hurst_values) else 0.5
+
+            # Step 3: Find Hurst anomalies and map back to spectrogram time axis (vertical time bands).
+            hurst_anomaly = np.abs(hurst_values - clutter_hurst) > hurst_deviation_threshold
+            times = self.stft_result['times']
+            time_per_window = window_samples / self.fs
+            for i, is_anomaly in enumerate(hurst_anomaly):
+                if not is_anomaly:
+                    continue
                 t_start = i * time_per_window
                 t_end = (i + 1) * time_per_window
                 time_mask = (times >= t_start) & (times < t_end)
                 fractal_boost_map[:, time_mask] = True
+
+        # --- Mode B: TF-local Hurst (patch-based) ---
+        elif mode_to_use == 'tf':
+            # Step 2: Compute TF-local Hurst from STFT power patches.
+            # For each frequency band, create a time series (mean log-power over band),
+            # compute Hurst on sliding windows in time (frames), then project back to TF.
+            power = self.stft_result.get('power')
+            if power is None:
+                return cfar_map, {"note": "Missing STFT power; returned CFAR-only map."}
+
+            n_freq, n_time = power.shape
+            tw = int(time_window_frames)
+            ts = int(time_step_frames)
+            if tw < 8:
+                tw = 8
+            if ts < 1:
+                ts = 1
+
+            if n_time < tw:
+                # Too few STFT frames; fallback to legacy time-domain projection.
+                return self.detect_with_fractal_boost(
+                    signal_data,
+                    hurst_deviation_threshold=hurst_deviation_threshold,
+                    window_samples=window_samples,
+                    fractal_mode='time',
+                )
+
+            print("   [FRACTAL] Computing Hurst exponent for fractal boost (TF-local)...")
+
+            logP = np.log(power + 1e-12)
+            half_band = max(1, int(freq_band_bins) // 2)
+
+            hurst_records = []  # (k_center, H0, anomaly_rate)
+
+            for k in range(0, n_freq, max(1, int(freq_stride))):
+                k0 = max(0, k - half_band)
+                k1 = min(n_freq, k + half_band + 1)
+
+                series = np.mean(logP[k0:k1, :], axis=0)  # (n_time,)
+
+                H_vals = []
+                windows = []
+                for t0 in range(0, n_time - tw + 1, ts):
+                    t1 = t0 + tw
+                    w = series[t0:t1]
+                    h = hurst_exponent(w, max_lag=max(8, tw // 4))
+                    H_vals.append(h)
+                    windows.append((t0, t1))
+
+                if len(H_vals) < 5:
+                    continue
+
+                H_vals = np.array(H_vals, dtype=float)
+                H0 = float(np.median(H_vals))
+                anomalies = np.abs(H_vals - H0) > hurst_deviation_threshold
+
+                for is_anom, (t0, t1) in zip(anomalies, windows):
+                    if is_anom:
+                        fractal_boost_map[k0:k1, t0:t1] = True
+
+                hurst_records.append((k, H0, float(np.mean(anomalies))))
+
+        else:
+            # Unknown mode: behave like legacy (safe default).
+            return self.detect_with_fractal_boost(
+                signal_data,
+                hurst_deviation_threshold=hurst_deviation_threshold,
+                window_samples=window_samples,
+                fractal_mode='time',
+            )
         
-        # Step 4: Combine: CFAR OR (fractal_anomaly AND power_above_median)
+        # Step 4: Combine: CFAR OR (fractal_anomaly AND high-power gate).
+        # For TF-local mode, we also require proximity to CFAR to avoid painting large clutter regions.
         power = self.stft_result['power']
-        power_mask = power > np.median(power)
-        
-        combined_map = cfar_map | (fractal_boost_map & power_mask)
+        power_thr = np.percentile(power, 85.0)
+        power_mask = power > power_thr
+
+        if mode_to_use == 'tf':
+            cfar_neighborhood = ndimage.binary_dilation(cfar_map, iterations=1)
+            combined_map = cfar_map | ((fractal_boost_map & power_mask) & cfar_neighborhood)
+        else:
+            combined_map = cfar_map | (fractal_boost_map & power_mask)
         
         # Stats
         n_cfar_only = np.sum(cfar_map & ~fractal_boost_map)
@@ -1031,6 +1127,7 @@ class CFARSTFTDetector:
         n_total = np.sum(combined_map)
         
         stats = {
+            'fractal_mode': mode_to_use,
             'clutter_hurst': clutter_hurst,
             'hurst_values': hurst_values,
             'n_cfar_detections': np.sum(cfar_map),
@@ -1039,7 +1136,8 @@ class CFARSTFTDetector:
             'boost_percentage': 100 * n_fractal_boost / max(1, np.sum(cfar_map))
         }
         
-        print(f"   [FRACTAL] Clutter Hurst: {clutter_hurst:.3f}")
+        if clutter_hurst is not None:
+            print(f"   [FRACTAL] Clutter Hurst: {clutter_hurst:.3f}")
         print(f"   [FRACTAL] Boosted detections: +{n_fractal_boost} ({stats['boost_percentage']:.1f}%)")
         
         self.detection_map = combined_map
