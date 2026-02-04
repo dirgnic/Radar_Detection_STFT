@@ -264,7 +264,7 @@ class CFAR2D:
     
     def detect(self, stft_magnitude: np.ndarray) -> np.ndarray:
         """
-        Aplica detectia GOCA-CFAR 2D pe magnitudinea STFT
+        Aplica detectia GOCA-CFAR 2D pe harta TF (de regula puterea STFT, |X(k,n)|^2)
         
         GOCA (Greatest Of Cell Averaging):
         - Imparte regiunea de antrenament in 4 sub-regiuni
@@ -272,7 +272,7 @@ class CFAR2D:
         - Ia MAXIMUL ca estimare de zgomot (robust la clutter)
         
         Args:
-            stft_magnitude: |F_x^h[m,k]| - magnitudinea STFT
+            stft_magnitude: harta TF pe care se aplica CFAR (in implementarea noastra: power = |STFT|^2)
             
         Returns:
             Masca binara de detectie (True = detectat, False = zgomot)
@@ -875,7 +875,7 @@ class CFARSTFTDetector:
         Pasii algoritmului (conform paper):
         1. Calculeaza STFT
         2. Detecteaza regiuni cu GOCA-CFAR 2D
-        3. Grupeaza cu DBSCAN (coordonate Hz/sec)
+        3. Grupeaza cu DBSCAN (coordonate normalizate la rezolutia STFT, unitati de bin)
         4. Extinde mastile cu geodesic dilation
         5. Sorteaza dupa energie
         
@@ -909,7 +909,7 @@ class CFARSTFTDetector:
         if n_detected == 0:
             return []
         
-        # Pasul 4: Clustering DBSCAN cu coordonate reale (Hz, sec)
+        # Pasul 4: Clustering DBSCAN in unitati de bin (f/df, t/dt), stabil la schimbarea rezolutiei STFT
         print("   [DBSCAN] Grupare puncte detectate...")
         detected_points = np.array(np.where(self.detection_map)).T  # (N, 2)
         
@@ -1108,6 +1108,10 @@ class CFARSTFTDetector:
                 window_samples=window_samples,
                 fractal_mode='time',
             )
+
+        # Expose maps for debugging/visualization (e.g., animation overlays).
+        self._last_cfar_map = cfar_map
+        self._last_fractal_boost_map = fractal_boost_map
         
         # Step 4: Combine: CFAR OR (fractal_anomaly AND high-power gate).
         # For TF-local mode, we also require proximity to CFAR to avoid painting large clutter regions.
@@ -1131,6 +1135,7 @@ class CFARSTFTDetector:
             'clutter_hurst': clutter_hurst,
             'hurst_values': hurst_values,
             'n_cfar_detections': np.sum(cfar_map),
+            'n_fractal_candidates': int(np.sum(fractal_boost_map)),
             'n_fractal_boosted': n_fractal_boost,
             'n_total_detections': n_total,
             'boost_percentage': 100 * n_fractal_boost / max(1, np.sum(cfar_map))
