@@ -386,7 +386,7 @@ def create_detection_animation(data_name: str = 'hi',
         
         # Update title with detection count
         ax_spec.set_title(f"STFT Spectrogram - IPIX {data_name.upper()} | "
-                          f"CFAR (Pfa=0.01) | Current window: {n_det:,} detections", 
+                          f"CFAR (Pfa={pfa:g}) | Current window: {n_det:,} detections", 
                           fontsize=14, fontweight='bold')
         
         # Save frame as PDF if requested
@@ -409,11 +409,24 @@ def create_detection_animation(data_name: str = 'hi',
         
         return spec_img, det_img, accum_img, hurst_line, ax_stats
     
-    # Create animation
+    # Create animation (or render a single frame when running headless)
     print("\nCreating animation...")
-    anim = animation.FuncAnimation(fig, update, init_func=init,
-                                    frames=n_frames, interval=1000//output_fps,
-                                    blit=False)
+    if save_frame is not None and not save_video:
+        # In headless/non-interactive runs, FuncAnimation won't render frames.
+        # Render just the requested frame so the PDF export path works.
+        init()
+        update(save_frame)
+        plt.close(fig)
+        return frames_data, detection_history
+
+    anim = animation.FuncAnimation(
+        fig,
+        update,
+        init_func=init,
+        frames=n_frames,
+        interval=1000 // output_fps,
+        blit=False
+    )
     
     if save_video:
         # Add timestamp to preserve old test files

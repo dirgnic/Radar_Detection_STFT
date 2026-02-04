@@ -240,11 +240,11 @@ Prof. Dr. Cristian Rusu
 \begin{abstractpage}
 
 \begin{abstract}{romanian}
-Acest document prezintă o implementare completă a algoritmului \textbf{CFAR--STFT}, propus de \textbf{\mbox{Abratkiewicz~(2022)}} \cite{abratkiewicz2022}, pentru detecția și reconstrucția semnalelor radar în prezența zgomotului și a \textit{sea clutter}-ului (zgomot de fond produs de suprafața mării). Pornind de la o reprezentare \textbf{timp--frecvență (STFT)}, aplicăm un prag adaptiv local (\textbf{CFAR 2D}) pentru a obține o mască rară, pe care o stabilizăm prin grupare (\textbf{DBSCAN}) și conectare morfologică (\textbf{dilatare geodezică}), astfel încât reconstrucția să rețină componenta de interes.
+Acest document prezintă o implementare completă a algoritmului \textbf{CFAR--STFT}, propus de \textbf{\mbox{Abratkiewicz~(2022)}} \cite{abratkiewicz2022}, pentru detecția și reconstrucția semnalelor radar în prezența zgomotului și a \textit{sea clutter}-ului (zgomot de fond produs de suprafața mării). Pornind de la o reprezentare \textbf{timp--frecvență (STFT)}, aplicăm un prag adaptiv local (\textbf{CFAR 2D}) pentru a obține o matrice de detecție rară, pe care o stabilizăm prin grupare (\textbf{DBSCAN}) și conectare morfologică (\textbf{dilatare geodezică}), astfel încât reconstrucția să rețină componenta de interes.
 
-Implementarea este validată pe date sintetice (chirp neliniar) și pe date reale (\textbf{IPIX radar}, sea clutter) \cite{ipix}. Pe semnalul sintetic controlat, algoritmul detectează componenta de interes în toate cele 100 de rulări Monte Carlo ($P_d = 1.00$). \textbf{RQF} (Reconstruction Quality Factor) crește de la \textbf{7.28 dB} (SNR = 5 dB) la \textbf{29.17 dB} (SNR = 30 dB).
+Implementarea este validată pe date sintetice (chirp neliniar) și pe date reale (\textbf{IPIX radar}, \textit{``sea clutter''} (date reale)) \cite{ipix}. Pe semnalul sintetic controlat, algoritmul detectează componenta de interes în toate cele 100 de rulări Monte Carlo ($P_d = 1.00$). \textbf{RQF} (Reconstruction Quality Factor) crește de la \textbf{7.28 dB} (SNR = 5 dB) la \textbf{29.17 dB} (SNR = 30 dB).
 
-\textbf{Contribuția principală}: adaptăm algoritmul la sea clutter real folosind \textbf{distribuția K} (în loc de Gaussian) \cite{ward2006}, o \textbf{îmbunătățire bazată pe proprietăți fractale (exponentul Hurst)} pentru ținte slabe \cite{hurst1951} și \textbf{DBSCAN cu metrică anizotropică} pentru clustering de semnături cvasi-verticale.
+\textbf{Contribuția principală}: adaptăm algoritmul pe date reale folosind \textbf{distribuția K} (în loc de Gaussian) \cite{ward2006}, o \textbf{îmbunătățire bazată pe proprietăți fractale (exponentul Hurst)} pentru target-uri slabe \cite{hurst1951} și \textbf{DBSCAN cu metrică anizotropică} pentru clustering de semnături cvasi-verticale. De asemenea, realizăm o analiză comparativă cu algoritmi alternativi: \textbf{CA-CFAR + HDBSCAN} și \textbf{separare geometrică prin triangulare Delaunay}.
 
 \textbf{Cuvinte cheie:} CFAR, STFT, radar, sea clutter, K-distribution, DBSCAN, detecție adaptivă
 \end{abstract}
@@ -254,9 +254,9 @@ Implementarea este validată pe date sintetice (chirp neliniar) și pe date real
 \begin{abstract}{english}
 This document presents a complete implementation of the \textbf{CFAR-STFT} algorithm, proposed by \textbf{\mbox{Abratkiewicz~(2022)}} \cite{abratkiewicz2022}, for detection and reconstruction of radar signals in the presence of noise and sea clutter (sea-surface backscatter). Starting from a \textbf{time--frequency (STFT)} representation, we apply a local adaptive threshold (\textbf{2D CFAR}) to obtain a sparse mask, which is then stabilized via grouping (\textbf{DBSCAN}) and morphological linking (\textbf{geodesic dilation}) so that the reconstruction preserves the component of interest.
 
-The implementation is validated on synthetic data (nonlinear chirp) and real data (\textbf{IPIX radar sea clutter}) \cite{ipix}. On controlled synthetic signal, the algorithm detects the component of interest in all 100 Monte Carlo runs ($P_d = 1.00$). \textbf{RQF} (Reconstruction Quality Factor) increases from \textbf{7.28 dB} (SNR = 5 dB) to \textbf{29.17 dB} (SNR = 30 dB).
+The implementation is validated on synthetic data (nonlinear chirp) and real data (\textbf{IPIX radar}, \textit{``sea clutter''} real measurements) \cite{ipix}. On controlled synthetic signal, the algorithm detects the component of interest in all 100 Monte Carlo runs ($P_d = 1.00$). \textbf{RQF} (Reconstruction Quality Factor) increases from \textbf{7.28 dB} (SNR = 5 dB) to \textbf{29.17 dB} (SNR = 30 dB).
 
-\textbf{Key contribution}: we adapt the algorithm to real sea clutter using a \textbf{K-distribution} (instead of Gaussian) \cite{ward2006}, a \textbf{fractal-based enhancement (Hurst exponent)} for weak targets \cite{hurst1951}, and an \textbf{anisotropic DBSCAN metric} for clustering quasi-vertical signatures.
+\textbf{Key contribution}: we adapt the algorithm to real sea clutter using a \textbf{K-distribution} (instead of Gaussian) \cite{ward2006}, a \textbf{fractal-based enhancement (Hurst exponent)} for weak targets \cite{hurst1951}, and an \textbf{anisotropic DBSCAN metric} for clustering quasi-vertical signatures. We also include a comparative analysis against alternative pipelines: \textbf{CA-CFAR + HDBSCAN} and \textbf{Delaunay-triangulation-based separation}.
 
 \textbf{Keywords:} CFAR, STFT, radar, sea clutter, K-distribution, DBSCAN, adaptive detection
 \end{abstract}
@@ -310,11 +310,11 @@ Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm
 \scriptsize
 \setlength{\tabcolsep}{2pt}
 \renewcommand{\arraystretch}{1.10}
-\begin{tabular}{@{} >{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{6.0cm} >{\raggedright\arraybackslash}p{5.0cm} @{}}
+\begin{tabular}{@{} >{\raggedright\arraybackslash}p{2.4cm} >{\raggedright\arraybackslash}p{6.2cm} >{\raggedright\arraybackslash}p{5.4cm} @{}}
 \toprule
 \textbf{Componentă} & \textbf{Model matematic} & \textbf{Rol în algoritm} \\ \midrule
 
-STFT (Transformata Fourier pe Ferestre Scurte) &
+STFT (Short-Time Fourier Transform) &
 \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
 $\begin{aligned}
 X(k,n) &= \sum_{m=0}^{N-1} x(m)\, \\
@@ -322,7 +322,7 @@ X(k,n) &= \sum_{m=0}^{N-1} x(m)\, \\
 \end{aligned}$\\
 \textit{Param.:} $N=256$, $H=32$, fereastră Gauss, $\sigma=8$
 \end{tabular} &
-Transformă semnalul în plan timp--frecvență; spectrograma $|X(k,n)|^2$ este intrarea pentru CFAR și clustering. \\ \midrule
+Transformă semnalul în plan timp--frecvență; spectrograma $|X(k,n)|^2$ este input-ul pentru CFAR și clustering. \\ \midrule
 
 CFAR 2D (GOCA-CFAR) &
 \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
@@ -331,14 +331,14 @@ $T(k,n)=\alpha\,\hat{Z}$\\
 $\hat{Z}=\max(\mu_1,\mu_2,\mu_3,\mu_4)$\\
 \textit{unde} $\alpha$ depinde de $P_{fa}$ și $N_T$
 \end{tabular} &
-Detectează candidații de țintă pe baza unui prag adaptiv local aplicat în 4 cadrane; controlează rata de alarmă falsă. \\ \midrule
+Detectează candidații de target pe baza unui prag adaptiv local aplicat în 4 cadrane; controlează rata de alarmă falsă. \\ \midrule
 
-DBSCAN (clustering pe densitate) &
+DBSCAN -- clustering pe densitate &
 \begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
 $d=\sqrt{(\Delta t)^2 + (\Delta f/s_f)^2}$\\
-\textit{cu} $s_f=3$ (favorizează semnături verticale)
+\textit{Anizotropic} $\Rightarrow$ scalare diferită pe axe; \textit{aici} $s_f=3$ (favorizează elemente verticale)
 \end{tabular} &
-Grupează punctele detectate $(k,n)$ în clustere coerente (ținte radar) păstrând structura aproape verticală. \\
+Grupează punctele detectate $(k,n)$ în clustere coerente (target-uri radar) păstrând structura aproape verticală. \\
 
 \bottomrule
 \end{tabular}
@@ -394,7 +394,7 @@ Grupează punctele detectate $(k,n)$ în clustere coerente (ținte radar) păstr
 prag $T=\alpha\cdot\max(\mu_1,\ldots,\mu_4)$;\\
 decizie $|X(k,n)|^2 > T$.
 \item \textbf{DBSCAN}:\\
-distanță anizotropică; tipic $\varepsilon=8$, \texttt{minSamples}=5.
+distanță anizotropică (scalare diferită pe axe: $\Delta f/s_f$); tipic $\varepsilon=8$, \texttt{minSamples}=5.
 \item \textbf{Dilatare geodezică}:\\
 kernel cruce (3$\times$3), de 3 ori cu \texttt{maximum\_filter}.
 \item \textbf{Extragere}:\\
@@ -474,7 +474,7 @@ $X_{\text{masked}} = X_{\text{STFT}}\odot H_{\text{dil}}$.
 \label{fig:cfar}
 \end{figure}
 
-\noindent\textit{Notă:} în unele implementări 2D, se mai exclude intenționat o „cruce” de celule pe axele verticală/orizontală dintre cadrane (buffer alb), pentru a evita contaminarea estimării de fond de către „ridge”-uri/sidelobe-uri ale unei ținte puternice (energie care se scurge pe axele timp/frecvență sau range/Doppler). Astfel, mediile $\mu_k$ rămân estimate din zone mai curate de clutter.
+\noindent\textit{Notă:} în unele implementări 2D, se mai exclude intenționat o „cruce” de celule pe axele verticală/orizontală dintre cadrane (buffer alb), pentru a evita contaminarea estimării de fond de către „ridge”-uri/sidelobe-uri ale unui target puternic (energie care se scurge pe axele timp/frecvență sau range/Doppler). Astfel, mediile $\mu_k$ rămân estimate din zone mai curate de clutter.
 
 % ============================================================================
 % CAPITOLUL 3: DATE ȘI SURSE DE VALIDARE
@@ -489,7 +489,7 @@ $X_{\text{masked}} = X_{\text{STFT}}\odot H_{\text{dil}}$.
 
 \section{Baza de date IPIX}
 
-IPIX (McMaster University) \cite{ipix}: radar X-band ($f_{RF}=9.39$ GHz, PRF=1000 Hz), date complexe I/Q. Ținte reale (sferă 1m la 2660m): \#17, \#18, \#30, \#40.
+IPIX (McMaster University) \cite{ipix}: radar X-band ($f_{RF}=9.39$ GHz, PRF=1000 Hz), date complexe I/Q. Target-uri reale (sferă 1m la 2660m): \#17, \#18, \#30, \#40.
 
 \section{Experimente pe semnale sintetice}
 
@@ -524,25 +524,29 @@ Metrica RQF:
 
 \subsection{Principii fundamentale CFAR}
 
-CFAR menține rata alarmelor false constantă: (1) fereastră glisantă cu CUT, guard cells, training cells; (2) prag adaptiv $T = \alpha Z$; (3) detecție dacă $CUT \ge T$.
+Deși arhitecturile specifice variază, toți algoritmii CFAR (Constant False Alarm Rate) urmează principii comune: procesare prin fereastră glisantă (CUT + \textit{guard cells} + \textit{training cells}, iar guard este exclus din estimare pentru a evita „scurgerea” energiei unui target), prag adaptiv $T=\alpha\cdot Z$ (cu $\alpha$ dependent de $P_{fa}$ și $N_T$) și decizie de detecție dacă $P_{\text{CUT}}\ge T$.
 
 \subsection{Algoritmi CFAR}
 
-CA-CFAR: media aritmetică, robustă în zgomot omogen. OS-CFAR: percentilă, robust la interferențe. SOCA-CFAR: minim subregiuni, optim la marginile dense.
+CA-CFAR: folosește media aritmetică, robust în zgomot (aproape) omogen. OS-CFAR: folosește o percentilă (în locul mediei), robust la interferențe/outlieri. SOCA-CFAR: alege minimul dintre mediile subregiunilor ferestrei; util la marginile de clutter.
 
 \subsection{CFAR: Formule și pseudocod}
 
 \begin{table}[H]
 \centering
 \small
-\renewcommand{\arraystretch}{2.5}
+\renewcommand{\arraystretch}{2.0}
 \begin{tabular}{@{} l p{4cm} p{7.5cm} @{}}
 \toprule
 \textbf{Metodă} & \textbf{Model matematic} & \textbf{Pseudocod simplificat} \\ \midrule
 
 CA-CFAR & 
-$Z = \frac{1}{N_T} \sum_{i=1}^{N_T} x_i$, $T = R \cdot Z$ & 
-\textbf{1.} Extrage celulele de antrenament $S_{train}$ (fără zona de gardă) \newline
+$\begin{aligned}
+Z &= \frac{1}{N_T} \sum_{i=1}^{N_T} x_i \\
+T &= \\
+&\; R \cdot Z
+\end{aligned}$ & 
+\textbf{1.} Extrage celulele de antrenament $S_{train}$ (fără zona de guard) \newline
 \textbf{2.} $Z = \text{mean}(S_{train})$ \newline
 \textbf{3.} IF $CUT \ge T$ THEN detecție \\ \midrule
 
@@ -553,7 +557,11 @@ $Z = x_{(k)}$, $T = \alpha \cdot Z$ &
 \textbf{3.} IF $CUT \ge T$ THEN detecție \\ \midrule
 
 SOCA-CFAR &
-$Z = \min(\mu_1, \dots, \mu_4)$, $T = R \cdot Z$ &
+$\begin{aligned}
+Z &= \min(\mu_1, \dots, \mu_4) \\
+T &= \\
+&\; R \cdot Z
+\end{aligned}$ &
 \textbf{1.} Împarte fereastra în 4 subregiuni \newline
 \textbf{2.} Calculează media $\mu_i$ pentru fiecare subregiune \newline
 \textbf{3.} $Z = \min(\mu_{1}, \dots, \mu_4)$ \newline
@@ -566,10 +574,12 @@ $Z = \min(\mu_1, \dots, \mu_4)$, $T = R \cdot Z$ &
 
 \subsection{Metode de clustering}
 
+Observații: \textbf{Agglomerative} nu elimină zgomotul și poate grupa detecții false CFAR; \textbf{HDBSCAN} folosește Mutual Reachability Distance (MRD) pentru a penaliza zonele cu densitate mică, reducând fenomenul de \textit{chaining}.
+
 \begin{table}[H]
 \centering
 \small
-\renewcommand{\arraystretch}{2.0}
+\renewcommand{\arraystretch}{1.6}
 \begin{tabular}{@{} l p{3.5cm} p{7.5cm} @{}}
 \toprule
 \textbf{Metodă} & \textbf{Descriere conceptuală} & \textbf{Pseudocod} \\ \midrule
@@ -580,7 +590,7 @@ Ierarhic \textit{bottom-up}. Fuzionează succesiv perechile cele mai apropiate. 
 \textbf{2.} Fiecare punct = cluster individual \newline
 \textbf{3.} WHILE nr\_clustere $> K$: \newline
 \hspace{1em} Găsește clusterele cu $d_{min}$ \newline
-\hspace{1em} Unește-le sub aceeași etichetă \newline
+\hspace{1em} Le unește sub aceeași etichetă \newline
 \textbf{4.} Reindexează etichetele (0, 1, 2...) \\ \midrule
 
 	HDBSCAN & 
@@ -623,7 +633,7 @@ Detectare \newline Vârfuri &
 Maxime locale în spectrograma STFT peste un prag percentilă ($S=|X|^2$) &
 \begin{tabular}[t]{@{}l@{}}
 1. STFT $\rightarrow$ $S=|X|^2$ \\
-2. Prag $T=\mathrm{perc}_{99}(S)$ \\
+2. Threshold $T$ = magnitudinea percentilei din $S$ \\
 3. Maxime locale cu $S>T$ \\
 4. Salvează coordonate vârfuri
 \end{tabular} \\ \midrule
@@ -631,15 +641,15 @@ Maxime locale în spectrograma STFT peste un prag percentilă ($S=|X|^2$) &
 Triangulare \newline Delaunay &
 Triangulare pe vârfuri cu criteriul cercului circumscris (Delaunay) &
 \begin{tabular}[t]{@{}l@{}}
-1. Delaunay pe setul de vârfuri \\
-2. Elimină triunghiuri din super-triunghi \\
-3. Filtrează în zona de interes (ROI)
+1. $T_1$: triunghi auxiliar (acoperă punctele) \\
+2. Pentru fiecare $p$: inserează; re-triangulează local \\
+3. La final: șterge triunghiurile cu vârfuri din $T_1$
 \end{tabular} \\ \midrule
 
 Gruparea \newline triunghiurilor &
 Triunghiuri vecine conectate după energie medie, dacă au muchie comună & 
 \begin{tabular}[t]{@{}l@{}}
-1. Construiește graful de adiacență (muchiilor comune) \\
+1. Construiește lista de adiacență \\
 2. Leagă triunghiuri cu energie similară ($\Delta<\varepsilon$) \\
 3. Componente conexe (DFS/BFS) \\
 4. Pentru fiecare componentă: centroid + energie
@@ -653,12 +663,13 @@ Triunghiuri vecine conectate după energie medie, dacă au muchie comună &
 
 \textbf{Metodă 1: CA-CFAR + HDBSCAN:} STFT Hamming, CA-CFAR, HDBSCAN clustering, reconstrucție componentă, evaluare RQF.
 
-\textbf{Metodă 2: Triangulare Delaunay:} STFT Gaussiană, maxime locale, triangulare Delaunay timp-frecvență, grupare după energie, Doppler din component dominantă.
+\textbf{Metodă 2: Triangulare Delaunay (separare geometrică):}
+Se calculează STFT cu fereastră Gaussiană și se formează spectrograma $S=|X|^2$ în plan timp--frecvență. Apoi, în locul unei pragări CFAR, se extrag maxime locale peste un prag percentilă, obținând un set rar de vârfuri candidate. Pe coordonatele acestor vârfuri se construiește triangularea Delaunay, iar triunghiurile rezultate sunt grupate în componente conexe (pe baza adiacenței) și filtrate după energie medie similară. În final, Doppler-ul este estimat din componenta cu energia maximă (de ex. prin centroid/medie pe axa frecvență, rezultând $f_D$).
 
 \textbf{Rezultate sintetice:}
 CA-CFAR+HDBSCAN: 100\% detecție, RQF stabil SNR 5-30 dB. Triangulare: bună SNR mediu/ridicat, variabilitate mai mare RQF.
 
-\section{Experimente pe IPIX cu ținte reale}
+\section{Experimente pe IPIX cu target-uri reale}
 
 S-au efectuat experimente pe date reale din baza IPIX. Figurile de mai jos arată cadre reprezentative din secvențele de detecție:
 
@@ -666,7 +677,7 @@ S-au efectuat experimente pe date reale din baza IPIX. Figurile de mai jos arat�
 \centering
 \vspace{-4pt}
 \includegraphics[width=0.85\textwidth]{../results/ipix_figures/ipix_target_17_goca_frame83.pdf}
-\caption{GOCA-CFAR pe IPIX Target \#17: spectrograma (stânga), heatmap detecții (centru), detecții cadru (dreapta). Linie verticală = țintă la Doppler pozitiv.}
+\caption{GOCA-CFAR pe IPIX Target \#17: spectrograma (stânga), heatmap detecții (centru), detecții cadru (dreapta). Linie verticală = target la Doppler pozitiv.}
 \label{fig:goca_detection}
 \vspace{-4pt}
 \end{figure}
@@ -675,7 +686,7 @@ S-au efectuat experimente pe date reale din baza IPIX. Figurile de mai jos arat�
 \centering
 \vspace{-4pt}
 \includegraphics[width=0.85\textwidth]{../results/ipix_figures/ipix_target_17_fractal_frame83.pdf}
-\caption{GOCA-CFAR cu Fractal Boost pe IPIX Target \#17: Hurst exponent boost îmbunătățește detecția țintelor slabe.}
+\caption{GOCA-CFAR cu Fractal Boost pe IPIX Target \#17: Hurst exponent boost îmbunătățește detecția target-urilor slabe.}
 \label{fig:fractal_boost_detection}
 \vspace{-4pt}
 \end{figure}
@@ -705,20 +716,20 @@ Date IPIX reale: Low Sea State (clutter moderat) vs High Sea State (clutter inte
 
 \subsection{Observații Experimentale Detaliate}
 
-\textbf{CA-CFAR + HDBSCAN:} Detecție 100\%, dar produce detecții dominante de clutter; ținta nu izolată ($\sigma = 0$). HDBSCAN grupează întreg clutter-ul. \textbf{Concluzie:} CA-CFAR nu separă ținta de clutter neomogen.
+\textbf{CA-CFAR + HDBSCAN:} \textbf{Problemă:} Produce detecții dominate de clutter; target-ul nu este izolat ($\sigma = 0$). HDBSCAN grupează tot clutter-ul într-un cluster unic. \textbf{Concluzie:} separă greu target-ul de clutter neomogen.
 
-\textbf{Triangulare Delaunay:} Detecție ridicată dar instabilă. HIGH sea: 4.2 comp., LOW sea: 13.6 comp. (neașteptat). Doppler variază 4×: +1.30 vs. -0.30 m/s. Metoda fragmentează clutter. \textbf{Concluzie:} Variabilitate prea mare.
+\textbf{Triangulare Delaunay:} Detecție ridicată dar instabilă. HIGH sea: 4.2 comp., LOW sea: 13.6 comp. (neașteptat). Doppler variază 4×: +1.30 vs. -0.30 m/s. Metoda geometrică fragmentează clutter-ul în multe componente, reducând consistența detecțiilor. \textbf{Concluzie:} Variabilitate prea mare.
 
 \subsection{Concluzie validată experimental}
 
-Pentru sea clutter real neomogen: CA-CFAR nu separă ținta (variabilitate zero). Triangularea oferă detecție dar variabilitate mare. \textbf{GOCA-CFAR + DBSCAN anisotropic} (această implementare) oferă cea mai bună performanță cu detecții stabile.
+Pentru date reale neomogene, \textbf{CA-CFAR + HDBSCAN} produce detecții dominate de clutter (target-ul nu este izolat), \textbf{Triangulare Delaunay} oferă detecție geometrică dar instabilă (fragmentare excesivă), iar \textbf{GOCA-CFAR + DBSCAN anisotropic} (această implementare) oferă performanță optimă cu detecții stabile.
 
-\textbf{Motivul succesului:} (1) GOCA adaptează prag pe 4 cadrane local, (2) DBSCAN anisotropic ($\text{freq\_scale}=3.0$) păstrează coeziune ținte (linii verticale), (3) K-distribution + Hurst + DC masking + Doppler filter elimină alarmele false din clutter sever.
+\textbf{Motivul succesului:} (1) GOCA adaptează prag pe 4 cadrane local, (2) DBSCAN anisotropic ($\text{freq\_scale}=3.0$) păstrează coeziunea target-urilor (linii verticale), (3) K-distribution + Hurst + DC masking + filtrul Doppler reduce alarmele false generate de clutter.
 
 
 \label{chap:adaptations}
 
-Modificări cheie pentru adaptarea algoritmului din articol la sea clutter real sunt sintetizate în tabelul de mai jos.
+Modificări cheie pentru adaptarea algoritmului din articol pe date reale sunt sintetizate în tabelul de mai jos.
 
 \begin{table}[H]
 \centering
@@ -729,12 +740,12 @@ Modificări cheie pentru adaptarea algoritmului din articol la sea clutter real 
 \textbf{Metodă} & \textbf{Model / idee} & \textbf{Pași de implementare} \\ \midrule
 
 K-distribution (clutter) &
-Sea clutter are cozi grele; puterea $Z=|X(k,n)|^2$ este mai bine modelată de o distribuție de tip K decât de una Gaussiană/exponențială &
-Estimează parametrii distribuției K (de ex. prin MLE sau momente) pe regiuni fără țintă; ajustează factorul de prag $\alpha$ astfel încât $P_{fa}$ să fie respectat; aplică în GOCA-CFAR local (4 cadrane). \\ \midrule
+Datele marine au \textit{(heavy tails)}: în „margini” apar valori cu ponderi mari; puterea $Z=|X(k,n)|^2$ este mai bine modelată de o distribuție de tip K decât de una Gaussiană/exponențială &
+Estimează parametrii distribuției K (de ex. prin MLE sau momente) pe regiuni fără target; ajustează factorul de prag $\alpha$ astfel încât $P_{fa}$ să fie respectat; aplică în GOCA-CFAR local (4 cadrane). \\ \midrule
 
 Hartă Hurst (fractalitate) &
-Separă ținte slabe ($H<0.6$) de clutter ($H\approx 0.8$) &
-Calculează $H$ pe patch-uri timp--frecvență; masca $M_H = [H < H_{th}]$; combină $M_H$ cu detecțiile CFAR pentru a evidenția țintele slabe. \\ \midrule
+Separă target-uri slabe ($H<0.6$) de clutter ($H\approx 0.8$) &
+Calculează $H$ pe patch-uri timp--frecvență; masca $M_H = [H < H_{th}]$; combină $M_H$ cu detecțiile CFAR pentru a evidenția target-urile slabe. \\ \midrule
 
 DBSCAN anisotropic + măști &
 Păstrează semnăturile verticale și taie DC &
@@ -742,7 +753,7 @@ Distanță $d = \sqrt{(\Delta t)^2 + (\Delta f/3)^2}$; maschează DC $\pm 8$ bin
 
 \bottomrule
 \end{tabular}
-\caption{Adaptări ale algoritmului CFAR-STFT pentru sea clutter real: model statistic, fractalitate și filtrare de cluster.}
+\caption{Adaptări ale algoritmului CFAR-STFT pentru date reale: model statistic, fractalitate și filtrare de cluster.}
 \end{table}
 
 % ============================================================================
@@ -774,8 +785,8 @@ $N_{fft}$ (window\_size) & 256 & $[128, 512]$ & Lungime FFT \\
 $H$ (hop\_size) & 32 & $[N/8, N/2]$ & Hop = 87.5\% overlap \\
 $\sigma_{window}$ & 8 & [4, 16] & Deviația std. a ferestrei \\
 $P_{fa}$ & $10^{-3}$ & [$10^{-4}$, $10^{-2}$] & Probabilitate alarmă falsă \\
-$N_G$ (cfar\_guard) & 3 & [2, 8] & Mărime celule guard \\
-$N_T$ (cfar\_training) & 12 & [8, 24] & Mărime celule training \\
+$N_G$ (cfar\_guard) & 3 & [2, 8] & Dimensiune celule guard \\
+$N_T$ (cfar\_training) & 12 & [8, 24] & Dimensiune celule training \\
 $\varepsilon_{DBSCAN}$ & 8 & [4, 16] & Raza de clustering \\
 minSamples & 5 & [3, 10] & Puncte minime per cluster \\
 freq\_scale & 3.0 & [2, 5] & Scalare metrică anisotropică DBSCAN \\
@@ -801,7 +812,16 @@ Am obținut RQF = 29.17 dB (SNR = 30 dB, $P_d = 100\%$), cu performanță stabil
 
 \section{Direcții viitoare}
 
-Direcții viitoare includ accelerare pe GPU, calibrare automată a parametrilor, urmărire multi-țintă și adaptare bazată pe metode de învățare automată.
+\small
+Direcții viitoare includ accelerare pe GPU, calibrare automată a parametrilor, urmărire multi-target și extinderea spre arhitecturi hibride (modelare fizică + \textit{data-driven}):
+\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt,parsep=0pt]
+\item \textbf{Clasificare pe trăsături (Random Forest / XGBoost)}: după detecția CFAR, fiecare cluster poate fi descris printr-un vector de trăsături (energie, arie/durată, centroid $(t,f)$, Hurst, parametrii K, lățime Doppler), pentru separare non-liniară clutter/target.
+\item \textbf{Modele secvențiale (LSTM/GRU)}: exploatează continuitatea cinematică; detecția se poate reformula ca \textit{predictive anomaly detection} pe serii STFT (eroare de predicție mare $\Rightarrow$ anomalie).
+\item \textbf{Autoencodere convoluționale (CAE)}: antrenare pe clutter pur; reziduul de reconstrucție produce o hartă de eroare care poate ghida (atenționa) pragarea CFAR în zonele suspecte.
+\item \textbf{Tracking multi-target}: extindere \textit{track-while-scan} (ex. filtre de particule / PHD) pentru menținerea identității și predicție în intervale cu fading.
+\item \textbf{Accelerare hardware}: portare STFT/CFAR 2D pe GPU (CUDA) sau FPGA pentru procesare aproape în timp real pe fluxuri I/Q.
+\end{enumerate}
+\normalsize
 
 \section{Cod}
 

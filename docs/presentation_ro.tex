@@ -33,7 +33,7 @@
 \graphicspath{{../results/ipix_figures/}{../results/animations/}{images/}}
 
 \title[CFAR-STFT]{Analiza semnalelor radar în prezența ecourilor marine}
-\subtitle{Abordare CFAR-STFT cu adaptări pentru sea clutter real}
+\subtitle{Abordare CFAR-STFT cu adaptări pentru date reale}
 \author[Corobana, Nae]{Ingrid Corobana \and Teodora Nae}
 \date{Procesarea Semnalelor -- 2026}
 \institute[FMI]{Universitatea din București\\Facultatea de Matematică și Informatică\\[0.3em]
@@ -60,7 +60,7 @@ Coordonator: Prof. Dr. Cristian Rusu}
 \begin{itemize}
     \item Ecouri radar de la suprafața mării
     \item Non-Gaussian (spike-uri frecvente)
-    \item Ascunde ținte mici
+    \item Ascunde target-uri mici
 \end{itemize}
 
 \vspace{0.5em}
@@ -147,13 +147,13 @@ $$|X(k,n)|^2 \geq T \Rightarrow \text{\color{dbscangreen}Detectat}$$
 % ============================================================================
 \section{Adaptări Sea Clutter}
 
-\begin{frame}{Adaptări pentru Sea Clutter Real}
+\begin{frame}{Adaptări pentru Date Reale}
 \begin{columns}[T]
 \column{0.5\textwidth}
 \textbf{1. K-Distribution}:
 \begin{itemize}
     \item Sea clutter $\neq$ Gaussian
-    \item (heavy tails): valori extreme mai frecvente
+    \item (heavy tails): datele marine au „margini” cu ponderi mari (valori extreme mai frecvente)
     \item Ajustare prag CFAR
 \end{itemize}
 
@@ -161,16 +161,16 @@ $$|X(k,n)|^2 \geq T \Rightarrow \text{\color{dbscangreen}Detectat}$$
 \textbf{2. Hurst Boost}:
 \begin{itemize}
     \item Clutter: $H \approx 0.75$--$0.85$
-    \item Țintă perturbă: $H < 0.6$
-    \item Detectează ținte slabe
+    \item Target perturbă: $H < 0.6$
+    \item Detectează target-uri slabe
 \end{itemize}
 
 \column{0.5\textwidth}
 \textbf{3. DBSCAN Asimetric}:
 \begin{itemize}
-    \item Ținte = linii verticale în TF
+    \item Target-uri = linii verticale în TF
     \item Scalare frecvență: $s_f = 3.0$
-    \item Un cluster per țintă
+    \item Un cluster per target
 \end{itemize}
 
 \vspace{0.5em}
@@ -233,7 +233,7 @@ $\checkmark$ RQF crește cu SNR
 \end{figure}
 \end{columns}
 
-{\scriptsize IPIX: Radar X-band 9.39 GHz, PRF=1000 Hz, țintă sferă 1m la 2660m}
+{\scriptsize IPIX: Radar X-band 9.39 GHz, PRF=1000 Hz, target sferă 1m la 2660m}
 \end{frame}
 
 % ============================================================================
@@ -247,7 +247,7 @@ $\checkmark$ RQF crește cu SNR
 \small
 \begin{tabular}{lccc}
 \toprule
-\textbf{Metodă} & \textbf{Robustețe clutter} & \textbf{Ținte slabe} & \textbf{Ideal pentru} \\
+\textbf{Metodă} & \textbf{Robustețe clutter} & \textbf{Target-uri slabe} & \textbf{Ideal pentru} \\
 \midrule
 CA-CFAR & Scăzută & Ridicată & Zgomot omogen \\
 OS-CFAR & Foarte bună & Medie & Multi-target \\
@@ -258,7 +258,7 @@ SOCA-CFAR & Bună & Medie & Margini clutter \\
 \end{table}
 
 \vspace{0.5em}
-\textbf{Observație experimentală}: CA-CFAR eșuează pe IPIX -- detectează clutter, nu ținte!
+\textbf{Observație experimentală}: CA-CFAR eșuează la separare pe IPIX -- detecțiile sunt dominate de clutter, iar target-ul nu este izolat.
 
 \vspace{0.3em}
 GOCA-CFAR + DBSCAN = performanța optimă pentru sea clutter neomogen
@@ -289,7 +289,7 @@ Triangulare Delaunay & LOW & 13.6 & $-0.30$ \\
 \textbf{Probleme identificate}:
 \begin{itemize}
     \item CA-CFAR: variabilitate zero $\Rightarrow$ grupează tot clutter-ul într-un cluster
-    \item Triangulare: fragmentare excesivă, inconsistentă între scenarii
+    \item Triangulare Delaunay: fragmentează clutter-ul în multe componente, reducând consistența detecțiilor
 \end{itemize}
 \end{frame}
 
