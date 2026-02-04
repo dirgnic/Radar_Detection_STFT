@@ -323,7 +323,14 @@ Clustering pe densitate cu distanță asimetrică pentru semnături verticale: $
 
 \section{Pipeline general (5 pași)}
 
-Algoritmul complet constă din cinci etape: \textbf{(1)} Calcul STFT cu fereastră Gaussiană ($N_{fft}=256$, hop=32, $\sigma=8$). \textbf{(2)} Detecție CFAR 2D în plan timp--frecvență: calculează media puterii în 4 cadrane pentru fiecare bin $(k,n)$, iar pragul $T = R \cdot \max(\mu_1, \mu_2, \mu_3, \mu_4)$ decide dacă $|X(k,n)|^2 > T$ (parametri: $P_f=0.001$, $N_G=3$, $N_T=12$). \textbf{(3)} Clustering DBSCAN: aplică distanța asimetrică din ecuația (3) pentru a grupa punctele detectate $(k,n)$ cu parametri $\varepsilon=8$, minSamples=5. \textbf{(4)} Dilatare geodezică: expandează detecțiile aplicând kernel cruce (3×3) de 3 ori cu \texttt{maximum\_filter} pentru a conecta punctele apropiate. \textbf{(5)} Extragere detecții: aplică masca pe STFT $X_{\text{masked}} = X_{\text{STFT}} \odot H_{\text{dil}}$ și extrage binarele detectate.
+Algoritmul complet constă din cinci etape:
+
+\noindent
+\textbf{(1)} Calcul STFT cu fereastră Gaussiană ($N_{fft}=256$, hop=32, $\sigma=8$). \\[0.15cm]
+\textbf{(2)} Detecție CFAR 2D în plan timp--frecvență: calculează media puterii în 4 cadrane pentru fiecare bin $(k,n)$, iar pragul $T = R \cdot \max(\mu_1, \mu_2, \mu_3, \mu_4)$ decide dacă $|X(k,n)|^2 > T$ (parametri: $P_f=0.001$, $N_G=3$, $N_T=12$). \\[0.15cm]
+\textbf{(3)} Clustering DBSCAN: aplică distanța asimetrică din ecuația (3) pentru a grupa punctele detectate $(k,n)$ cu parametri $\varepsilon=8$, minSamples=5. \\[0.15cm]
+\textbf{(4)} Dilatare geodezică: expandează detecțiile aplicând kernel cruce (3×3) de 3 ori cu \texttt{maximum\_filter} pentru a conecta punctele apropiate. \\[0.15cm]
+\textbf{(5)} Extragere detecții: aplică masca pe STFT $X_{\text{masked}} = X_{\text{STFT}} \odot H_{\text{dil}}$ și extrage binarele detectate.
 
 \begin{figure}[H]
 \centering
