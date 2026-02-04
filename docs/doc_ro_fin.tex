@@ -440,16 +440,21 @@ $X_{\text{masked}} = X_{\text{STFT}}\odot H_{\text{dil}}$.
     \draw[{Stealth}-{Stealth}, thick] (-3,-5.3) -- (3,-5.3);
     \node at (0,-5.8) {\scriptsize $2N_G + 1$};
     
-    % GOCA regions
-    \draw[thick, blue, dashed] (-5,0.5) rectangle (-0.5,5);
-    \draw[thick, green!70!black, dashed] (0.5,0.5) rectangle (5,5);
-    \draw[thick, purple, dashed] (-5,-5) rectangle (-0.5,-0.5);
-    \draw[thick, orange!80!black, dashed] (0.5,-5) rectangle (5,-0.5);
+    % GOCA training regions (mu_k) - L-shape (training only, fara guard + CUT)
+    \draw[thick, blue, dashed] (-5,0.5) rectangle (-3,3);
+    \draw[thick, blue, dashed] (-5,3) rectangle (-0.5,5);
+    \draw[thick, green!70!black, dashed] (3,0.5) rectangle (5,3);
+    \draw[thick, green!70!black, dashed] (0.5,3) rectangle (5,5);
+    \draw[thick, purple, dashed] (-5,-3) rectangle (-3,-0.5);
+    \draw[thick, purple, dashed] (-5,-5) rectangle (-0.5,-3);
+    \draw[thick, orange!80!black, dashed] (3,-3) rectangle (5,-0.5);
+    \draw[thick, orange!80!black, dashed] (0.5,-5) rectangle (5,-3);
     
-    \node[blue, font=\scriptsize] at (-2.75,2.75) {$\mu_1$};
-    \node[green!70!black, font=\scriptsize] at (2.75,2.75) {$\mu_2$};
-    \node[purple, font=\scriptsize] at (-2.75,-2.75) {$\mu_3$};
-    \node[orange!80!black, font=\scriptsize] at (2.75,-2.75) {$\mu_4$};
+    % Label-urile mu_k sunt in zona de training (nu in guard)
+    \node[blue, font=\scriptsize] at (-4.0,4.0) {$\mu_1$};
+    \node[green!70!black, font=\scriptsize] at (4.0,4.0) {$\mu_2$};
+    \node[purple, font=\scriptsize] at (-4.0,-4.0) {$\mu_3$};
+    \node[orange!80!black, font=\scriptsize] at (4.0,-4.0) {$\mu_4$};
     
 \end{tikzpicture}
 \hspace{1cm}
@@ -468,6 +473,8 @@ $X_{\text{masked}} = X_{\text{STFT}}\odot H_{\text{dil}}$.
 \caption{Structura celulelor GOCA-CFAR 2D: CUT (roșu), Guard (galben), Training (colorat pe cadrane). Mediile $\mu_1,\dots,\mu_4$ se calculează \textbf{doar} pe celulele de training (excluzând zona de guard și CUT), iar GOCA folosește maximul pentru adaptare locală.}
 \label{fig:cfar}
 \end{figure}
+
+\noindent\textit{Notă:} în unele implementări 2D, se mai exclude intenționat o „cruce” de celule pe axele verticală/orizontală dintre cadrane (buffer alb), pentru a evita contaminarea estimării de fond de către „ridge”-uri/sidelobe-uri ale unei ținte puternice (energie care se scurge pe axele timp/frecvență sau range/Doppler). Astfel, mediile $\mu_k$ rămân estimate din zone mai curate de clutter.
 
 % ============================================================================
 % CAPITOLUL 3: DATE ȘI SURSE DE VALIDARE

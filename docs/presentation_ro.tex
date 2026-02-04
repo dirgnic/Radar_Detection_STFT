@@ -106,15 +106,20 @@ Coordonator: Prof. Dr. Cristian Rusu}
     \node at (0,3) {\tiny Training};
     
     % GOCA quadrants
-    \draw[blue, dashed, thick] (-4,0.4) rectangle (-0.4,4);
-    \draw[green!70!black, dashed, thick] (0.4,0.4) rectangle (4,4);
-    \draw[purple, dashed, thick] (-4,-4) rectangle (-0.4,-0.4);
-    \draw[orange!80!black, dashed, thick] (0.4,-4) rectangle (4,-0.4);
+    % L-shape outlines (training only, fara guard)
+    \draw[blue, dashed, thick] (-4,0.4) rectangle (-2,2);
+    \draw[blue, dashed, thick] (-4,2) rectangle (-0.4,4);
+    \draw[green!70!black, dashed, thick] (2,0.4) rectangle (4,2);
+    \draw[green!70!black, dashed, thick] (0.4,2) rectangle (4,4);
+    \draw[purple, dashed, thick] (-4,-2) rectangle (-2,-0.4);
+    \draw[purple, dashed, thick] (-4,-4) rectangle (-0.4,-2);
+    \draw[orange!80!black, dashed, thick] (2,-2) rectangle (4,-0.4);
+    \draw[orange!80!black, dashed, thick] (0.4,-4) rectangle (4,-2);
     
-    \node[blue, font=\tiny] at (-2.2,2.2) {$\mu_1$};
-    \node[green!70!black, font=\tiny] at (2.2,2.2) {$\mu_2$};
-    \node[purple, font=\tiny] at (-2.2,-2.2) {$\mu_3$};
-    \node[orange!80!black, font=\tiny] at (2.2,-2.2) {$\mu_4$};
+    \node[blue, font=\tiny] at (-3.0,3.0) {$\mu_1$};
+    \node[green!70!black, font=\tiny] at (3.0,3.0) {$\mu_2$};
+    \node[purple, font=\tiny] at (-3.0,-3.0) {$\mu_3$};
+    \node[orange!80!black, font=\tiny] at (3.0,-3.0) {$\mu_4$};
 \end{tikzpicture}
 
 \column{0.5\textwidth}
@@ -127,12 +132,12 @@ R &= N_T (P_f^{-1/N_T} - 1)
 
 \textbf{Decizie}:
 $$|X(k,n)|^2 \geq T \Rightarrow \text{\color{dbscangreen}Detectat}$$
+
+{\tiny \textit{Notă:} excludem o „cruce” (buffer) între cadrane pentru a evita ridge/sidelobe-uri pe axe.}
 \end{columns}
 
-\vspace{0.3em}
-\begin{alertblock}{Parametri IPIX}
-$N_G = 3$, $N_T = 12$, $P_f = 0.001$ (mult mai mic decât paper!)
-\end{alertblock}
+\vspace{0em}
+{\tiny \textbf{Parametri IPIX:} $N_G = 3$, $N_T = 12$, $P_f = 0.001$}
 \end{frame}
 
 % ============================================================================
