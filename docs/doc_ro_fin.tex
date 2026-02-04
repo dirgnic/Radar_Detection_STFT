@@ -39,8 +39,8 @@
 
 % Include funcțiile de grafică
 \usepackage{graphicx}
-% Încarcă imaginile din directorul `images`
-\graphicspath{{./images/}{../results/ipix_figures/}}
+% Încarcă imaginile din directoarele specificate
+\graphicspath{{./images/}{../results/ipix_figures/}{../results/evaluation/}}
 
 % Pachete matematice
 \usepackage{amsmath}
@@ -464,6 +464,15 @@ Metrica RQF:
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\textwidth]{rqf_vs_snr.pdf}
+\hfill
+\includegraphics[width=0.48\textwidth]{detection_rate_vs_snr.pdf}
+\caption{Performanță vs SNR pe semnale sintetice: (stânga) RQF mediu și deviație standard pentru 100 rulări MC la fiecare nivel SNR, arătând trend crescător și convergență; (dreapta) rata de detecție de 100\% pe toată gama SNR 5-30 dB}
+\label{fig:snr_performance}
+\end{figure}
 
 \section{Analiză comparativă: Algoritmi CFAR și Clustering}
 
