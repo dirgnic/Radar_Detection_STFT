@@ -913,7 +913,8 @@ class CFARSTFTDetector:
         print("   [DBSCAN] Grupare puncte detectate...")
         detected_points = np.array(np.where(self.detection_map)).T  # (N, 2)
         
-        # Folosim DBSCAN cu conversie la coordonate reale
+        # DBSCAN lucreaza pe coordonate normalizate la rezolutia STFT (f/df, t/dt),
+        # astfel incat eps ramane stabil la schimbarea rezolutiei (hop/nfft).
         cluster_labels = self.dbscan.fit(detected_points, freqs, times)
         unique_labels = set(cluster_labels) - {-1}  # Excludem zgomotul
         

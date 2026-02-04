@@ -611,9 +611,10 @@ Ierarhic \textit{bottom-up}. Fuzionează succesiv perechile cele mai apropiate. 
 	DBSCAN & 
 	Bazat pe densitate & 
 	\begin{tabular}[t]{@{}l@{}}
-	Grupeaza puncte cu distanță $\le \varepsilon$. \\
-	Asimetric: \\[0.25em]
-	$d = \sqrt{\Delta t^2 + (\Delta f / \text{freq\_scale})^2}$
+	Grupează puncte cu distanță $\le \varepsilon$. \\
+	(Coordonate normalizate la rezoluția STFT: $t/dt$, $f/df$.)\\
+	Anizotropic: \\[0.25em]
+	$d=\sqrt{(s_t\Delta t)^2 + (\Delta f/s_f)^2}$,\quad $s_f=3,\; s_t=1.5$
 	\end{tabular} \\
 	\bottomrule
 	\end{tabular}
@@ -738,7 +739,7 @@ Date IPIX reale: Low Sea State (clutter moderat) vs High Sea State (clutter inte
 
 Pentru date reale neomogene, \textbf{CA-CFAR + HDBSCAN} produce detecții dominate de clutter (target-ul nu este izolat), \textbf{Triangulare Delaunay} oferă detecție geometrică dar instabilă (fragmentare excesivă), iar \textbf{GOCA-CFAR + DBSCAN anisotropic} (această implementare) oferă performanță optimă cu detecții stabile.
 
-\textbf{Motivul reușitei:} (1) GOCA adaptează pragul local pe 4 cadrane de training (colțuri), (2) DBSCAN anisotropic ($s_f=3.0$, $s_t=1.5$) păstrează coeziunea target-urilor (linii verticale), (3) K-distribution + extensia Hurst reduc alarmele false generate de clutter.
+\textbf{Motivul reușitei:} (1) GOCA adaptează pragul local pe 4 cadrane de training (colțuri), (2) DBSCAN anizotropic ($s_f=3.0$, $s_t=1.5$) păstrează coeziunea target-urilor (linii verticale), (3) K-distribution + extensia Hurst reduc alarmele false generate de clutter.
 
 
 \label{chap:adaptations}
@@ -755,7 +756,7 @@ Modificări cheie pentru adaptarea algoritmului din articol pe date reale sunt s
 
 K-distribution (clutter) &
 Datele marine au \textit{(heavy tails)}: în „margini” apar valori cu ponderi mari; puterea $Z=|X(k,n)|^2$ este mai bine modelată de o distribuție de tip K decât de una Gaussiană/exponențială &
-Parametrii K se estimează o singură dată din celule de training (cache); pragul se obține din ICDF pentru $P_{fa}$ și se aplică adaptiv local prin GOCA ($\hat{Z}=\max(\mu_i)$). \\ \midrule
+Parametrii K se estimează o dată per rulare CFAR, dintr-un eșantion larg al hărții TF (excluzând vârfuri extreme); pragul se obține din ICDF pentru $P_{fa}$ și se aplică adaptiv local prin GOCA ($\hat{Z}=\max(\mu_i)$). \\ \midrule
 
 Hartă Hurst (fractalitate) &
 Separă target-uri slabe ($H<0.6$) de clutter ($H\approx 0.8$) &
