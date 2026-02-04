@@ -353,7 +353,7 @@ Algoritmul complet are cinci pași:
 \label{fig:pipeline}
 \end{figure}
 
-\subsection{Pasul 2 Detaliu: Structura CFAR 2D}
+\subsection{Pasul 2: Structura CFAR 2D}
 
 \begin{figure}[H]
 \centering
@@ -417,11 +417,9 @@ Aplică formula (1) cu $N_{fft}=256$, hop=32, fereastră Gaussiană $\sigma=8$.
 
 \subsection{Pasul 2: Detecție CFAR 2D}
 
-Pentru fiecare bin (k,n): calculează media puterii în 4 cadrane, prag $T = R \cdot \max(\mu_1, \mu_2, \mu_3, \mu_4)$, decizie dacă $|X(k,n)|^2 > T$. Parametri: $P_f=0.001$, $N_G=3$, $N_T=12$.
+Calculează media puterii în 4 cadrane pentru fiecare bin (k,n), prag $T = R \cdot \max(\mu_1, \mu_2, \mu_3, \mu_4)$, decisie dacă $|X(k,n)|^2 > T$. Parametri: $P_f=0.001$, $N_G=3$, $N_T=12$.\n\n\subsection{Pasul 3: Clustering DBSCAN}
 
-\subsection{Pasul 3: Clustering DBSCAN}
-
-Grupează punctele detectate (k,n) cu distanța asimetrică din ecuația (3). Parametri: $\varepsilon=8$, minSamples=5.
+Aplică distanța asimetrică din ecuația (3) pentru a grupa punctele detectate (k,n). Parametri: $\varepsilon=8$, minSamples=5.
 
 \subsection{Pasul 4: Dilatare geodezică}
 
@@ -438,7 +436,7 @@ Aplică masca pe STFT: \texttt{X\_masked = X\_stft \(\odot\) H\_dil}, apoi extra
 
 \section{Baza de date IPIX}
 
-IPIX (McMaster University): radar X-band coerent, $f_{RF}=9.39$ GHz, PRF=1000 Hz, date complexe I/Q. Ținta: sferă 1m la 2660m. Ținte validate: \#17, \#18, \#30, \#40.
+IPIX (McMaster University): radar X-band ($f_{RF}=9.39$ GHz, PRF=1000 Hz), date complexe I/Q. Ținte reale (sferă 1m la 2660m): \#17, \#18, \#30, \#40.
 
 \section{Experimente pe semnale sintetice}
 
@@ -550,22 +548,9 @@ min\_doppler\_bw & 3.0 Hz & [1, 10] & Lățime Doppler minimă \\
 \end{tabular}
 \end{table}
 
-\textbf{Modificări vs. Paper (Abratkiewicz 2022)}: 
-Adaptări pentru sea clutter real: $N_{fft}=256$ (vs. 512), hop=32 (87.5\% overlap), $N_G=3$ (vs. 16), $P_f=0.001$ (vs. 0.4), K-distribution în loc de Gaussian, DBSCAN asimetric (freq\_scale=3.0), DC masking, filtru Doppler. Parametri ușor ajustați pentru IPIX maritime vs. semnale sintetice controlate din paper.
+\section{Notă asupra Doppler}
 
-\section{Interpretare Doppler}
-
-Conversie Doppler $\rightarrow$ viteză radială:
-\begin{equation}
-v_r = \frac{f_d \cdot c}{2 f_{RF}}
-\end{equation}
-
-Pentru IPIX ($f_{RF} = 9.39$ GHz): $f_d = +100$ Hz $\rightarrow$ $v_r \approx +1.6$ m/s; $f_d = -100$ Hz $\rightarrow$ $v_r \approx -1.6$ m/s.
-
-Viteza maximă neambiguă:
-\begin{equation}
-v_{max} = \frac{PRF \cdot c}{4 f_{RF}} \approx \pm 8 \text{ m/s}
-\end{equation}
+Conversie: $v_r = \frac{f_d \cdot c}{2 f_{RF}}$. Pentru IPIX ($f_{RF} = 9.39$ GHz), $f_d = +100$ Hz $\rightarrow$ $v_r \approx +1.6$ m/s; viteza max neambiguă $\approx \pm 8$ m/s.
 
 % ============================================================================
 % CAPITOLUL 8: CONCLUZII
