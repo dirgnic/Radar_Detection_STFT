@@ -70,6 +70,7 @@
 \usepackage{booktabs}
 \usepackage{float}
 \usepackage{caption}
+\usepackage{multirow}
 
 % Pentru includerea PDF-urilor
 \usepackage{pdfpages}
@@ -417,7 +418,9 @@ Aplică formula (1) cu $N_{fft}=256$, hop=32, fereastră Gaussiană $\sigma=8$.
 
 \subsection{Pasul 2: Detecție CFAR 2D}
 
-Calculează media puterii în 4 cadrane pentru fiecare bin (k,n), prag $T = R \cdot \max(\mu_1, \mu_2, \mu_3, \mu_4)$, decisie dacă $|X(k,n)|^2 > T$. Parametri: $P_f=0.001$, $N_G=3$, $N_T=12$.\n\n\subsection{Pasul 3: Clustering DBSCAN}
+Calculează media puterii în 4 cadrane pentru fiecare bin (k,n), prag $T = R \cdot \max(\mu_1, \mu_2, \mu_3, \mu_4)$, decisie dacă $|X(k,n)|^2 > T$. Parametri: $P_f=0.001$, $N_G=3$, $N_T=12$.
+
+\subsection{Pasul 3: Clustering DBSCAN}
 
 Aplică distanța asimetrică din ecuația (3) pentru a grupa punctele detectate (k,n). Parametri: $\varepsilon=8$, minSamples=5.
 
@@ -877,6 +880,11 @@ H. Rohling,
 Richards, M. A. (2005).
 \textit{Fundamentals of Radar Signal Processing}.
 McGraw-Hill Professional.
+
+\bibitem{triangulation2023}
+Triangulation Separation Method,
+\textit{IPIX Radar Target Separation via Delaunay Triangulation}.
+Available: Included in \texttt{extensions/triangulation\_separation.py}
 
 \end{thebibliography}
 

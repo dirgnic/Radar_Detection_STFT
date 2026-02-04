@@ -71,7 +71,9 @@ def create_detection_animation(data_name: str = 'hi',
                                 output_suffix: str = '',
                                 dbscan_eps: float = 8.0,
                                 use_fractal_boost: bool = True,
-                                min_doppler_bw: float = 3.0):
+                                min_doppler_bw: float = 3.0,
+                                save_frame: int = None,
+                                save_frame_dir: str = 'results/ipix_figures'):
     """
     Create animated detection visualization.
     
@@ -87,6 +89,8 @@ def create_detection_animation(data_name: str = 'hi',
         dbscan_eps: DBSCAN clustering distance (larger = merge nearby detections)
         use_fractal_boost: Use Hurst exponent to boost detection (+10-15% Pd)
         min_doppler_bw: Filter out components with Doppler bandwidth < this (Hz)
+        save_frame: Frame index to save as PDF (e.g., 83)
+        save_frame_dir: Directory for saving frame PDF
     """
     # Load data
     data = load_ipix_data()
@@ -385,6 +389,24 @@ def create_detection_animation(data_name: str = 'hi',
                           f"CFAR (Pfa=0.01) | Current window: {n_det:,} detections", 
                           fontsize=14, fontweight='bold')
         
+        # Save frame as PDF if requested
+        if save_frame is not None and frame_idx == save_frame:
+            print(f"\n>>> Saving frame {frame_idx} as PDF...")
+            save_frame_path = Path(save_frame_dir)
+            save_frame_path.mkdir(parents=True, exist_ok=True)
+            
+            # Generate filename with algorithm type
+            cfar_type = "GOCA" if not use_vectorized else "CA"
+            fractal_suffix = "_fractal" if use_fractal_boost else ""
+            pdf_filename = f"ipix_{data_name}_frame{frame_idx}_{cfar_type}{fractal_suffix}.pdf"
+            pdf_path = save_frame_path / pdf_filename
+            
+            try:
+                fig.savefig(str(pdf_path), format='pdf', dpi=300, bbox_inches='tight')
+                print(f"✓ Saved: {pdf_path}")
+            except Exception as e:
+                print(f"✗ Error saving PDF: {e}")
+        
         return spec_img, det_img, accum_img, hurst_line, ax_stats
     
     # Create animation
@@ -549,6 +571,10 @@ if __name__ == "__main__":
                         help='Disable fractal boost (Hurst exponent enhancement)')
     parser.add_argument('--min-doppler-bw', type=float, default=3.0,
                         help='Min Doppler bandwidth (Hz) to keep component (default: 3.0, 0=disabled)')
+    parser.add_argument('--save-frame', type=int, default=None,
+                        help='Save specific frame as PDF (e.g., 83)')
+    parser.add_argument('--save-frame-dir', type=str, default='results/ipix_figures',
+                        help='Directory to save frame PDF (default: results/ipix_figures)')
     
     args = parser.parse_args()
     
@@ -570,7 +596,9 @@ if __name__ == "__main__":
             output_suffix=args.suffix,
             dbscan_eps=args.eps,
             use_fractal_boost=not args.no_fractal,
-            min_doppler_bw=args.min_doppler_bw
+            min_doppler_bw=args.min_doppler_bw,
+            save_frame=args.save_frame,
+            save_frame_dir=args.save_frame_dir
         )
         
         if frames_data:
