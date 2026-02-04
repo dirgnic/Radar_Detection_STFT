@@ -336,10 +336,10 @@ Algoritmul complet are cinci pași:
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-    node distance=2.2cm and 2.5cm,
-    box/.style={rectangle, draw, rounded corners, minimum width=3.2cm, minimum height=1.1cm, align=center, font=\small\bfseries},
-    arrow/.style={-{Stealth[length=3mm]}, thick},
-    label/.style={font=\scriptsize, align=center},
+    node distance=1.4cm and 1.6cm,
+    box/.style={rectangle, draw, rounded corners, minimum width=2.2cm, minimum height=0.8cm, align=center, font=\tiny\bfseries},
+    arrow/.style={-{Stealth[length=2mm]}, thick},
+    label/.style={font=\tiny, align=center},
     eqlabel/.style={font=\tiny, text=gray}
 ]
 
@@ -439,18 +439,22 @@ Algoritmul complet are cinci pași:
 
 Aplică formula (1) cu $N_{fft}=256$, hop=32, fereastră Gaussiană $\sigma=8$.
 
+\vspace{0.4cm}
 \subsection{Pasul 2: Detecție CFAR 2D}
 
 Calculează media puterii în 4 cadrane pentru fiecare bin (k,n), prag $T = R \cdot \max(\mu_1, \mu_2, \mu_3, \mu_4)$, decisie dacă $|X(k,n)|^2 > T$. Parametri: $P_f=0.001$, $N_G=3$, $N_T=12$.
 
+\vspace{0.4cm}
 \subsection{Pasul 3: Clustering DBSCAN}
 
 Aplică distanța asimetrică din ecuația (3) pentru a grupa punctele detectate (k,n). Parametri: $\varepsilon=8$, minSamples=5.
 
+\vspace{0.4cm}
 \subsection{Pasul 4: Dilatare geodezică}
 
 Aplică dilatare cu kernel cruce (3×3) de 3 ori: \texttt{for i in range(3): H\_dil = scipy.ndimage.maximum\_filter(H\_dil, footprint=cross)}. Expandează detecțiile pentru a conecta punctele apropiate.
 
+\vspace{0.4cm}
 \subsection{Pasul 5: Extragere detecții}
 
 Aplică masca pe STFT: \texttt{X\_masked = X\_stft \(\odot\) H\_dil}, apoi extrage binarele detectate.
