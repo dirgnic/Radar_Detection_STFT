@@ -323,15 +323,7 @@ Clustering pe densitate cu distanță asimetrică pentru semnături verticale: $
 
 \section{Pipeline general (5 pași)}
 
-Algoritmul complet are cinci pași:
-
-\begin{enumerate}
-    \item calcul STFT cu fereastră Gaussiană;
-    \item detecție \textbf{CFAR 2D} în plan timp--frecvență;
-    \item clustering DBSCAN al punctelor detectate;
-    \item extinderea măștii prin \textbf{dilatare geodezică} (geodesic dilation);
-    \item extragere detecții (mascare STFT).
-\end{enumerate}
+Algoritmul complet constă din cinci etape: \textbf{(1)} Calcul STFT cu fereastră Gaussiană ($N_{fft}=256$, hop=32, $\sigma=8$). \textbf{(2)} Detecție CFAR 2D în plan timp--frecvență: calculează media puterii în 4 cadrane pentru fiecare bin $(k,n)$, iar pragul $T = R \cdot \max(\mu_1, \mu_2, \mu_3, \mu_4)$ decide dacă $|X(k,n)|^2 > T$ (parametri: $P_f=0.001$, $N_G=3$, $N_T=12$). \textbf{(3)} Clustering DBSCAN: aplică distanța asimetrică din ecuația (3) pentru a grupa punctele detectate $(k,n)$ cu parametri $\varepsilon=8$, minSamples=5. \textbf{(4)} Dilatare geodezică: expandează detecțiile aplicând kernel cruce (3×3) de 3 ori cu \texttt{maximum\_filter} pentru a conecta punctele apropiate. \textbf{(5)} Extragere detecții: aplică masca pe STFT $X_{\text{masked}} = X_{\text{STFT}} \odot H_{\text{dil}}$ și extrage binarele detectate.
 
 \begin{figure}[H]
 \centering
@@ -435,30 +427,6 @@ Algoritmul complet are cinci pași:
 \label{fig:cfar}
 \end{figure}
 
-\subsection{Pasul 1: Calcul STFT}
-
-Aplică formula (1) cu $N_{fft}=256$, hop=32, fereastră Gaussiană $\sigma=8$.
-
-\vspace{0.4cm}
-\subsection{Pasul 2: Detecție CFAR 2D}
-
-Calculează media puterii în 4 cadrane pentru fiecare bin (k,n), prag $T = R \cdot \max(\mu_1, \mu_2, \mu_3, \mu_4)$, decisie dacă $|X(k,n)|^2 > T$. Parametri: $P_f=0.001$, $N_G=3$, $N_T=12$.
-
-\vspace{0.4cm}
-\subsection{Pasul 3: Clustering DBSCAN}
-
-Aplică distanța asimetrică din ecuația (3) pentru a grupa punctele detectate (k,n). Parametri: $\varepsilon=8$, minSamples=5.
-
-\vspace{0.4cm}
-\subsection{Pasul 4: Dilatare geodezică}
-
-Aplică dilatare cu kernel cruce (3×3) de 3 ori: \texttt{for i in range(3): H\_dil = scipy.ndimage.maximum\_filter(H\_dil, footprint=cross)}. Expandează detecțiile pentru a conecta punctele apropiate.
-
-\vspace{0.4cm}
-\subsection{Pasul 5: Extragere detecții}
-
-Aplică masca pe STFT: \texttt{X\_masked = X\_stft \(\odot\) H\_dil}, apoi extrage binarele detectate.
-
 % ============================================================================
 % CAPITOLUL 3: DATE ȘI SURSE DE VALIDARE
 % ============================================================================
@@ -500,10 +468,10 @@ Metrica RQF:
 \begin{figure}[H]
 \centering
 \vspace{-4pt}
-\includegraphics[width=0.42\textwidth]{rqf_vs_snr.pdf}
+\includegraphics[width=0.42\textwidth]{../results/evaluation/rqf_vs_snr_annotated.pdf}
 \hfill
-\includegraphics[width=0.42\textwidth]{detection_rate_vs_snr.pdf}
-\caption{Performanță vs SNR: RQF și rata detecție 100\% (SNR 5-30 dB).}
+\includegraphics[width=0.42\textwidth]{../results/evaluation/detection_rate_vs_snr_annotated.pdf}
+\caption{Performanță vs SNR cu adnotări: RQF și rata detecție 100\% (SNR 5-30 dB cu marcare punctelor).}}
 \label{fig:snr_performance}
 \vspace{-4pt}
 \end{figure}
