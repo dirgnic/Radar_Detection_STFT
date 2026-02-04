@@ -785,6 +785,10 @@ Pentru reducerea detecțiilor persistente asociate returnărilor staționare, se
 Pentru eliminarea detecțiilor neplauzibile fizic, se resping clusterele a căror lățime Doppler este sub pragul minim ($< 3$ Hz).
 \chapter{Detalii de implementare}
 
+\section{Framework și tehnologii}
+
+Implementarea utilizează Python 3 cu bibliotecile: NumPy pentru operații matriceale, SciPy pentru STFT și algoritmi de clustering (DBSCAN, HDBSCAN), Matplotlib pentru vizualizare. Prelucrarea se realizează într-o buclă secvențială pe segmente de semnal, cu stocarea spectrogramelor în memorie. Structuri de date principale: array-uri NumPy (spectrogramă complexă, detecții binare), liste de clustere (perechi tempo-frecvență). Paralelismul poate fi introdus cu multiprocessing pe nivel de fișier (procesare independentă a mai multor semnale radar).
+
 \section{Parametri și calibrare}
 
 \begin{table}[H]
