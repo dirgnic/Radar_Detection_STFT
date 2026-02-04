@@ -240,7 +240,7 @@ Prof. Dr. Cristian Rusu
 \begin{abstractpage}
 
 \begin{abstract}{romanian}
-Acest document prezintă o implementare completă a algoritmului \textbf{CFAR--STFT}, propus de \textbf{Abratkiewicz~(2022)}, pentru detecția și reconstrucția semnalelor radar în prezența zgomotului și a sea clutter. Algoritmul combină \textbf{Short-Time Fourier Transform (STFT)}, \textbf{detecție adaptivă CFAR 2D}, \textbf{clustering DBSCAN} și \textbf{dilatare geodezică} pentru a extrage componenta de interes dintr-un amestec cu sea clutter.
+Acest document prezintă o implementare completă a algoritmului \textbf{CFAR--STFT}, propus de \textbf{\mbox{Abratkiewicz~(2022)}}, pentru detecția și reconstrucția semnalelor radar în prezența zgomotului și a sea clutter. Algoritmul combină \textbf{Short-Time Fourier Transform (STFT)}, \textbf{detecție adaptivă CFAR 2D}, \textbf{clustering DBSCAN} și \textbf{dilatare geodezică} pentru a extrage componenta de interes dintr-un amestec cu sea clutter.
 
 Implementarea este validată pe date sintetice (chirp neliniar) și pe date reale (\textbf{IPIX radar}, sea clutter). Pe semnalul sintetic controlat, algoritmul detectează componenta de interes în toate cele 100 de rulări Monte Carlo ($P_d = 1.00$). \textbf{RQF} (Reconstruction Quality Factor) crește de la \textbf{7.28 dB} (SNR = 5 dB) la \textbf{29.17 dB} (SNR = 30 dB).
 
@@ -252,7 +252,7 @@ Implementarea este validată pe date sintetice (chirp neliniar) și pe date real
 \newpage
 
 \begin{abstract}{english}
-This document presents a complete implementation of the \textbf{CFAR-STFT} algorithm, proposed by \textbf{Abratkiewicz~(2022)}, for detection and reconstruction of radar signals in the presence of noise and sea clutter. The algorithm combines \textbf{Short-Time Fourier Transform (STFT)}, \textbf{2D adaptive CFAR detection}, \textbf{DBSCAN clustering}, and \textbf{geodesic dilation} to extract the component of interest from a mixture with sea clutter.
+This document presents a complete implementation of the \textbf{CFAR-STFT} algorithm, proposed by \textbf{\mbox{Abratkiewicz~(2022)}}, for detection and reconstruction of radar signals in the presence of noise and sea clutter. The algorithm combines \textbf{Short-Time Fourier Transform (STFT)}, \textbf{2D adaptive CFAR detection}, \textbf{DBSCAN clustering}, and \textbf{geodesic dilation} to extract the component of interest from a mixture with sea clutter.
 
 The implementation is validated on synthetic data (nonlinear chirp) and real data (\textbf{IPIX radar sea clutter}). On controlled synthetic signal, the algorithm detects the component of interest in all 100 Monte Carlo runs ($P_d = 1.00$). \textbf{RQF} (Reconstruction Quality Factor) increases from \textbf{7.28 dB} (SNR = 5 dB) to \textbf{29.17 dB} (SNR = 30 dB).
 
@@ -287,7 +287,7 @@ The implementation is validated on synthetic data (nonlinear chirp) and real dat
 
 Problema principală abordată este \textbf{detecția obiectelor mici în date radar maritime}, într-un mediu complex. Mediul acvatic are caracteristici particulare: (1) statisticile \textbf{nu sunt bine modelate de o distribuție Gaussiană} (valorile extreme sunt frecvente), (2) există \textbf{corelație temporală} (valuri cu tipare structurate), (3) efectele Doppler \textbf{extind spectrul} (valuri în mișcare), (4) apar \textbf{vârfuri de energie (spikes)} vizibile când valurile sunt mari.
 
-Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm Rate) pot fi limitate atunci când pierd informația temporală și nu exploatează structura timp--frecvență. Abratkiewicz~(2022)\footnote{Abratkiewicz, K. (2022). Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform. Sensors, 22(16), 5954.} propune o abordare care folosește explicit structura \textbf{time--frequency} pentru a îmbunătăți atât \textbf{detecția}, cât și \textbf{recuperarea/reconstrucția} componentelor semnalului.
+Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm Rate) pot fi limitate atunci când pierd informația temporală și nu exploatează structura timp--frecvență. \mbox{Abratkiewicz~(2022)}\footnote{Abratkiewicz, K. (2022). Radar Detection-Inspired Signal Retrieval from the Short-Time Fourier Transform. Sensors, 22(16), 5954.} propune o abordare care folosește explicit structura \textbf{time--frequency} pentru a îmbunătăți atât \textbf{detecția}, cât și \textbf{recuperarea/reconstrucția} componentelor semnalului.
 
 
 
@@ -303,47 +303,59 @@ Metodele tradiționale adaptive de detecție \textbf{CFAR} (Constant False Alarm
 
 \section{Fundamente teoretice și STFT}
 
+\begin{samepage}
 \begin{table}[H]
 \centering
-\small
-\renewcommand{\arraystretch}{2.3}
-\begin{tabular}{@{} l p{5cm} p{6.8cm} @{}}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.10}
+\begin{tabular}{@{} >{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{6.0cm} >{\raggedright\arraybackslash}p{5.0cm} @{}}
 \toprule
 \textbf{Componentă} & \textbf{Model matematic} & \textbf{Rol în algoritm} \\ \midrule
 
 STFT (Transformata Fourier pe Ferestre Scurte) &
-$X(k,n) = \sum_{m=0}^{N-1} x(m) \, w(m - nH) \, e^{-j2\pi km/N}$, cu $N = 256$, $H = 32$ (87.5\% overlap), fereastră Gaussiană $w(m) = e^{-m^2/(2\sigma^2)}$, $\sigma = 8$ &
-Transformă semnalul $x[n]$ în plan timp--frecvență; oferă reprezentarea $|X(k,n)|^2$ pe care se aplică ulterior CFAR 2D și clusteringul. \\ \midrule
+\begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+$\begin{aligned}
+X(k,n) &= \sum_{m=0}^{N-1} x(m)\, \\
+&\quad w(m-nH)\,e^{-j2\pi km/N}
+\end{aligned}$\\
+\textit{Param.:} $N=256$, $H=32$, fereastră Gauss, $\sigma=8$
+\end{tabular} &
+Transformă semnalul în plan timp--frecvență; spectrograma $|X(k,n)|^2$ este intrarea pentru CFAR și clustering. \\ \midrule
 
 CFAR 2D (GOCA-CFAR) &
-Prag adaptiv local: $H(k,n) = 1$ dacă $|X(k,n)|^2 > T$, unde $T = R \, \hat{Z}$, $\hat{Z} = \max(\mu_1, \mu_2, \mu_3, \mu_4)$, $R = N_T (P_{fa}^{-1/N_T} - 1)$ &
-Evaluează fiecare bin $(k,n)$ în context local (4 cadrane de training) și generează o mască binară $H(k,n)$ ce marchează candidații de detecție cu rată de alarmă falsă controlată. \\ \midrule
+\begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+$H(k,n)=\mathbf{1}\{|X(k,n)|^2>T(k,n)\}$\\
+$T(k,n)=\alpha\,\hat{Z}$\\
+$\hat{Z}=\max(\mu_1,\mu_2,\mu_3,\mu_4)$\\
+\textit{unde} $\alpha$ depinde de $P_{fa}$ și $N_T$
+\end{tabular} &
+Detectează candidații de țintă pe baza unui prag adaptiv local aplicat în 4 cadrane; controlează rata de alarmă falsă. \\ \midrule
 
 DBSCAN (clustering pe densitate) &
-Metrică asimetrică pentru semnături verticale: $d = \sqrt{\Delta t^2 + (\Delta f / 3)^2}$ &
-Gruparea punctelor detectate $(k,n)$ în clustere coerente (ținte) printr-un algoritm de tip densitate, sensibil la structura aproape verticală a componentelor în plan timp--frecvență. \\
+\begin{tabular}[t]{@{}>{\raggedright\arraybackslash}p{\linewidth}@{}}
+$d=\sqrt{(\Delta t)^2 + (\Delta f/s_f)^2}$\\
+\textit{cu} $s_f=3$ (favorizează semnături verticale)
+\end{tabular} &
+Grupează punctele detectate $(k,n)$ în clustere coerente (ținte radar) păstrând structura aproape verticală. \\
 
 \bottomrule
 \end{tabular}
-\caption{Fundamente teoretice: reprezentarea STFT, detecția CFAR 2D și clusteringul DBSCAN utilizate în algoritmul CFAR-STFT.}
+\caption{Fundamente teoretice: STFT, detecția CFAR 2D și clusteringul DBSCAN în cadrul algoritmului CFAR-STFT.}
 \end{table}
+\vspace{-6pt}
 
 \section{Pipeline general (5 pași)}
 
-Algoritmul complet constă din cinci etape:
-
+% Punem pașii în paralel cu schema (Figura 2.1) ca să nu ocupe o pagină întreagă.
 \noindent
-\textbf{(1)} Calcul STFT cu fereastră Gaussiană ($N_{fft}=256$, hop=32, $\sigma=8$). \\[0.15cm]
-\textbf{(2)} Detecție CFAR 2D în plan timp--frecvență: calculează media puterii în 4 cadrane pentru fiecare bin $(k,n)$, iar pragul $T = R \cdot \max(\mu_1, \mu_2, \mu_3, \mu_4)$ decide dacă $|X(k,n)|^2 > T$ (parametri: $P_f=0.001$, $N_G=3$, $N_T=12$). \\[0.15cm]
-\textbf{(3)} Clustering DBSCAN: aplică distanța asimetrică din ecuația (3) pentru a grupa punctele detectate $(k,n)$ cu parametri $\varepsilon=8$, minSamples=5. \\[0.15cm]
-\textbf{(4)} Dilatare geodezică: expandează detecțiile aplicând kernel cruce (3×3) de 3 ori cu \texttt{maximum\_filter} pentru a conecta punctele apropiate. \\[0.15cm]
-\textbf{(5)} Extragere detecții: aplică masca pe STFT $X_{\text{masked}} = X_{\text{STFT}} \odot H_{\text{dil}}$ și extrage binarele detectate.
-
-\begin{figure}[H]
+\vspace{-4pt}
+\begin{minipage}[t]{0.53\textwidth}
 \centering
+\resizebox{0.90\linewidth}{!}{%
 \begin{tikzpicture}[
-    node distance=1.4cm and 1.6cm,
-    box/.style={rectangle, draw, rounded corners, minimum width=2.2cm, minimum height=0.8cm, align=center, font=\tiny\bfseries},
+    node distance=1.1cm and 1.2cm,
+    box/.style={rectangle, draw, rounded corners, minimum width=2.0cm, minimum height=0.7cm, align=center, font=\scriptsize\bfseries},
     arrow/.style={-{Stealth[length=2mm]}, thick},
     label/.style={font=\tiny, align=center},
     eqlabel/.style={font=\tiny, text=gray}
@@ -351,20 +363,16 @@ Algoritmul complet constă din cinci etape:
 
 % Rândul 1: Input -> STFT -> CFAR
 \node[box, fill=signalgray!20] (input) {Semnal de intrare\\$x[n]$};
-
 \node[box, fill=stftblue!30, right=of input] (stft) {STFT\\Gaussiană $\sigma=8$};
-
 \node[box, fill=cfarorange!30, right=of stft] (cfar) {GOCA-CFAR 2D\\$P_f=0.001$};
 
 % Rândul 2: DBSCAN -> Mask -> Detecții
-\node[box, fill=dbscangreen!30, below=2cm of cfar] (dbscan) {DBSCAN\\Clustering};
-
-\node[box, fill=maskpurple!30, below=2cm of stft] (mask) {Mask Expansion\\Geodesic Dilation};
-
-\node[box, fill=istftred!30, below=2cm of input] (output) {Detecții\\finale};
+\node[box, fill=dbscangreen!30, below=1.4cm of cfar] (dbscan) {DBSCAN\\Clustering};
+\node[box, fill=maskpurple!30, below=1.4cm of stft] (mask) {Mask Expansion\\Geodesic Dilation};
+\node[box, fill=istftred!30, below=1.4cm of input] (output) {Detecții\\finale};
 
 % Rândul 3: Output
-\node[box, fill=signalgray!20, below=2cm of mask] (final) {Ținte detectate};
+\node[box, fill=signalgray!20, below=1.4cm of mask] (final) {Ținte detectate};
 
 % Săgeți rândul 1
 \draw[arrow] (input) -- node[above, label] {$x[n]$} (stft);
@@ -378,10 +386,25 @@ Algoritmul complet constă din cinci etape:
 % Săgeată finală
 \draw[arrow] (output) -- (final);
 
-\end{tikzpicture}
-\caption{Pipeline-ul complet al algoritmului CFAR-STFT pentru detecția componentelor din planul timp-frecvență.}
+\end{tikzpicture}%
+} % resizebox
+{\captionsetup{skip=1pt}\captionof{figure}{Pipeline-ul complet al algoritmului CFAR-STFT pentru detecția componentelor din planul timp--frecvență.}}
 \label{fig:pipeline}
-\end{figure}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.46\textwidth}
+\scriptsize
+\textbf{Algoritmul complet constă din cinci etape:}
+\begin{enumerate}[leftmargin=*,label=\textbf{(\arabic*)},topsep=0pt,itemsep=0pt,parsep=0pt]
+\item \textbf{STFT}: fereastră Gaussiană ($N_{fft}=256$, hop $H=32$, $\sigma=8$).
+\item \textbf{GOCA-CFAR 2D}: prag local $T=\alpha\cdot\max(\mu_1,\mu_2,\mu_3,\mu_4)$; condiție $|X(k,n)|^2>T$.
+\item \textbf{DBSCAN}: distanță anizotropică; tipic $\varepsilon=8$, \texttt{minSamples}=5.
+\item \textbf{Dilatare geodezică}: kernel cruce (3$\times$3), de 3 ori cu \texttt{maximum\_filter}.
+\item \textbf{Extragere}: mască pe STFT $X_{\text{masked}}=X_{\text{STFT}}\odot H_{\text{dil}}$.
+\end{enumerate}
+\end{minipage}
+\vspace{-4pt}
+\end{samepage}
 
 \subsection{Pasul 2: Structura CFAR 2D}
 
@@ -542,22 +565,25 @@ Ierarhic \textit{bottom-up}. Fuzionează succesiv perechile cele mai apropiate. 
 \hspace{1em} Unește-le sub aceeași etichetă \newline
 \textbf{4.} Reindexează etichetele (0, 1, 2...) \\ \midrule
 
-HDBSCAN & 
-Bazat pe densitate ierarhică. Folosește \textit{core distance} și \textit{MST} pentru stabilitate. & 
-\textbf{1.} Normalizează punctele $(f, t)$ \newline
-\textbf{2.} Calculează \textbf{core distance} $(c)$ pentru fiecare punct \newline
-\textbf{3.} Determină \textbf{MRD}: $d_{mrd}(u,v) = \max(c(u), c(v), d(u,v))$ \newline
-\textbf{4.} Construiește \textbf{MST} folosind MRD \newline
-\textbf{5.} Extrage componente conexe cu prag $\varepsilon$ \newline
-\textbf{6.} Elimină clusterele sub $min\_samples$ $\to$ zgomot (-1) \\ \midrule
+	HDBSCAN & 
+	Bazat pe densitate ierarhică. Folosește \textit{core distance} și \textit{MST} pentru stabilitate. & 
+	\textbf{1.} Normalizează punctele $(f, t)$ \newline
+	\textbf{2.} Calculează \textbf{core distance} $(c)$ pentru fiecare punct \newline
+	\textbf{3.} Determină \textbf{MRD}:\par\vspace{0.35em}
+	$d_{mrd}(u,v) = \max(c(u), c(v), d(u,v))$ \newline
+	\textbf{4.} Construiește \textbf{MST} folosind MRD \newline
+	\textbf{5.} Extrage componente conexe cu prag $\varepsilon$ \newline
+	\textbf{6.} Elimină clusterele sub $min\_samples$ $\to$ zgomot (-1) \\ \midrule
 
-DBSCAN & 
-Bazat pe densitate & 
-Grupeaza puncte cu distanță $\le \varepsilon$. Asymetric: $d = \sqrt{\Delta t^2 + (\Delta f / \text{freq\_scale})^2}$ \\
-\bottomrule
-\end{tabular}
-\caption{Metode de clustering utilizate}
-\end{table}
+	DBSCAN & 
+	Bazat pe densitate & 
+	Grupeaza puncte cu distanță $\le \varepsilon$. \newline
+	Asimetric:\par\vspace{0.25em}
+	$d = \sqrt{\Delta t^2 + (\Delta f / \text{freq\_scale})^2}$ \\
+	\bottomrule
+	\end{tabular}
+	\caption{Metode de clustering utilizate}
+	\end{table}
 
 \subsection{Separare prin triangulare Delaunay}
 
@@ -565,37 +591,37 @@ Alternativă geometrică la CFAR + clustering:
 
 \begin{table}[H]
 \centering
-\small
-\renewcommand{\arraystretch}{2.5}
-\begin{tabular}{@{} l p{3.5cm} p{7.5cm} @{}}
+\scriptsize
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{@{} p{2.1cm} p{4.4cm} p{6.6cm} @{}}
 \toprule
 \textbf{Pas} & \textbf{Idee} & \textbf{Pseudocod simplificat} \\ \midrule
 
 Detectare Vârfuri &
-Maxime locale în spectrograma STFT, filtrate prin prag percentilă:
-\[
-\text{peak}(i,j) = \begin{cases} 1 & \text{dacă } S_{i,j} = \max(\text{vecini}) \text{ și } S_{i,j} > T \\ 0 & \text{altfel} \end{cases}
-\]
-& 
-\textbf{1.} Calcul STFT și magnitudine \newline
-\textbf{2.} Threshold = magnitudinea percentilei \newline
-\textbf{3.} Identifică maxime locale în fereastră \newline
-\textbf{4.} Returnează coordonate vârfuri \\ \midrule
+Maxime locale în spectrograma STFT peste un prag percentilă ($S=|X|^2$) &
+\begin{tabular}[t]{@{}l@{}}
+1. STFT $\rightarrow$ $S=|X|^2$ \\
+2. Prag $T=\mathrm{perc}_{99}(S)$ \\
+3. Maxime locale cu $S>T$ \\
+4. Salvează coordonate vârfuri
+\end{tabular} \\ \midrule
 
 Triangulare Delaunay &
-Construiește triunghiuri pentru punctele detectate. Criteriu: niciun punct în cercul circumscris al unui triunghi existent & 
-\textbf{1.} Creează triunghi inițial care înconjoară toate punctele \newline
-\textbf{2.} Pentru fiecare punct nou: identifică triunghiuri care încalcă criteriul \newline
-\textbf{3.} Elimină triunghiurile și formează poligonul gol \newline
-\textbf{4.} Creeaza triunghiuri noi: punct curent + fiecare latură a poligonului \newline
-\textbf{5.} Elimină triunghiurile cu vârfuri din super-triunghi \\ \midrule
+Triangulare pe vârfuri cu criteriul cercului circumscris (Delaunay) &
+\begin{tabular}[t]{@{}l@{}}
+1. Delaunay pe setul de vârfuri \\
+2. Elimină triunghiuri din super-triunghi \\
+3. Filtrează în zona de interes (ROI)
+\end{tabular} \\ \midrule
 
 Gruparea triunghiurilor &
 Triunghiuri vecine conectate după energie medie, dacă au muchie comună & 
-\textbf{1.} Construiește lista muchiilor pentru toate triunghiurile \newline
-\textbf{2.} Adaugă muchiile comune ca legături dacă diferența relativă magnitudine $< \varepsilon$ \newline
-\textbf{3.} Parcurgere DFS pentru identificare componente conexe \newline
-\textbf{4.} Calculează puncte, energie, centroid pentru fiecare componentă \\
+\begin{tabular}[t]{@{}l@{}}
+1. Construiește graful de adiacență (muchiilor comune) \\
+2. Leagă triunghiuri cu energie similară ($\Delta<\varepsilon$) \\
+3. Componente conexe (DFS/BFS) \\
+4. Pentru fiecare componentă: centroid + energie
+\end{tabular} \\
 \bottomrule
 \end{tabular}
 \caption{Sinteză a pașilor de separare prin triangulare Delaunay și pseudocod asociat}
@@ -675,33 +701,26 @@ Modificări cheie pentru adaptarea algoritmului din articol la sea clutter real 
 \begin{table}[H]
 \centering
 \small
-\renewcommand{\arraystretch}{2.2}
-\begin{tabular}{@{} l p{4.3cm} p{7.3cm} @{}}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{} l p{5.2cm} p{6.2cm} @{}}
 \toprule
-\textbf{Metodă} & \textbf{Model matematic} & \textbf{Pseudocod simplificat} \\ \midrule
+\textbf{Metodă} & \textbf{Model / idee} & \textbf{Pași de implementare} \\ \midrule
 
-K-distribution (model clutter) &
-$p(x) = \frac{4}{\Gamma(\nu)} \left(\frac{\nu x^2}{2\mu}\right)^{(\nu+1)/2} K_{\nu-1}\left(\sqrt{\frac{2\nu x^2}{\mu}}\right)$; cozi mai grele decât distribuția Gaussiană; $\nu = \mu^2 / (\sigma^2 - \mu^2)$ &
-\textbf{1.} Estimează media $\mu$ și varianța $\sigma^2$ din ferestre de sea clutter.\\
-\textbf{2.} Calculează $\nu = \mu^2 / (\sigma^2 - \mu^2)$.\\
-\textbf{3.} Ajustează factorul de scalare $R$ sau pragul CFAR pentru a controla $P_{fa}$ în cozi grele. \\ \midrule
+K-distribution (clutter) &
+Sea clutter are cozi grele; puterea $Z=|X(k,n)|^2$ este mai bine modelată de o distribuție de tip K decât de una Gaussiană/exponențială &
+Estimează parametrii distribuției K (de ex. prin MLE sau momente) pe regiuni fără țintă; ajustează factorul de prag $\alpha$ astfel încât $P_{fa}$ să fie respectat; aplică în GOCA-CFAR local (4 cadrane). \\ \midrule
 
-Exponent Hurst (fractalitate) &
-$\mathbb{E}\left[|X(t+\tau) - X(t)|^2\right] \propto \tau^{2H}$; clutter: $H \approx 0.75$--$0.85$, ținte: $H < 0.6$ &
-\textbf{1.} Pentru fiecare patch timp--frecvență, estimează exponentul Hurst $H$.\\
-\textbf{2.} Marchează \emph{Hurst anomaly} acolo unde $H < H_{th}$ și puterea locală este mare.\\
-\textbf{3.} Combină masca: $M = M_{CFAR} \lor (M_{Hurst} \land M_{power})$ pentru a evidenția țintele slabe. \\ \midrule
+Hartă Hurst (fractalitate) &
+Separă ținte slabe ($H<0.6$) de clutter ($H\approx 0.8$) &
+Calculează $H$ pe patch-uri timp--frecvență; masca $M_H = [H < H_{th}]$; combină $M_H$ cu detecțiile CFAR pentru a evidenția țintele slabe. \\ \midrule
 
-DBSCAN anisotropic + măști Doppler &
-$d = \sqrt{(\Delta t)^2 + \left(\frac{\Delta f}{3.0}\right)^2}$; mască DC $\pm 8$ bin-uri; lățime Doppler $\ge 3$ Hz &
-\textbf{1.} Maschează bin-urile de frecvență din jurul DC ($\pm 8$) înainte de CFAR/clusterizare.\\
-\textbf{2.} Rulează DBSCAN cu metrica anisotropică, parametrii $\varepsilon$ și \texttt{minSamples}.\\
-\textbf{3.} Pentru fiecare cluster, calculează lățimea Doppler și respinge clusterele cu lățime $< 3$ Hz.\\
-\textbf{4.} Păstrează drept ținte valide doar clusterele rămase. \\
+DBSCAN anisotropic + măști &
+Păstrează semnăturile verticale și taie DC &
+Distanță $d = \sqrt{(\Delta t)^2 + (\Delta f/3)^2}$; maschează DC $\pm 8$ bin-uri; elimină clustere cu lățime Doppler $<3$ Hz; rezultatul reduce alarmele false din clutter. \\
 
 \bottomrule
 \end{tabular}
-\caption{Adaptări ale algoritmului CFAR-STFT pentru sea clutter real: model statistic, criterii fractale și clustering anisotropic.}
+\caption{Adaptări ale algoritmului CFAR-STFT pentru sea clutter real: model statistic, fractalitate și filtrare de cluster.}
 \end{table}
 
 % ============================================================================
