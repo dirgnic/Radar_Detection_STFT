@@ -669,6 +669,17 @@ Se calculează STFT cu fereastră Gaussiană și se formează spectrograma $S=|X
 \textbf{Rezultate sintetice:}
 CA-CFAR+HDBSCAN: 100\% detecție, RQF stabil SNR 5-30 dB. Triangulare: bună SNR mediu/ridicat, variabilitate mai mare RQF.
 
+\begin{figure}[H]
+\centering
+\vspace{-4pt}
+\includegraphics[width=0.495\textwidth]{../extensions/extensions/results/paper_extension_ca_hdbscan_hamming.pdf}%
+\includegraphics[width=0.495\textwidth]{../extensions/extensions/results/paper_extension_triangulation.pdf}
+\vspace{-6pt}
+\caption{Extensie pe semnalul sintetic din lucrarea de referință: RQF vs. SNR pentru (stânga) CA-CFAR + HDBSCAN (fereastră Hamming) și (dreapta) separare geometrică prin triangulare Delaunay.}
+\label{fig:paper_extension_rqf}
+\vspace{-6pt}
+\end{figure}
+
 \section{Experimente pe IPIX cu target-uri reale}
 
 S-au efectuat experimente pe date reale din baza IPIX. Figurile de mai jos arată cadre reprezentative din secvențele de detecție:
