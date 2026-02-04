@@ -84,6 +84,9 @@
 \definecolor{stftblue}{RGB}{66, 133, 244}
 \definecolor{cfarorange}{RGB}{255, 152, 0}
 \definecolor{dbscangreen}{RGB}{76, 175, 80}
+\definecolor{maskpurple}{RGB}{156, 39, 176}
+\definecolor{istftred}{RGB}{244, 67, 54}
+\definecolor{signalgray}{RGB}{96, 96, 96}
 \definecolor{darkblue}{RGB}{25, 50, 100}
 \definecolor{codegray}{RGB}{240, 240, 240}
 
@@ -306,6 +309,108 @@ Algoritmul complet are cinci pași:
     \item extragere detecții (mascare STFT).
 \end{enumerate}
 
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=2.2cm and 2.5cm,
+    box/.style={rectangle, draw, rounded corners, minimum width=3.2cm, minimum height=1.1cm, align=center, font=\small\bfseries},
+    arrow/.style={-{Stealth[length=3mm]}, thick},
+    label/.style={font=\scriptsize, align=center},
+    eqlabel/.style={font=\tiny, text=gray}
+]
+
+% Rândul 1: Input -> STFT -> CFAR
+\node[box, fill=signalgray!20] (input) {Semnal de intrare\\$x[n]$};
+
+\node[box, fill=stftblue!30, right=of input] (stft) {STFT\\Gaussiană $\sigma=8$};
+
+\node[box, fill=cfarorange!30, right=of stft] (cfar) {GOCA-CFAR 2D\\$P_f=0.001$};
+
+% Rândul 2: DBSCAN -> Mask -> Detecții
+\node[box, fill=dbscangreen!30, below=2cm of cfar] (dbscan) {DBSCAN\\Clustering};
+
+\node[box, fill=maskpurple!30, below=2cm of stft] (mask) {Mask Expansion\\Geodesic Dilation};
+
+\node[box, fill=istftred!30, below=2cm of input] (output) {Detecții\\finale};
+
+% Rândul 3: Output
+\node[box, fill=signalgray!20, below=2cm of mask] (final) {Ținte detectate};
+
+% Săgeți rândul 1
+\draw[arrow] (input) -- node[above, label] {$x[n]$} (stft);
+\draw[arrow] (stft) -- node[above, label] {$|F_x^h|^2$} (cfar);
+
+% Săgeți verticale și rândul 2
+\draw[arrow] (cfar) -- node[right, label] {Mască\\binară} (dbscan);
+\draw[arrow] (dbscan) -- node[above, label] {Clustere} (mask);
+\draw[arrow] (mask) -- node[above, label] {Măști} (output);
+
+% Săgeată finală
+\draw[arrow] (output) -- (final);
+
+\end{tikzpicture}
+\caption{Pipeline-ul complet al algoritmului CFAR-STFT pentru detecția componentelor din planul timp-frecvență.}
+\label{fig:pipeline}
+\end{figure}
+
+\subsection{Pasul 2 Detaliu: Structura CFAR 2D}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.65]
+    % Grid background
+    \draw[step=1, gray!30, very thin] (-5.5,-5.5) grid (5.5,5.5);
+    
+    % Training cells (outer ring)
+    \fill[cfarorange!40] (-5,-5) rectangle (5,5);
+    
+    % Guard cells (middle ring)
+    \fill[yellow!40] (-3,-3) rectangle (3,3);
+    
+    % CUT (center)
+    \fill[red!60] (-0.5,-0.5) rectangle (0.5,0.5);
+    
+    % Labels pentru regiuni
+    \node at (0,0) {\textbf{CUT}};
+    \node at (0,2) {\small Guard};
+    \node at (0,4) {\small Training};
+    
+    % Dimensiuni
+    \draw[{Stealth}-{Stealth}, thick] (-5,-6) -- (5,-6);
+    \node at (0,-6.5) {$2(N_G + N_T) + 1$};
+    
+    \draw[{Stealth}-{Stealth}, thick] (-3,-5.3) -- (3,-5.3);
+    \node at (0,-5.8) {\scriptsize $2N_G + 1$};
+    
+    % GOCA regions
+    \draw[thick, blue, dashed] (-5,0.5) rectangle (-0.5,5);
+    \draw[thick, green!70!black, dashed] (0.5,0.5) rectangle (5,5);
+    \draw[thick, purple, dashed] (-5,-5) rectangle (-0.5,-0.5);
+    \draw[thick, orange!80!black, dashed] (0.5,-5) rectangle (5,-0.5);
+    
+    \node[blue, font=\scriptsize] at (-2.75,2.75) {$\mu_1$};
+    \node[green!70!black, font=\scriptsize] at (2.75,2.75) {$\mu_2$};
+    \node[purple, font=\scriptsize] at (-2.75,-2.75) {$\mu_3$};
+    \node[orange!80!black, font=\scriptsize] at (2.75,-2.75) {$\mu_4$};
+    
+\end{tikzpicture}
+\hspace{1cm}
+\begin{tikzpicture}[scale=0.85]
+    % Formula box
+    \node[draw, rounded corners, fill=gray!10, minimum width=5.5cm, minimum height=4cm, align=left] (formulas) {
+        \textbf{GOCA-CFAR:}\\[0.3em]
+        $\hat{Z} = \max(\mu_1, \mu_2, \mu_3, \mu_4)$\\[0.3em]
+        $T = R \cdot \hat{Z}$\\[0.3em]
+        $R = N_T \cdot (P_f^{-1/N_T} - 1)$\\[0.8em]
+        \textbf{Decizie:}\\[0.3em]
+        $|F_x^h[m,k]|^2 \geq T \Rightarrow$ \textcolor{green!60!black}{Det}\\
+        $|F_x^h[m,k]|^2 < T \Rightarrow$ \textcolor{red}{Zgomot}
+    };
+\end{tikzpicture}
+\caption{Structura celulelor GOCA-CFAR 2D: CUT (roșu), Guard (galben), Training (portocaliu). GOCA calculează media în 4 sub-regiuni și ia maximul pentru adaptare locală.}
+\label{fig:cfar}
+\end{figure}
+
 \subsection{Pasul 1: Calcul STFT}
 
 Aplică formula (1) cu $N_{fft}=256$, hop=32, fereastră Gaussiană $\sigma=8$.
@@ -445,6 +550,9 @@ min\_doppler\_bw & 3.0 Hz & [1, 10] & Lățime Doppler minimă \\
 \end{tabular}
 \end{table}
 
+\textbf{Modificări vs. Paper (Abratkiewicz 2022)}: 
+Adaptări pentru sea clutter real: $N_{fft}=256$ (vs. 512), hop=32 (87.5\% overlap), $N_G=3$ (vs. 16), $P_f=0.001$ (vs. 0.4), K-distribution în loc de Gaussian, DBSCAN asimetric (freq\_scale=3.0), DC masking, filtru Doppler. Parametri ușor ajustați pentru IPIX maritime vs. semnale sintetice controlate din paper.
+
 \section{Interpretare Doppler}
 
 Conversie Doppler $\rightarrow$ viteză radială:
@@ -521,20 +629,5 @@ Richards, M. A. (2005).
 McGraw-Hill Professional.
 
 \end{thebibliography}
-
-% ============================================================================
-% ANEXĂ: DIAGRAME PIPELINE
-% ============================================================================
-\appendix
-\chapter{Diagrame detaliate ale pipeline-ului CFAR-STFT}
-
-Planul timp--frecvență și componentele algoritmului sunt ilustrate în figura \ref{fig:pipeline-pdf}.
-
-\begin{figure}[H]
-\centering
-\includepdf[pages=-, scale=0.75]{pipeline_diagrams.pdf}
-\caption{Diagrame detaliate: (1) Pipeline principal, (2) CFAR 2D, (3) Configurația experimentală, (4) Procesare TF, (5) Doppler, (6) Parametri, (7) RQF metric}
-\label{fig:pipeline-pdf}
-\end{figure}
 
 \end{document}
