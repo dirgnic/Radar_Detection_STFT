@@ -30,12 +30,12 @@
   {\guillemotleft}
   {\guillemotright}
 
-% Setează spațiere inter-linie (doublespacing din LaTeX este echivalentul setarii 1.5 in Microsoft Word)
+% Setează spațiere inter-linie (compactă)
 \usepackage{setspace}
-\doublespacing
+\renewcommand{\baselinestretch}{1.1}
 
-% Modificarea geometriei paginii (cu margini de 2,5 cm) 
-\usepackage[margin=2.5cm]{geometry}
+% Modificarea geometriei paginii (cu margini de 0.8 inch - mai mici pentru mai mult conținut)
+\usepackage[margin=0.8in]{geometry}
 
 % Include funcțiile de grafică
 \usepackage{graphicx}
@@ -494,10 +494,43 @@ Toți algoritmii de tip CFAR (Constant False Alarm Rate) urmează principii comu
     \item \textbf{SOCA-CFAR (Smallest Of Cell Averaging):} Selectează minimul dintre mediile subregiunilor. Optim pentru separarea țintelor la marginile clutter-ului dens.
 \end{itemize}
 
+\subsection{CFAR: Formule și pseudocod}
+
 \begin{table}[H]
 \centering
 \small
-\renewcommand{\arraystretch}{2.0}
+\renewcommand{\arraystretch}{2.5}
+\begin{tabular}{@{} l p{4cm} p{7.5cm} @{}}
+\toprule
+\textbf{Metodă} & \textbf{Model matematic} & \textbf{Pseudocod simplificat} \\ \midrule
+
+CA-CFAR & 
+$Z = \frac{1}{N_T} \sum_{i=1}^{N_T} x_i$, $T = R \cdot Z$ & 
+\textbf{1.} Extrage celulele de antrenament $S_{train}$ (fără zona de gardă) \newline
+\textbf{2.} $Z = \text{mean}(S_{train})$ \newline
+\textbf{3.} IF $CUT \ge T$ THEN detecție \\ \midrule
+
+OS-CFAR & 
+$Z = x_{(k)}$, $T = \alpha \cdot Z$ &
+\textbf{1.} Sortează $S_{train}$ → $S_{sorted}$ \newline
+\textbf{2.} $Z = S_{sorted}[k]$ (valoarea de rang k) \newline
+\textbf{3.} IF $CUT \ge T$ THEN detecție \\ \midrule
+
+SOCA-CFAR &
+$Z = \min(\mu_1, \dots, \mu_4)$, $T = R \cdot Z$ &
+\textbf{1.} Împarte fereastra în 4 subregiuni \newline
+\textbf{2.} Calculează media $\mu_i$ pentru fiecare subregiune \newline
+\textbf{3.} $Z = \min(\mu_{1}, \dots, \mu_4)$ \newline
+\textbf{4.} IF $CUT \ge T$ THEN detecție \\ 
+
+\bottomrule
+\end{tabular}
+\caption{Formule și pseudocod pentru metodele CFAR}
+\end{table}
+
+\begin{table}[H]
+\centering
+\small
 \begin{tabular}{@{} l l l l l @{}}
 \toprule
 \textbf{Metodă} & \textbf{Robustețe clutter} & \textbf{Ținte slabe} & \textbf{Complexitate} & \textbf{Ideal pentru} \\ \midrule
@@ -517,19 +550,29 @@ SOCA & Bună & Medie & Medie & Margini clutter \\
 \renewcommand{\arraystretch}{2.0}
 \begin{tabular}{@{} l p{3.5cm} p{7.5cm} @{}}
 \toprule
-\textbf{Metodă} & \textbf{Descriere} & \textbf{Caracteristici} \\ \midrule
+\textbf{Metodă} & \textbf{Descriere conceptuală} & \textbf{Pseudocod} \\ \midrule
 
 Agglomerative & 
-Ierarhic bottom-up & 
-Fuzionează succesiv perechile cele mai apropiate. Fiecare punct inițial = cluster. Unește până la K clustere. \\
+Ierarhic \textit{bottom-up}. Fuzionează succesiv perechile cele mai apropiate. & 
+\textbf{1.} Normalizează punctele $(f, t)$ \newline
+\textbf{2.} Fiecare punct = cluster individual \newline
+\textbf{3.} WHILE nr\_clustere $> K$: \newline
+\hspace{1em} Găsește clusterele cu $d_{min}$ \newline
+\hspace{1em} Unește-le sub aceeași etichetă \newline
+\textbf{4.} Reindexează etichetele (0, 1, 2...) \\ \midrule
 
 HDBSCAN & 
-Bazat pe densitate ierarhică & 
-Folosește \textit{core distance} și \textit{MST}. Determină MRD: $d_{mrd}(u,v) = \max(c(u), c(v), d(u,v))$. Elimină clusterele sub \textit{min\_samples}. \\
+Bazat pe densitate ierarhică. Folosește \textit{core distance} și \textit{MST} pentru stabilitate. & 
+\textbf{1.} Normalizează punctele $(f, t)$ \newline
+\textbf{2.} Calculează \textbf{core distance} $(c)$ pentru fiecare punct \newline
+\textbf{3.} Determină \textbf{MRD}: $d_{mrd}(u,v) = \max(c(u), c(v), d(u,v))$ \newline
+\textbf{4.} Construiește \textbf{MST} folosind MRD \newline
+\textbf{5.} Extrage componente conexe cu prag $\varepsilon$ \newline
+\textbf{6.} Elimină clusterele sub $min\_samples$ $\to$ zgomot (-1) \\ \midrule
 
 DBSCAN & 
 Bazat pe densitate & 
-Grupeaza puncte cu distanță $\le \varepsilon$. Asymetric: $d = \sqrt{\Delta t^2 + (\Delta f / \text{freq\_scale})^2}$ optimizează pentru semnături verticale. \\
+Grupeaza puncte cu distanță $\le \varepsilon$. Asymetric: $d = \sqrt{\Delta t^2 + (\Delta f / \text{freq\_scale})^2}$ \\
 \bottomrule
 \end{tabular}
 \caption{Metode de clustering utilizate}
@@ -544,6 +587,48 @@ Grupeaza puncte cu distanță $\le \varepsilon$. Asymetric: $d = \sqrt{\Delta t^
     
     \item \textbf{DBSCAN asimetric:} Țintele apar ca linii verticale în timp-frecvență (multe frecvențe, puține momente). Distanța asimetrică cu \texttt{freq\_scale=3.0} păstrează coeziunea țintelor.
 \end{itemize}
+
+\subsection{Separare prin triangulare Delaunay}
+
+Alternativă geometrică la CFAR + clustering:
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{2.5}
+\begin{tabular}{@{} l p{3.5cm} p{7.5cm} @{}}
+\toprule
+\textbf{Pas} & \textbf{Idee} & \textbf{Pseudocod simplificat} \\ \midrule
+
+Detectare Vârfuri &
+Maxime locale în spectrograma STFT, filtrate prin prag percentilă:
+\[
+\text{peak}(i,j) = \begin{cases} 1 & \text{dacă } S_{i,j} = \max(\text{vecini}) \text{ și } S_{i,j} > T \\ 0 & \text{altfel} \end{cases}
+\]
+& 
+\textbf{1.} Calcul STFT și magnitudine \newline
+\textbf{2.} Threshold = magnitudinea percentilei \newline
+\textbf{3.} Identifică maxime locale în fereastră \newline
+\textbf{4.} Returnează coordonate vârfuri \\ \midrule
+
+Triangulare Delaunay &
+Construiește triunghiuri pentru punctele detectate. Criteriu: niciun punct în cercul circumscris al unui triunghi existent & 
+\textbf{1.} Creează triunghi inițial care înconjoară toate punctele \newline
+\textbf{2.} Pentru fiecare punct nou: identifică triunghiuri care încalcă criteriul \newline
+\textbf{3.} Elimină triunghiurile și formează poligonul gol \newline
+\textbf{4.} Creeaza triunghiuri noi: punct curent + fiecare latură a poligonului \newline
+\textbf{5.} Elimină triunghiurile cu vârfuri din super-triunghi \\ \midrule
+
+Gruparea triunghiurilor &
+Triunghiuri vecine conectate după energie medie, dacă au muchie comună & 
+\textbf{1.} Construiește lista muchiilor pentru toate triunghiurile \newline
+\textbf{2.} Adaugă muchiile comune ca legături dacă diferența relativă magnitudine $< \varepsilon$ \newline
+\textbf{3.} Parcurgere DFS pentru identificare componente conexe \newline
+\textbf{4.} Calculează puncte, energie, centroid pentru fiecare componentă \\
+\bottomrule
+\end{tabular}
+\caption{Sinteză a pașilor de separare prin triangulare Delaunay și pseudocod asociat}
+\end{table}
 
 \subsection{Experimente pe semnale sintetice controlate}
 
