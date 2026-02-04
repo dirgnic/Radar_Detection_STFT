@@ -646,7 +646,7 @@ Triangulare \newline Delaunay &
 Triangulare pe vârfuri cu criteriul cercului circumscris (Delaunay) &
 \begin{tabular}[t]{@{}l@{}}
 1. $T_1$: triunghi auxiliar (acoperă punctele) \\
-2. Pentru fiecare $p$: inserează; re-triangulează local \\
+2. Pentru fiecare $p$: inserează; reface triangularea local \\
 3. La final: șterge triunghiurile cu vârfuri din $T_1$
 \end{tabular} \\ \midrule
 
@@ -668,7 +668,7 @@ Triunghiuri vecine conectate după energie medie, dacă au muchie comună &
 \textbf{Metodă 1: CA-CFAR + HDBSCAN:} STFT Hamming, CA-CFAR, HDBSCAN clustering, reconstrucție componentă, evaluare RQF.
 
 \textbf{Metodă 2: Triangulare Delaunay (separare geometrică):}
-Se calculează STFT cu fereastră Gaussiană și se formează spectrograma $S=|X|^2$ în plan timp--frecvență. Apoi, în locul unei pragări CFAR, se extrag maxime locale peste un prag percentilă, obținând un set rar de vârfuri candidate. Pe coordonatele acestor vârfuri se construiește triangularea Delaunay, iar triunghiurile rezultate sunt grupate în componente conexe (pe baza adiacenței) și filtrate după energie medie similară. În final, Doppler-ul este estimat din componenta cu energia maximă (de ex. prin centroid/medie pe axa frecvență, rezultând $f_D$).
+Se calculează STFT cu fereastră Gaussiană și se formează spectrograma $S=|X|^2$ în plan timp--frecvență. Apoi, în locul unei marginire CFAR, se extrag maxime locale peste un prag percentilă, obținând un set rar de vârfuri candidate. Pe coordonatele acestor vârfuri se construiește triangularea Delaunay, iar triunghiurile rezultate sunt grupate în componente conexe (pe baza adiacenței) și filtrate după energie medie similară. În final, Doppler-ul este estimat din componenta cu energia maximă (de ex. prin centroid/medie pe axa frecvență, rezultând $f_D$).
 
 \textbf{Rezultate sintetice:}
 CA-CFAR+HDBSCAN: 100\% detecție, RQF stabil SNR 5-30 dB. Triangulare: bună SNR mediu/ridicat, variabilitate mai mare RQF.
