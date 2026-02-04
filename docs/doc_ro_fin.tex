@@ -341,26 +341,9 @@ Grupează punctele detectate (k,n) cu distanța asimetrică din ecuația (3). Pa
 \end{algorithmic}
 \end{algorithm}
 
-\subsection{Pasul 5: Reconstrucție iSTFT}
+\subsection{Pasul 5: Extragere detecții}
 
-\begin{algorithm}[H]
-\caption{Reconstrucție inversă (iSTFT)}
-\begin{algorithmic}[1]
-\Require STFT original $X_{stft}$, mască dilatată $H_{dil}$, fereastră $w$, hop $H=256$
-\Ensure Semnal reconstruit $\hat{x}(n)$
-\State $X_{masked} \gets X_{stft} \odot H_{dil}$ \Comment{Aplică masca element-wise}
-\State $N_t \gets $ cols($X_{masked}$)
-\State $M \gets N_{fft}$ \Comment{Lungimea semnalului reconstruit}
-\State $\hat{x} \gets \text{zeros}(M)$
-\For{$n \gets 0$ to $N_t - 1$}
-    \State Calculează iFFT: $x_n \gets \text{ifft}(X_{masked}[:, n], N_{fft})$
-    \State Aplică fereastră: $x_w \gets \text{real}(x_n) \odot w$
-    \State Adună cu overlap-add: $\hat{x}[nH : nH + N_{fft}] \mathrel{+}= x_w$
-\EndFor
-\State Normalizează după fereastră: $\hat{x} \gets \hat{x} / (\sum_m w[m]^2)$
-\State \Return $\hat{x}$
-\end{algorithmic}
-\end{algorithm}
+Aplică masca pe STFT: \texttt{X\_masked = X\_stft \(\odot\) H\_dil}, apoi extrage binarele detectate.
 
 % ============================================================================
 % CAPITOLUL 4: DATE ȘI SURSE DE VALIDARE
